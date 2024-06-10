@@ -4,23 +4,27 @@ pragma solidity ^0.8.13;
 import {Test, console} from "forge-std/Test.sol";
 import {Lamport} from "../../src/lamport/lamport.sol";
 
+
+
+
 contract TestLamport is Test {
     Lamport public lamp;
     uint256 nonce = 0;
     bytes32[512] private_key;
-    bytes32[512] generated_public_key;
+    
     string message;
     bytes32[256] signature;
 
     function setUp() public {
         message ="ilesik";
         lamp = new Lamport();
+        bytes32[512] memory generated_public_key;
         generated_public_key = key_gen();
-        test_set_key();
+        test_set_key(generated_public_key);
         msg_encode();
     }
 
-    function test_set_key() public{
+    function test_set_key(bytes32[512] memory generated_public_key) public{
         lamp.set_public_key(generated_public_key);
     }
     
