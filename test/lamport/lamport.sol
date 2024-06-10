@@ -8,20 +8,20 @@ contract TestLamport is Test {
     Lamport public lamp;
     uint256 nonce = 0;
     bytes32[512] private_key;
+    bytes32[512] generated_public_key;
     string message;
     bytes32[256] signature;
 
     function setUp() public {
         message ="ilesik";
         lamp = new Lamport();
-        bytes32[512] memory public_key;
-        public_key = key_gen();
-        test_set_key(public_key);
+        generated_public_key = key_gen();
+        test_set_key();
         msg_encode();
     }
 
-    function test_set_key( bytes32[512] memory public_key) public{
-        lamp.set_public_key(public_key);
+    function test_set_key() public{
+        lamp.set_public_key(generated_public_key);
     }
     
     function test_verify() public view {

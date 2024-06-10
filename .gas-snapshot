@@ -1,0 +1,6 @@
+TestLamport:test_set_key(bytes32[512]) (runs: 256, μ: 2719427, ~: 2719759)
+TestLamport:test_verify() (gas: 1346756)
+TestLamport:test_wrong_verify() (gas: 591953)
+TestLamportMerkleTree:test_set_key() (gas: 1553944)
+TestLamportMerkleTree:test_verify() (gas: 2674358)
+TestMerkleTree:test_build_root() (gas: 35533)

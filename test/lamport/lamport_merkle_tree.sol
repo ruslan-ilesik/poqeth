@@ -14,6 +14,7 @@ contract TestLamportMerkleTree is Test {
     bytes32[] public_key;
     string message;
     bytes32[256] signature;
+    bytes32 key;
 
     function setUp() public{
         message ="ilesik";
@@ -21,12 +22,13 @@ contract TestLamportMerkleTree is Test {
         lamp = new LamportMerkleTree();
         tree = new MerkleTree();
         key_gen();
-        test_set_key();
+        key = tree.build_root(public_key);
         msg_encode();
+        test_set_key();
     }
 
     function test_set_key() public{
-        lamp.set_public_key(tree.build_root(public_key));
+        lamp.set_public_key(key);
     }
 
      function test_verify() public {
