@@ -13,9 +13,9 @@ contract LamportMerkleTree {
     }
 
     function verify(
-        string memory message,
-        bytes32[256] memory signature,
-        bytes32[] memory raw_public_key
+        string calldata message,
+        bytes32[256] calldata signature,
+        bytes32[] calldata raw_public_key
     ) public returns (bool) {
         require(raw_public_key.length == 512, "public key should be 512 elements long");
         bytes32 msg_bytes = keccak256(abi.encodePacked(message));

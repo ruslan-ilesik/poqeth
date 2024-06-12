@@ -6,13 +6,13 @@ contract Lamport {
 
     constructor() {}
 
-   function set_public_key(bytes32[512] memory pb) public {
+   function set_public_key(bytes32[512] calldata pb) public {
     public_key = pb;
    }
 
     function verify(
-        string memory message,
-        bytes32[256] memory signature
+        string calldata message,
+        bytes32[256] calldata signature
     ) public view returns (bool) {
         bytes32 msg_bytes = keccak256(abi.encodePacked(message));
         for (uint8 i = 0; i < 32; i++) {
