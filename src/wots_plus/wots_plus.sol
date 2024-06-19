@@ -16,7 +16,7 @@ contract WOTSPlus {
 
     function verify(uint256 w, bytes32[] calldata M, bytes32[] calldata sigma) public view returns (bool) {
         uint256 l1 = M.length;
-        uint256 l2 = log2(l1*(w-1))/log2(w);
+        uint256 l2 = logN(l1*(w-1), w); //log2(l1*(w-1))/log2(w);
 
         // Compute checksum C
         uint256 checksum = 0;
@@ -59,6 +59,14 @@ contract WOTSPlus {
         return result;
     }
 
+
+    
+    function logN(uint x, uint N) public pure returns (uint result) {
+        while (x > 1) {
+            x /= N;
+            result++;
+        }
+    }
 
         //CODE FROM: https://ethereum.stackexchange.com/questions/8086/logarithm-math-operation-in-solidity
     function log2(uint x) public pure returns (uint y){
