@@ -7,7 +7,7 @@ import {MerkleTree} from "../../src/merkle_tree.sol";
 import {FORS} from "../../src/fors/fors.sol";
 //import "forge-std/console.sol";
 
-contract FORSTest{
+contract FORSTest is Test{
     constructor(){}
 
     function setUp() public{
