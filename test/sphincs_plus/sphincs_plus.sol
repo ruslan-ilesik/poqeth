@@ -2,7 +2,7 @@ pragma solidity ^0.8.26;
 
 import {Test, console} from "forge-std/Test.sol";
 import "forge-std/console.sol";
-
+import {LinkedListStack, StackEnty} from "./LinkedListStack.sol";
 
 enum ADDRSTypes{WOTS_HASH, WOTS_PK, TREE,
 FORS_TREE, FORS_ROOTS}
@@ -257,8 +257,13 @@ contract TestSphincsPlus is Test {
         return treehash(sk_seed,0,h/d,pk_seed,addrs);
     }
 
+
+
     function treehash(bytes1[] memory sk_seed, uint s, uint z,bytes1[] memory pk_seed, ADDRS addrs) public returns (bytes32){
-        if( s % (1 << z) != 0 ) {return 0;} // TO DO: Change to -1;
+        require(s % (1 << z) == 0, "Invalid start index");
+
+        LinkedListStack stack = new LinkedListStack();
+
         for ( uint i = 0; i < 2**z; i++ ) {
             addrs.setType(ADDRSTypes.WOTS_HASH);
             addrs.setKeyPairAddress(bytes4(uint32(s + i)));
