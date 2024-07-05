@@ -27,6 +27,41 @@ contract ADDRS{
         }
     }
 
+    function setTreeHeight(bytes4 height) public{
+        require(_type == 2, "Can not set TreeHeight  of address not of type 2");
+        for (uint8 i=0; i < 4; i++){
+            data[4+i] = height[i];
+        }
+    }
+
+    function getTreeHeight() public returns (bytes4){
+        return bytes4(
+            uint32(uint8(data[4])) << 24 |
+            uint32(uint8(data[5])) << 16 |
+            uint32(uint8(data[6])) << 8 |
+            uint32(uint8(data[7]))
+        );
+    }
+
+
+    function setTreeIndex(bytes4 hashAddress) public {
+        require(_type == 2, "Can not set TreeIndex of address not of type 2");
+        for (uint8 i=0; i < 4; i++){
+            data[8+i] = hashAddress[i];
+        }
+    }
+
+    function getTreeIndex() public view returns (bytes4) {
+        require(_type == 2, "Can not get TreeIndex of address not of type 2");
+        return bytes4(
+            uint32(uint8(data[8])) << 24 |
+            uint32(uint8(data[9])) << 16 |
+            uint32(uint8(data[10])) << 8 |
+            uint32(uint8(data[11]))
+        );
+    }
+
+
     function setData(bytes1[12] memory d) public {
         for (uint8 i = 0; i < 12; i++) {
            data[i] = d[i];
@@ -63,6 +98,17 @@ contract ADDRS{
 
     function setType(ADDRSTypes t) public {
         _type = uint32(uint(t));
+        if (t == ADDRSTypes.WOTS_PK){
+            for (uint i =3; i < 12; i++){
+                data[i] = 0;
+            }
+        }
+
+        if (t == ADDRSTypes.TREE){
+             for (uint i =0; i < 4; i++){
+                data[i] = 0;
+            }
+        }
     }
 
     function getType() public view returns (uint32) {
@@ -70,7 +116,7 @@ contract ADDRS{
     }
 
     function getKeyPairAddress() public returns (bytes4) {
-        require(_type == 0, "Can not get pair address of address not of type 0");
+        require(_type == 0 || _type == 1, "Can not get pair address of address not of type 0,1");
         return bytes4(
             uint32(uint8(data[0])) << 24 |
             uint32(uint8(data[1])) << 16 |
@@ -102,7 +148,7 @@ contract ADDRS{
 
     // Function to set the first 4 bytes of data
     function setKeyPairAddress(bytes4 pairAddress) public {
-        require(_type == 0, "Can not set pair address of address not of type 0");
+        require(_type == 0 || _type == 1, "Can not set pair address of address not of type 0,1");
         for (uint8 i=0; i < 4; i++){
             data[i] = pairAddress[i];
         }
@@ -216,12 +262,16 @@ contract TestSphincsPlus is Test {
         for ( uint i = 0; i < 2**z; i++ ) {
             addrs.setType(ADDRSTypes.WOTS_HASH);
             addrs.setKeyPairAddress(bytes4(uint32(s + i)));
-            wots_PKgen(sk_seed,pk_seed,addrs);
+            bytes32 node = wots_PKgen(sk_seed,pk_seed,addrs);
+            addrs.setType(ADDRSTypes.TREE);
+            addrs.setTreeHeight(bytes4(uint32(1)));
+            addrs.setTreeIndex(bytes4(uint32(s+i)));
         } 
     }
 
-    function wots_PKgen(bytes1[] memory sk_seed,bytes1[] memory pk_seed,ADDRS addrs) public {
+    function wots_PKgen(bytes1[] memory sk_seed,bytes1[] memory pk_seed,ADDRS addrs) public returns (bytes32){
         ADDRS wotspkADRS = copyADDRS(addrs);
+        bytes32[] memory tmp = new bytes32[](len);
         for (uint32 i =0; i < len; i++){
             addrs.setChainAddress(bytes4(i));
             //addrs.setHashAddress(0);//hashAdrs.setHashAddress(0); TO DO?
@@ -230,8 +280,12 @@ contract TestSphincsPlus is Test {
             for (uint8 i = 0; i < sk.length; i++) {
                 result |= bytes32(sk[i] & 0xFF) >> (i * 8);
             }
-            chain(result, 0, w - 1, pk_seed, addrs);
+            tmp[i] = chain(result, 0, w - 1, pk_seed, addrs);
         }
+        wotspkADRS.setType(ADDRSTypes.WOTS_PK);
+        wotspkADRS.setKeyPairAddress(addrs.getKeyPairAddress());
+        return keccak256(abi.encodePacked(pk_seed,wotspkADRS.toBytes32(),tmp));
+
     }
 
     function chain(bytes32 X,uint i,uint s, bytes1[]memory pk_seed, ADDRS addrs) public returns (bytes32){
