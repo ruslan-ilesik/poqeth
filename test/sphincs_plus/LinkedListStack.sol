@@ -6,8 +6,6 @@ pragma solidity ^0.8.26;
 struct StackEnty{
         bytes32 value;
         uint32 height;
-
-
 }
 contract LinkedListStack {
 

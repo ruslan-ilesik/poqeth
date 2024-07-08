@@ -231,7 +231,9 @@ contract TestSphincsPlus is Test {
         len1 = (n) / log2(w) + ((n) % log2(w) == 0 ? 0 : 1);
         len2 = (log2(len1 * (w - 1)) / log2(w)) + 1;
         len = len1 + len2;
-        key_gen();
+        bytes memory SK;
+        bytes memory PK;
+        (SK,PK) = key_gen();
 
         
 
@@ -263,6 +265,9 @@ contract TestSphincsPlus is Test {
         require(s % (1 << z) == 0, "Invalid start index");
 
         LinkedListStack stack = new LinkedListStack();
+        StackEnty memory current = StackEnty(0,0);
+        stack.push(current);
+        current = StackEnty(0,0);
 
         for ( uint i = 0; i < 2**z; i++ ) {
             addrs.setType(ADDRSTypes.WOTS_HASH);
@@ -271,7 +276,19 @@ contract TestSphincsPlus is Test {
             addrs.setType(ADDRSTypes.TREE);
             addrs.setTreeHeight(bytes4(uint32(1)));
             addrs.setTreeIndex(bytes4(uint32(s+i)));
-        } 
+
+            while (stack.peek().height == uint32(addrs.getTreeHeight())){
+                current = stack.pop();
+                addrs.setTreeIndex(bytes4((uint32(addrs.getTreeIndex()) - 1) / 2));
+                node = keccak256(abi.encodePacked(pk_seed,addrs.toBytes32(),(current.value | node)));
+                addrs.setTreeHeight(bytes4(uint32(addrs.getTreeHeight())+1));
+            }
+            current.height = uint32(addrs.getTreeHeight());
+            current.value = node;
+            stack.push(current);
+            current = StackEnty(0,0);
+        }
+        return stack.pop().value; 
     }
 
     function wots_PKgen(bytes1[] memory sk_seed,bytes1[] memory pk_seed,ADDRS addrs) public returns (bytes32){
