@@ -27,6 +27,8 @@ contract ADDRS{
         }
     }
 
+
+
     function setTreeHeight(bytes4 height) public{
         require(_type == 2, "Can not set TreeHeight  of address not of type 2");
         for (uint8 i=0; i < 4; i++){
@@ -76,7 +78,7 @@ contract ADDRS{
         return temp;
     }
 
-    function setLayerAdress(bytes4 adr) public{
+    function setLayerAddress(bytes4 adr) public{
         layer_adress = adr;
     }
 
@@ -84,7 +86,7 @@ contract ADDRS{
         return layer_adress;
     }
 
-    function setTreeAdress(bytes12 adr) public {
+    function setTreeAddress(bytes12 adr) public {
         tree_adress = adr;
     }
 
@@ -148,7 +150,7 @@ contract ADDRS{
 
     // Function to set the first 4 bytes of data
     function setKeyPairAddress(bytes4 pairAddress) public {
-        require(_type == 0 || _type == 1, "Can not set pair address of address not of type 0,1");
+        require(_type == 0 || _type == 1 || _type == 3, "Can not set pair address of address not of type 0,1,3");
         for (uint8 i=0; i < 4; i++){
             data[i] = pairAddress[i];
         }
@@ -231,25 +233,112 @@ contract TestSphincsPlus is Test {
         len1 = (n) / log2(w) + ((n) % log2(w) == 0 ? 0 : 1);
         len2 = (log2(len1 * (w - 1)) / log2(w)) + 1;
         len = len1 + len2;
+
+        bytes1[] memory sk_seed = NPRNG(n);
+        bytes1[] memory sk_prf = NPRNG(n);
+        bytes1[] memory pk_seed = NPRNG(n);
+
+
+        bytes32 pk_root = ht_PKgen(sk_seed,pk_seed);
         bytes memory SK;
         bytes memory PK;
-        (SK,PK) = key_gen();
+        (SK,PK) = key_gen(sk_seed, sk_prf, pk_seed,pk_root);
+        sign(message, SK,sk_prf,pk_seed,pk_root);
 
         
 
     }
-    function key_gen() public returns(bytes memory, bytes memory) {
-        bytes1[] memory sk_seed = NPRNG(n);
-        bytes1[] memory sk_prf = NPRNG(n);
-        bytes1[] memory pk_seed = NPRNG(n);
-        bytes32 pk_root = ht_PKgen(sk_seed,pk_seed);
+
+
+    struct SIG{
+        bytes1[] randomness;
+        bytes1[] sig_fors;
+        bytes1[] sig_ht;
+
+    }
+
+    function sign(string memory M, bytes memory SK, bytes1[] memory sk_prf, bytes1[] memory pk_seed, bytes32 pk_root) public {
+        ADDRS addrs = new ADDRS();
+        bytes1[] memory opt = NPRNG(n);
+        bytes1[] memory R = PRF_msg(sk_prf, opt, M);
+        SIG memory sign = SIG(R,new bytes1[]((k*(a + 1) * n)),new bytes1[]((h + d*len)*n));
+        bytes1[] memory digest = h_msg(R, pk_seed, pk_root, M);
+
+
+        uint tmp_md_len = (k * (a + 7)) / 8;
+        uint tmp_idx_tree_len = (h - (h / d) + 7) / 8;
+        uint tmp_idx_leaf_len = (h / d + 7) / 8;
+
+        bytes memory tmp_md = new bytes(tmp_md_len);
+        bytes memory tmp_idx_tree = new bytes(tmp_idx_tree_len);
+        bytes memory tmp_idx_leaf = new bytes(tmp_idx_leaf_len);
+
+        for (uint i = 0; i < tmp_md_len; i++) {
+            tmp_md[i] = digest[i];
+        }
+
+        for (uint i = 0; i < tmp_idx_tree_len; i++) {
+            tmp_idx_tree[i] = digest[tmp_md_len + i];
+        }
+
+        for (uint i = 0; i < tmp_idx_leaf_len; i++) {
+            tmp_idx_leaf[i] = digest[tmp_md_len + tmp_idx_tree_len + i];
+        }
+
+        // Extract md, idx_tree, and idx_leaf from the digest
+  
+        bytes memory md = new bytes(k*a / 8);
+        for (uint i = 0; i < k*a / 8; i++) {
+            md[i] = tmp_md[i];
+        }
+
+        // Extract idx_tree
+        bytes12 idx_tree = 0;
+        uint idx_tree_bits = h - (h / d);
+        for (uint i = 0; i < idx_tree_bits; i++) {
+            uint bytePos = i / 8;
+            uint bitPos = i % 8;
+            if ((uint8(tmp_idx_tree[bytePos]) & (1 << bitPos)) != 0) {
+                idx_tree |= bytes12(uint96(1) << i);
+            }
+        }
+
+        // Extract idx_leaf
+        bytes4 idx_leaf = 0;
+        uint idx_leaf_bits = h / d;
+        for (uint i = 0; i < idx_leaf_bits; i++) {
+            uint bytePos = i / 8;
+            uint bitPos = i % 8;
+            if ((uint8(tmp_idx_leaf[bytePos]) & (1 << bitPos)) != 0) {
+                idx_leaf |= bytes4(uint32(1) << i);
+            }
+        }
+        
+        addrs.setLayerAddress(0);
+        addrs.setTreeAddress(idx_tree);
+        addrs.setType(ADDRSTypes.FORS_TREE);
+        addrs.setKeyPairAddress(idx_leaf);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    function key_gen(bytes1[] memory sk_seed, bytes1[] memory sk_prf, bytes1[] memory pk_seed,bytes32 pk_root) public returns(bytes memory, bytes memory) {
         return ( abi.encodePacked(sk_seed, sk_prf, pk_seed, pk_root), abi.encodePacked(pk_seed, pk_root) );
     }
 
     function ht_PKgen(bytes1[] memory sk_seed, bytes1[] memory pk_seed) public returns (bytes32){
         ADDRS addrs = new ADDRS();
-        addrs.setLayerAdress(bytes4(uint32(d-1)));
-        addrs.setTreeAdress(0);
+        addrs.setLayerAddress(bytes4(uint32(d-1)));
+        addrs.setTreeAddress(0);
         return xmss_PKgen(sk_seed, pk_seed, addrs);
     }
 
@@ -325,11 +414,22 @@ contract TestSphincsPlus is Test {
 
     function copyADDRS(ADDRS aa) public returns (ADDRS adr){
         adr = new ADDRS();
-        adr.setLayerAdress(aa.getLayerAdress());
-        adr.setTreeAdress(aa.getTreeAddress());
+        adr.setLayerAddress(aa.getLayerAdress());
+        adr.setTreeAddress(aa.getTreeAddress());
         adr.setType(aa.getType());
         adr.setData(aa.getData());
         return adr;
+    }
+
+    function h_msg(bytes1[] memory R, bytes1[] memory  pk_seed, bytes32 pk_root, string memory M) public returns(bytes1[] memory){
+        require(R.length == pk_seed.length && pk_seed.length == 32,"Lengths do not match");
+        uint tmp_md_len = (k * (a + 7)) / 8;
+        uint tmp_idx_tree_len = (h - (h / d) + 7) / 8;
+        uint tmp_idx_leaf_len = (h / d + 7) / 8;
+        uint m = tmp_md_len + tmp_idx_leaf_len + tmp_idx_tree_len;
+        bytes1[] memory hashed = new bytes1[](m);
+        keccak256(abi.encodePacked(R,pk_seed,pk_root,M));
+        return hashed;
     }
 
     function PRF(bytes1[] memory seed, bytes32 b32) public returns (bytes1[] memory){
@@ -343,6 +443,21 @@ contract TestSphincsPlus is Test {
             }
         }
         return random;
+    }
+
+    function PRF_msg(bytes1[] memory a, bytes1[] memory b, string memory c) public returns (bytes1[] memory){
+        require(a.length == b.length, "first 2 arguments should have same size");
+        bytes1[] memory random = new bytes1[](a.length);
+        uint cnt = 0;
+        for(uint i =0; i < a.length;i+=32){
+            bytes32 value = keccak256(abi.encodePacked(cnt,a,b,c));
+            cnt++;
+            for (uint j=0; j < 32 && i*32+j < a.length; j++){
+                random[i*32+j] = value[j];
+            }
+        }
+        return random;
+
     }
 
     function NPRNG(uint bytes_amount) public returns (bytes1[] memory){

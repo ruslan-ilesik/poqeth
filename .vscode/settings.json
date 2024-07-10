@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.embeddedhtml": "html",
+        ".fantomasignore": "ignore",
+        "memory": "cpp"
+    }
+}
