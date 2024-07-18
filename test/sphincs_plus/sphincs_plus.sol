@@ -84,8 +84,8 @@ contract TestSphincsPlus is Test {
         sign(message, SK,sk_prf,pk_seed,pk_root,sk_seed);
         
         SIG memory aaaa = copySIG(signature);
-        spc.spx_verify(message,aaaa);
-        console.logUint(signature.randomness.length + signature.sig_fors.length + signature.sig_ht.length);
+        require (spc.spx_verify(message,aaaa),"VERIFY FAILED");
+
 
     }
     function copySIG(SIG memory original) internal pure returns (SIG memory) {
