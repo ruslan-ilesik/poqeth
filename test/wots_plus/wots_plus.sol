@@ -17,7 +17,7 @@ contract TestWotsPlus is Test {
     bytes32[] r;
     uint256 k;
     uint256 m = 32; //bytes, can not be changed!
-    uint8 w = 16; // bits, lets assume it will divisible by 8
+    uint8 w = 8; // bits, lets assume it will divisible by 8
     uint256 l1 ;
     uint256 l2;
 
@@ -49,6 +49,7 @@ contract TestWotsPlus is Test {
     }
 
     function testWots() public {
+        wots.set_pk(r,k,pk);
         assertTrue(wots.verify(w, M, sigma));
     }
 
