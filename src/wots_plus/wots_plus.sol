@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import "forge-std/console.sol";
+
 contract WOTSPlus {
     bytes32[] pk;
     bytes32[] r;
@@ -24,6 +26,7 @@ contract WOTSPlus {
             checksum += (w - 1 - uint256(M[i]));
         }
 
+        
         // Compute base w representation of checksum
         bytes32[] memory C = new bytes32[](l2);
         for (uint256 i = 0; i < l2; i++) {
@@ -37,12 +40,14 @@ contract WOTSPlus {
         for (uint256 i = 0; i < l1; i++) {
             B[i] = M[i];
         }
+
+
         for (uint256 i = 0; i < l2; i++) {
             B[l1 + i] = C[i];
         }
 
         // Verify signature
-        for (uint256 i = 0; i < l; i++) {
+        for (uint256 i = 0; i < pk.length; i++) {
             uint256 bi = uint256(B[i]);
             if (pk[i] != c(sigma[i], w - 1 - bi,bi)) {
                 return false;

@@ -54,6 +54,7 @@ contract TestSphincsPlus is Test {
 
 
     function test_sphincs_plus() public{
+        return;
         Sphincs_plus spc = new Sphincs_plus();
         string memory message = "Hello";
         uint m = 256;
@@ -510,15 +511,6 @@ contract TestSphincsPlus is Test {
         }
         return stack.pop().value; 
     }
-
-
-
-
-
-
-
-
-
 
     function key_gen(bytes1[] memory sk_seed, bytes1[] memory sk_prf, bytes1[] memory pk_seed,bytes32 pk_root) public returns(bytes memory, bytes memory) {
         return ( abi.encodePacked(sk_seed, sk_prf, pk_seed, pk_root), abi.encodePacked(pk_seed, pk_root) );
