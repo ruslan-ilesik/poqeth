@@ -52,14 +52,18 @@ def main():
     # File paths for different w values
     file_path_w8 = '8.csv'
     file_path_w16 = '16.csv'
+    file_path_w4 = '4.csv'
     
     # Calculate the sum of verify_values for each w
     sum_w8 = sum_verify_values(file_path_w8)
     sum_w16 = sum_verify_values(file_path_w16)
+    sum_w4 = sum_verify_values(file_path_w4)
     
     print(f"Sum of verify_values using binominal for w=8: {sum_w8}")
     print(f"Sum of verify_values using binominal for w=16: {sum_w16}")
+    print(f"Sum of verify_values using binominal for w=4: {sum_w4}")
 
-    print(sum_w16/ (sum_w8/100.0))
+    print("w=8 is",sum_w16/ (sum_w8/100.0) - 100,"% more efficient than w=16")
+    print("w=8 is",sum_w4/ (sum_w8/100.0) - 100,"% more efficient than w=4")
 if __name__ == "__main__":
     main()

@@ -31,7 +31,7 @@ def replace_w_value_in_file(file_path, new_w_value):
     # Modify the specific line
     for i in range(len(lines)):
         if 'uint8 w = ' in lines[i]:
-            start_index = lines[i].index('uint8 w = ') + len('uint8 w = ')
+            start_index = lines[i].index('uint16 w = ') + len('uint16 w = ')
             end_index = lines[i].index(';', start_index)
             lines[i] = lines[i][:start_index] + str(new_w_value) + lines[i][end_index:]
             break
@@ -43,7 +43,7 @@ def replace_w_value_in_file(file_path, new_w_value):
 
 FILE_PATH = os.path.dirname(os.path.abspath(__file__))+"/wots_plus.sol"
 
-for w in tqdm.tqdm([8,16]):
+for w in tqdm.tqdm([4]):
     replace_w_value_in_file(FILE_PATH, w)
     with open(f'{w}.csv', 'w', newline='') as csvfile:
         csvwriter = csv.writer(csvfile)
