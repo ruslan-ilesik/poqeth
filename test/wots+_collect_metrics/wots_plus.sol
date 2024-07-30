@@ -17,7 +17,7 @@ contract TestWotsPlusCollect is Test {
     bytes32[] r;
     uint256 k;
     uint256 m = 32; //bytes, can not be changed!
-    uint16 w = 4; // bits, lets assume it will divisible by 8
+    uint16 w = 256; // bits, lets assume it will divisible by 8
     uint256 l1 ;
     uint256 l2;
 
@@ -28,13 +28,13 @@ contract TestWotsPlusCollect is Test {
         l1 = (m*8) / log2(w) + ((m*8) % log2(w) == 0 ? 0 : 1);
         l2 = log2(l1*(w-1))/log2(w);
         uint256 l = l1+l2;
-        uint256 n = 4;
+        uint256 n = 512;
 
         wots = new WOTSPlus();
         (sk,pk,r,k) = key_gen(n,l,w);
         
 
-        bytes32 hashed_message = hex"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe";//keccak256(abi.encodePacked(message));
+        bytes32 hashed_message = hex"fff0000000000000000000000000000000000000000000000000000000000000";//keccak256(abi.encodePacked(message));
         uint256 nhm = uint256(hashed_message);
         M = new bytes32[](l1);
         for (uint256 i = 0; i < l1; i++) {
@@ -53,13 +53,15 @@ contract TestWotsPlusCollect is Test {
         assertTrue(wots.verify(w, M, sigma));
     }
 
-    function c(bytes32 x, bytes32[] memory r,uint256 k, uint256 i)public pure returns (bytes32){
-        if (i==0){
-            return x;
-        }
-        return keccak256(abi.encodePacked(c(x, r, k, i - 1) ^ r[i - 1],k));
-    } 
+    function c(bytes32 x, bytes32[] memory r, uint256 k, uint256 i) public pure returns (bytes32) {
+        bytes32 result = x;
 
+        for (uint256 j = 0; j < i; j++) {
+            result = keccak256(abi.encodePacked(result ^ r[j], k));
+        }
+
+        return result;
+    }
 
     //lets assume n is in bytes, not bits for simpler operations;
     function key_gen(uint256 n,uint256 l,uint256 w) public returns (bytes32[] memory sk,bytes32[] memory pk,bytes32[] memory r,uint256 k){

@@ -43,7 +43,7 @@ def replace_w_value_in_file(file_path, new_w_value):
 
 FILE_PATH = os.path.dirname(os.path.abspath(__file__))+"/wots_plus.sol"
 
-for w in tqdm.tqdm([4]):
+for w in tqdm.tqdm([256]):
     replace_w_value_in_file(FILE_PATH, w)
     with open(f'{w}.csv', 'w', newline='') as csvfile:
         csvwriter = csv.writer(csvfile)

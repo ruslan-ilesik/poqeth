@@ -23,7 +23,7 @@ contract TestLamport is Test {
         test_set_key(generated_public_key);
         msg_encode();
     }
-
+ 
     function test_set_key(bytes32[512] memory generated_public_key) public{
         lamp.set_public_key(generated_public_key);
     }

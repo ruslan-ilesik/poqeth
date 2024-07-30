@@ -9,36 +9,294 @@ import "forge-std/console.sol";
 
 contract TestXMSSS is Test {
     XMSS xmss;
+    uint h = 10;
+    uint w = 16;
+    uint m = 32; // constant
+    uint n = 32; // constant as we just random 256 bit hashes
+    bytes32 Mp = 0;
+    //uint a = 8;
+    uint t = 2**8;//2 ** 8;
+    bytes32 SK_PRF;
+    bytes32 SEED;
+    uint256 l1 ;
+    uint256 l2;
+    uint256 l;
+    bytes32[] wots_sk;
+    bytes32[] wots_pk;
+    bytes32[] r;
+    bytes32 k;
+    bytes32 root ;
+    uint idx = 0;
+ 
+    XMSS.PK xmss_pk;
+    XMSS.SIG xmss_sig;
+
+
+
     function setUp() public{
         xmss = new XMSS();
+        l1 = (m*8) / log2(w) + ((m*8) % log2(w) == 0 ? 0 : 1);
+        l2 = log2(l1*(w-1))/log2(w);
+        l = l1+l2;
+        XMSS_keyGen();
+
+        xmss_sig.idx_sig =uint32(idx);
+        xmss_sig.r = keccak256(abi.encodePacked(SK_PRF,idx));
+        ADRS adrs = new ADRS();
+        adrs.setType(0);   // Type = OTS hash address
+        adrs.setOTSAddress(uint32(idx));
+
+        xmss_sig.sig_ots = WOTS_sign(adrs);
+
+
+    }
+
+    function XMSS_keyGen()public {
+        wots_sk = wots_key_sk();
+        SK_PRF = random();
+        SEED = random();
+        ADRS adrs = new ADRS();
+
+        //also defines auth path as we anyway fake all nodes
+        root = treehash(0,adrs);
+        xmss_pk = XMSS.PK(root,SEED);
+    }
+
+    function WOTS_sign(ADRS adrs)  public returns (bytes32[] memory sig){
+        uint256 csum = 0;
+        bytes32[] memory _msg = base_w(Mp, l1);
+        for (uint i = 0; i < l1; i++ ) {
+            csum = csum + w - 1 - uint256(_msg[i]);
+        }
+        csum = csum << ( 8 - ( ( l2 * log2(w) ) % 8 ));
+        uint len_2_bytes = ceil( ( l2 * log2(w) ), 8 );
+        bytes32[] memory _msg2 = base_w(toByte(csum, len_2_bytes), l2);
+        sig = new bytes32[](l);
+        for (uint i = 0; i < l; i++ ) {
+          adrs.setChainAddress(uint32(i));
+          if (i < l1){
+            sig[i] = chain(wots_sk[i], 0, uint(_msg[i]), adrs);
+          }
+          else{
+            sig[i] = chain(wots_sk[i], 0, uint(_msg2[i-l1]), adrs);
+          }
+          
+        }
+        return sig;
+    }
+
+    function toByte(uint256 x, uint y) public pure returns (bytes memory) {
+        bytes memory b = new bytes(y);
+        for (uint i = 0; i < y; i++) {
+            b[i] = bytes1(uint8(x >> (8 * (y - 1 - i))));
+        }
+        return b;
+    }
+
+    function base_w(bytes memory X,uint out_len) public returns (bytes32[] memory){
+        uint iin = 0;
+        uint out = 0;
+        uint8 total = 0;
+        uint bits = 0;
+        uint consumed;
+        bytes32[] memory basew = new bytes32[](out_len);
+        for (consumed = 0; consumed < out_len; consumed++ ) {
+           if ( bits == 0 ) {
+               total = uint8(X[iin]);
+               iin++;
+               bits += 8;
+           }
+           bits -= log2(w);
+           basew[out] = bytes32((total >> bits) & (w - 1));
+           out++;
+       }
+       return basew;
+    }
+
+    function base_w(bytes32 X,uint out_len) public returns (bytes32[] memory){
+        uint iin = 0;
+        uint out = 0;
+        uint8 total = 0;
+        uint bits = 0;
+        uint consumed;
+        bytes32[] memory basew = new bytes32[](out_len);
+        for (consumed = 0; consumed < out_len; consumed++ ) {
+           if ( bits == 0 ) {
+               total = uint8(X[iin]);
+               iin++;
+               bits += 8;
+           }
+           bits -= log2(w);
+           basew[out] = bytes32((total >> bits) & (w - 1));
+           out++;
+       }
+       return basew;
+
+    }
+
+    function treehash(uint s, ADRS adrs) public returns (bytes32) {
+        require(s % (1 << h) == 0,"treehash cond fail");
+        adrs.setType(0);   // Type = OTS hash address
+        adrs.setOTSAddress(uint32(s));
+        bytes32[] memory pk = wots_key_pk(adrs);
+        adrs.setType(1);   // Type = L-tree address
+        adrs.setLTreeAddress(uint32(s));
+        bytes32 node = ltree(pk,adrs);
+        //console.logBytes32(node);
+        adrs.setType(2);   // Type = hash tree address
+        adrs.setTreeHeight(0);
+        adrs.setTreeIndex(uint32(s));
+        //fake other trees with random values, we need only one message tree for verefication testing
+        xmss_sig.auth = new bytes32[](h);
+        for (uint i =0; i < (h); i++){
+            xmss_sig.auth[i] = random();
+            node = RAND_HASH(node,xmss_sig.auth[i], adrs);
+            adrs.setTreeHeight(uint32(adrs.getTreeHeight())+1);
+        }
+        //console.logBytes32(node);
+        return node;
+    }
+    function ceil(uint a, uint b) internal pure returns (uint) {
+        return (a + b - 1) / b;
+    }
+
+    function RAND_HASH(bytes32 l, bytes32 r,ADRS adrs)public returns (bytes32){
+        adrs.setKeyAndMask(0);
+        bytes32 KEY = PRF(adrs);
+        adrs.setKeyAndMask(1);
+        bytes32 BM_0 = PRF(adrs);
+        adrs.setKeyAndMask(2);
+        bytes32 BM_1 = PRF(adrs);
+        return keccak256(abi.encodePacked(KEY, (l ^ BM_0), (r ^ BM_1)));
+    }  
+
+    function ltree(bytes32[] memory pk, ADRS addrs)public  returns (bytes32){
+        uint len = l;
+        addrs.setTreeHeight(0);
+        while ( len > 1 ) {
+            for ( uint i = 0; i < (len / 2); i++ ) {
+                addrs.setTreeIndex(uint32(i));
+                pk[i] = RAND_HASH(pk[2*i], pk[2*i + 1], addrs);
+            }
+            if ( len % 2 == 1 ) {
+                pk[(len / 2)] = pk[len - 1];
+            }
+            len = ceil(len, 2);
+            addrs.setTreeHeight(uint32(addrs.getTreeHeight()) + 1);
+        }
+        return pk[0];
+
+    } 
+
+    /*function chain(bytes32 X,uint i,uint s, ADRS adrs)public returns(bytes32) {
+        if ( s == 0 ) {
+            return X;
+        }
+        if ( (i + s) > (w - 1) ) {
+            return 0;
+        }
+        bytes32 tmp = chain(X, i, s - 1, adrs);
+        adrs.setHashAddress(uint32(i + s - 1));
+        adrs.setKeyAndMask(0);
+        bytes32 KEY = PRF(adrs);
+        adrs.setKeyAndMask(1);
+        bytes32 BM = PRF(adrs);
+        tmp = keccak256(abi.encodePacked(KEY, tmp ^ BM));
+        return tmp;
+    }*/
+
+    function chain(bytes32 X, uint i, uint s, ADRS adrs) public returns (bytes32) {
+        if ((i + s) > (w - 1)) {
+            return 0;
+        }
+
+        bytes32 tmp = X;
+
+        for (uint k = 0; k < s; k++) {
+            adrs.setHashAddress(uint32(i + k));
+            adrs.setKeyAndMask(0);
+            bytes32 KEY = PRF(adrs);
+            adrs.setKeyAndMask(1);
+            bytes32 BM = PRF(adrs);
+            tmp = keccak256(abi.encodePacked(KEY, tmp ^ BM));
+        }
+
+        return tmp;
     }
 
 
+    function wots_key_pk(ADRS adrs)public returns(bytes32[] memory){
+        bytes32[] memory pk = new bytes32[](l);
+        for ( uint i = 0; i < l; i++ ) {
+            adrs.setChainAddress(uint32(i));
+            pk[i] = chain(wots_sk[i], 0, w - 1, adrs);
+        }
+        return pk;
+    }
+
+    function wots_key_sk() public returns (bytes32[] memory sk){
+        require(w>1,"w should be >1");
+        sk = new bytes32[](l);
+        for (uint256 i =0; i < l; i++){
+            sk[i] = bytes32(random());
+        }
+        return sk;
+    }
+
     function test_xmss() public{
-        XMSS.PK memory a = XMSS.PK("0hd03pddYm5T0SEn", 0x3437346562633461313634336532323833616265616166343334616639333936, 0x7848694e566e73395a4b6a6135573379);
-        xmss.set_pk(a);
-
-        bytes32[] memory sig_ots;
-        bytes32[] memory auth;
-        
+        xmss.set_pk(xmss_pk);
+        require(xmss.verify(xmss_sig, Mp, w,h),"verefication failed");
         // PLACE HOLDER START
-        bytes32 M = hex"6161616161616161616161616161616161616161616161616161616161616161";
-        uint8 w= 16;
-        uint32 idx_sig = 0;
-        bytes32 r = 0x6665653935336135323939333537353564316531323038336235356534623563;
-
-        
-        sig_ots = new bytes32[](35);
-        sig_ots[0] = 0x3236653739663565376362653435346532313163613332663532313230376134;sig_ots[1] = 0x3435303036633032363565646230346534623461623933376564666636343764;sig_ots[2] = 0x3734303030353039326336343165326364393539616364643530316436656637;sig_ots[3] = 0x6131343465343139653966386665613739623939363565623564363234366530;sig_ots[4] = 0x3462343235393431616138646462386365613337333065373066383961363630;sig_ots[5] = 0x3965376361626664346630313836653666393936616235616333383432336262;sig_ots[6] = 0x3762666236363935393266306530636662656135653636353734373738316431;sig_ots[7] = 0x3636393662363734386666343938393166643936383462356464623538653636;sig_ots[8] = 0x6264333661616363363632613938343332306366376336343062316635323730;sig_ots[9] = 0x6630653637303862336339396264663834346563663437656664653331663166;sig_ots[10] = 0x3734316563643938386361393264633965303062646637613039313538303030;sig_ots[11] = 0x3336373836356335306331643461316330396636613336336433376262356434;sig_ots[12] = 0x6166326539323035393261393936643234393765353363656638333532353563;sig_ots[13] = 0x3331373537643239326263343039363862303238666465623764643935346335;sig_ots[14] = 0x6462383837376662653064663662376661646537356266643231366532343266;sig_ots[15] = 0x3935336364396630393864396438636334393362333266653438656632303936;sig_ots[16] = 0x3566663636313135323037316630653234303461393037323362653038613639;sig_ots[17] = 0x3530363837653666666633373730663136656662616333373832333334396664;sig_ots[18] = 0x6663613734643931306237636138376530316363623533303638623033376236;sig_ots[19] = 0x3736656565373333663036626365386334313730333233616466343763383063;sig_ots[20] = 0x3132383832363364313866653661383263376233643630636339356631333731;sig_ots[21] = 0x3930343736323632393832626531303261333763303466366632303733663635;sig_ots[22] = 0x6339343666316137636638633830636165386639393933393963353864323937;sig_ots[23] = 0x3532653661643731373730613635323865656662646231343230386332343036;sig_ots[24] = 0x3066313038346132363534336165653764393237303735376662393436313836;sig_ots[25] = 0x6263306265383963396436393837333361363036663461653264356664343262;sig_ots[26] = 0x3862613533363434306333653866346637626136653562623334623866393764;sig_ots[27] = 0x6431363261376133383333663233396638366462383137363035303339623235;sig_ots[28] = 0x3064333333316165383632363739386162316435623636326464326136633830;sig_ots[29] = 0x3362366465633032636661643163653938613131663239386534636139663232;sig_ots[30] = 0x6332356665646130393764343136653237643262376264626165333033646433;sig_ots[31] = 0x3163633361633665393262623936623465663837323338636166643164383134;sig_ots[32] = 0x3138643932333333333833643364383331323664353664613265373833333332;sig_ots[33] = 0x3635306631343061616237346133383262353234633432336232653231326531;sig_ots[34] = 0x3934316139396439383061383039373865356332306166323562396235396536;
-    
-        
-        auth = new bytes32[](2);
-        auth[0] = 0x6331636233643239326537383436333537666132383564346531386463616437;auth[1] = 0x6130326535346262666436613437643235386230316339306538386338613834;
-    
-        //console.logBytes32(0x3232663132613363343861393064656437316335323131666362373830326532);
         // PLACE HOLDER END
-        console.logBytes32(sha256("hello"));
-        XMSS.SIG memory Sig = XMSS.SIG(idx_sig, r,sig_ots,auth);
-        xmss.verify(Sig, M, w);
+    }
+
+    uint counter = 0;
+    function random() public payable returns(bytes32){
+        counter++;
+        return keccak256(abi.encodePacked(block.timestamp,block.prevrandao,  
+        msg.sender,counter));
+    }
+
+     //CODE FROM: https://ethereum.stackexchange.com/questions/8086/logarithm-math-operation-in-solidity
+    function log2(uint x) public pure returns (uint y){
+        assembly {
+                let arg := x
+                x := sub(x,1)
+                x := or(x, div(x, 0x02))
+                x := or(x, div(x, 0x04))
+                x := or(x, div(x, 0x10))
+                x := or(x, div(x, 0x100))
+                x := or(x, div(x, 0x10000))
+                x := or(x, div(x, 0x100000000))
+                x := or(x, div(x, 0x10000000000000000))
+                x := or(x, div(x, 0x100000000000000000000000000000000))
+                x := add(x, 1)
+                let m2 := mload(0x40)
+                mstore(m2,           0xf8f9cbfae6cc78fbefe7cdc3a1793dfcf4f0e8bbd8cec470b6a28a7a5a3e1efd)
+                mstore(add(m2,0x20), 0xf5ecf1b3e9debc68e1d9cfabc5997135bfb7a7a3938b7b606b5b4b3f2f1f0ffe)
+                mstore(add(m2,0x40), 0xf6e4ed9ff2d6b458eadcdf97bd91692de2d4da8fd2d0ac50c6ae9a8272523616)
+                mstore(add(m2,0x60), 0xc8c0b887b0a8a4489c948c7f847c6125746c645c544c444038302820181008ff)
+                mstore(add(m2,0x80), 0xf7cae577eec2a03cf3bad76fb589591debb2dd67e0aa9834bea6925f6a4a2e0e)
+                mstore(add(m2,0xa0), 0xe39ed557db96902cd38ed14fad815115c786af479b7e83247363534337271707)
+                mstore(add(m2,0xc0), 0xc976c13bb96e881cb166a933a55e490d9d56952b8d4e801485467d2362422606)
+                mstore(add(m2,0xe0), 0x753a6d1b65325d0c552a4d1345224105391a310b29122104190a110309020100)
+                mstore(0x40, add(m2, 0x100))
+                let magic := 0x818283848586878898a8b8c8d8e8f929395969799a9b9d9e9faaeb6bedeeff
+                let shift := 0x100000000000000000000000000000000000000000000000000000000000000
+                let a := div(mul(x, magic), shift)
+                y := div(mload(add(m2,sub(255,a))), shift)
+                y := add(y, mul(256, gt(arg, 0x8000000000000000000000000000000000000000000000000000000000000000)))
+            }  
+    }
+
+    function c(bytes32 x, bytes32[] memory r,bytes32 k, uint256 i)public pure returns (bytes32){
+        if (i==0){
+            return x;
+        }
+        return keccak256(abi.encodePacked(c(x, r, k, i - 1) ^ r[i - 1],k));
+    } 
+
+    function PRF(ADRS adrs) public returns(bytes32){
+        return keccak256(abi.encodePacked(SEED,adrs.toBytes()));
     }
 }

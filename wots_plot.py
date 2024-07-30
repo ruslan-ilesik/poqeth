@@ -1,6 +1,7 @@
 import csv
 import matplotlib.pyplot as plt
 import matplotlib
+import math
 
 
 
@@ -23,21 +24,22 @@ def plot_graphs(i_values_dict, file_name):
     markers = {
         4 : "o",
         8: "s",
-        16:"d"
+        16:"d",
+        256:"p"
     }
     
     # Plot each dataset with a different color
     for w, (i_values, verify_values) in i_values_dict.items():
         # Use slicing to select every 5th element
         i_values_sliced = i_values[::5]
-        verify_values_sliced = verify_values[::5]
+        verify_values_sliced = [math.log2(i) for i in verify_values[::5]]
         #plt.plot(i_values, verify_values, linestyle='-', label=f'w={w}') # Plot full line
         plt.plot(i_values_sliced, verify_values_sliced, marker=markers[w], linestyle='-', label=f'w={w}') # Plot every 5th dot
     
     
     plt.xlabel('Hamming weight of M')
-    plt.ylabel('Gas cost')
-    plt.title('Verefication cost for WOTS+ with w={4, 8, 16}')
+    plt.ylabel('$log_2$(Gas cost)')
+    plt.title('Verefication cost for WOTS+ with w={4, 8, 16, 256}')
     plt.legend()
     plt.grid(True)
     plt.show()
@@ -46,7 +48,7 @@ def main():
     i_values_dict = {}
     
     # Read the data for each value of w
-    for w in [4, 8, 16]:
+    for w in [4, 8, 16, 256]:
         file_path = f'{w}.csv'
         i_values, verify_values = read_csv(file_path)
         i_values_dict[w] = (i_values, verify_values)
