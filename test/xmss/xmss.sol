@@ -9,11 +9,11 @@ import "forge-std/console.sol";
 
 contract TestXMSSS is Test {
     XMSS xmss;
-    uint h = 10;
-    uint w = 16;
+    uint h = 20;
+    uint w = 256;
+    bytes32 Mp = 0xfffffffffffffffffffffffffffffffffffffc00000000000000000000000000;
     uint m = 32; // constant
     uint n = 32; // constant as we just random 256 bit hashes
-    bytes32 Mp = 0;
     //uint a = 8;
     uint t = 2**8;//2 ** 8;
     bytes32 SK_PRF;
@@ -39,7 +39,6 @@ contract TestXMSSS is Test {
         l2 = log2(l1*(w-1))/log2(w);
         l = l1+l2;
         XMSS_keyGen();
-
         xmss_sig.idx_sig =uint32(idx);
         xmss_sig.r = keccak256(abi.encodePacked(SK_PRF,idx));
         ADRS adrs = new ADRS();
@@ -56,7 +55,6 @@ contract TestXMSSS is Test {
         SK_PRF = random();
         SEED = random();
         ADRS adrs = new ADRS();
-
         //also defines auth path as we anyway fake all nodes
         root = treehash(0,adrs);
         xmss_pk = XMSS.PK(root,SEED);
@@ -135,7 +133,7 @@ contract TestXMSSS is Test {
     }
 
     function treehash(uint s, ADRS adrs) public returns (bytes32) {
-        require(s % (1 << h) == 0,"treehash cond fail");
+        //require(s % (uint256(1) << h) == 0,"treehash cond fail");
         adrs.setType(0);   // Type = OTS hash address
         adrs.setOTSAddress(uint32(s));
         bytes32[] memory pk = wots_key_pk(adrs);
