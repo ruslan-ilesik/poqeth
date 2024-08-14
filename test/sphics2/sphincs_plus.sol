@@ -24,13 +24,14 @@ contract TestSphincsPlus is Test {
     uint32 FORS_PRF = 6;
 
 
-    uint n = 32;
-    uint w = 16;
-    uint h = 10;
-    uint d = 10;
-    uint k = 248;
-    bytes32 M = 0;
-    uint a = 8;
+    uint n = 32; // constant
+    uint m = 32; // constant
+    uint w = 4;
+    uint h = 24;
+    uint d = 8;
+    uint a = 4;
+    uint k = 56;
+    bytes32 M = 0xfffffffffffffffffffffffffffffffffffffc00000000000000000000000000;
     uint t = 2 ** a;
 
     uint len1;
@@ -47,18 +48,289 @@ contract TestSphincsPlus is Test {
         len1 = (n) / log2(w) + ((n) % log2(w) == 0 ? 0 : 1);
         len2 = (log2(len1 * (w - 1)) / log2(w)) + 1;
         len = len1 + len2;
+
+        uint tmp_md_size = (k*a+7) /8;
+        uint tmp_idx_tree_size = ((h-h/d+7)/8);
+        uint tmp_idx_leaf_size = (h/d+7)/8;
+
+        //console.logUint(tmp_md_size);
+        //console.logUint(tmp_idx_tree_size);
+        //console.logUint(tmp_idx_leaf_size);
+
+        require((k*a+7)/8 + (h-h/d+7)/8 + (h/d+7)/8 == m, "message size does not match one which can be signed");
         spx_keygen();
         spx_sign();
     }
 
     function test_sphincs()public{
+        sph.set_params(n, w, h, d, k, a, t);
         sph.set_pk(sphincs_pk);
+        require(sph.verify(M, sphincs_sig),"verefication failed");
     }
 
     function spx_sign()public {
         ADRS adrs = new ADRS();
         bytes32 opt = keccak256(abi.encodePacked(block.timestamp, "opt"));
         sphincs_sig.r = keccak256(abi.encodePacked(sphincs_sk.SKprf,opt,M));
+
+        //We assume M is already diggest for testing hamming weight propouses
+        bytes32 digest = M;
+        uint tmp_md_size = (k*a+7) /8;
+        uint tmp_idx_tree_size = ((h-h/d+7)/8);
+        uint tmp_idx_leaf_size = (h/d+7)/8;
+
+        bytes1[] memory tmp_md = new bytes1[](tmp_md_size);
+        for (uint i=0; i < tmp_md_size; i++ ){
+            tmp_md[i] = digest[i];
+        }
+
+        bytes1[] memory tmp_idx_tree = new bytes1[](tmp_idx_tree_size);
+        for (uint i=0; i < tmp_idx_tree_size; i++ ){
+            tmp_idx_tree[i] = digest[tmp_md_size+i];
+        }
+
+        bytes1[] memory tmp_idx_leaf = new bytes1[](tmp_idx_leaf_size);
+        for (uint i=0; i < tmp_idx_leaf_size; i++ ){
+            tmp_idx_leaf[i] = digest[tmp_md_size+tmp_idx_tree_size+i];
+        }
+
+        bytes memory  md = extractBits(abi.encodePacked(tmp_md), 0, k*a);
+
+        // idx_tree: first h - h/d bits after md
+        uint256 idx_tree_bits = h - h / d;
+        bytes memory  idx_tree = extractBits(abi.encodePacked(tmp_idx_tree), 0, idx_tree_bits);
+
+        // idx_leaf: first h/d bits after idx_tree
+        uint256 idx_leaf_bits = h / d;
+        bytes memory idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
+
+        adrs.setType(FORS_TREE);
+        adrs.setLayerAddress(0);
+        adrs.setTreeAddress(bytesToBytes8(idx_tree));
+        adrs.setKeyPairAddress(bytesToBytes4(idx_leaf));
+        sphincs_sig.fors_sig = fors_sign(md, sphincs_sk.SKseed, sphincs_sk.PKseed, adrs);
+        bytes32 PK_FORS = fors_pkFromSig(sphincs_sig.fors_sig,md,sphincs_sk.PKseed,adrs);
+        //console.logBytes32(PK_FORS);
+        adrs.setType(TREE);
+        Sphincs_plus.HT_SIG memory SIG_HT = ht_sign(PK_FORS,sphincs_sk.SKseed,sphincs_sk.PKseed,  uint64(bytesToBytes8(idx_tree)),uint32(bytesToBytes4(idx_leaf)));
+        sphincs_sig.ht_sig = SIG_HT;
+    }
+
+    function ht_sign(bytes32 M, bytes32 SKseed, bytes32 PKseed, uint64 idx_tree, uint32 idx_leaf)public returns(Sphincs_plus.HT_SIG memory){
+        Sphincs_plus.HT_SIG memory SIG_HT = Sphincs_plus.HT_SIG(new Sphincs_plus.XMSS_SIG[](d));
+        ADRS adrs = new ADRS();
+        adrs.setLayerAddress(0);
+        adrs.setTreeAddress(bytes8(idx_tree));
+        uint256 idx_tree_bits = h - h / d;
+        uint256 idx_leaf_bits = h / d;
+        Sphincs_plus.XMSS_SIG memory SIG_tmp = xmss_sign(M,SKseed,idx_leaf,PKseed,adrs);
+        SIG_HT.sig[0] = SIG_tmp;
+        bytes32 root = xmss_pkFromSig(idx_leaf, SIG_tmp, M, PKseed, adrs);
+        //console.logBytes32(root);
+        bytes memory idx_leaf2 = abi.encodePacked(idx_leaf);
+        bytes memory idx_tree2 = abi.encodePacked(idx_tree);
+        for (uint j = 1; j < d; j++) {
+            if (j == d-1){
+                idx_tree_bits = 0;
+                idx_leaf2 = new bytes(4);
+                idx_tree2 = new bytes(4);
+            }
+            else{
+                // Extract idx_leaf as the least significant (h / d) bits of idx_tree
+                idx_leaf2 = extractBits(idx_tree2, idx_tree_bits - (h / d), h / d);
+
+                // Update idx_tree to the most significant (h - (j + 1) * (h / d)) bits
+                idx_tree_bits -= h / d;
+                
+                idx_tree2 = extractBits(idx_tree2, 0, idx_tree_bits);
+            }
+            adrs.setLayerAddress(bytes4(uint32(j)));
+            adrs.setTreeAddress(bytesToBytes4(idx_tree2));
+            SIG_tmp = xmss_sign(root, SKseed, uint32(bytesToBytes4(idx_tree2)), PKseed, adrs);
+            SIG_HT.sig[j] = SIG_tmp;
+            root = xmss_pkFromSig(uint32(bytesToBytes4(idx_leaf2)), SIG_tmp, root, PKseed, adrs);
+            //console.logBytes32(root);
+
+            //as key gen doies not work properly
+            sphincs_pk.root = root;
+        }
+        return SIG_HT;
+    }
+
+    function xmss_pkFromSig(uint32 idx, Sphincs_plus.XMSS_SIG memory SIG_XMSS, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
+    adrs.setType(WOTS_HASH);
+    adrs.setKeyPairAddress(bytes4(idx));
+    bytes32[] memory sig = SIG_XMSS.sig;
+    bytes32[] memory AUTH = SIG_XMSS.auth;
+    bytes32[2] memory node;
+    node[0] = wots_pkFromSig(sig, M, PKseed, adrs);
+    adrs.setType(TREE);
+    adrs.setTreeIndex(bytes4(idx));
+    for (uint k = 0; k < h / d; k++ ) {
+        adrs.setTreeHeight(bytes4(uint32(k+1)));
+        if ((idx / (2**k)) % 2 == 0 ) {
+            adrs.setTreeIndex(bytes4(uint32(adrs.getTreeIndex()) / 2));
+            node[1] = keccak256(abi.encodePacked(PKseed, adrs.toBytes(), node[0] , AUTH[k]));
+        } 
+        else {
+            adrs.setTreeIndex(bytes4((uint32(adrs.getTreeIndex()) - 1) / 2));
+            node[1] = keccak256(abi.encodePacked(PKseed, adrs.toBytes(), AUTH[k], node[0]));
+        }
+        node[0] = node[1];
+        }
+    return node[0];
+    }
+
+    function wots_pkFromSig(bytes32[] memory sig, bytes32 M, bytes32 PKseed, ADRS adrs) public returns(bytes32){
+        uint csum = 0;
+        ADRS wotspkADRS = new ADRS();
+        wotspkADRS.fillFrom(adrs);
+        bytes32[] memory _msg = base_w(M,len1);
+        for (uint i = 0; i < len1; i++ ) {
+           csum = csum + w - 1 - uint(_msg[i]);
+        }
+        csum = csum << ( 8 - ( ( len2 * log2(w) ) % 8 ));
+        uint len_2_bytes = ceil( ( len2 * log2(w) ), 8 );
+        bytes32[] memory _msg2 = base_w(toByte(csum, len_2_bytes),len2);
+        bytes32[] memory tmp = new bytes32[](len);
+        for (uint i = 0; i < len; i++ ) {
+          adrs.setChainAddress(bytes4(uint32(i)));
+          if (i < len1){
+            tmp[i] = chain(sig[i], uint(_msg[i]), w - 1 - uint(_msg[i]),PKseed, adrs);
+          }
+          else{
+            tmp[i] = chain(sig[i], uint(_msg2[i-len1]), w - 1 - uint(_msg2[i-len1]),PKseed, adrs);
+          }
+        }
+        wotspkADRS.setType(WOTS_PK);
+        wotspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
+        bytes32 pk = keccak256(abi.encodePacked(PKseed,wotspkADRS.toBytes(),tmp));
+        return pk;
+    }
+
+    function xmss_sign(bytes32 M, bytes32 SKseed, uint32 idx, bytes32 PKseed, ADRS adrs)public returns(Sphincs_plus.XMSS_SIG memory){
+        bytes32[] memory AUTH = new bytes32[](h/d);
+        for (uint j = 0; j < h/d; j++ ) {
+            uint k = (idx/(2**j))^1;
+            AUTH[j] = treehash(k*(2**j),j, adrs);
+        }
+        adrs.setType(WOTS_HASH);
+        adrs.setKeyPairAddress(bytes4(idx));
+        bytes32[] memory sig = wots_sign(M,SKseed,PKseed,adrs);
+        Sphincs_plus.XMSS_SIG memory xmss_sig = Sphincs_plus.XMSS_SIG(sig,AUTH);
+        return xmss_sig;
+    } 
+
+    function wots_sign(bytes32 M, bytes32 SKseed, bytes32 PKseed, ADRS adrs)public returns(bytes32[] memory){
+        uint csum = 0;
+        bytes32[] memory _msg = base_w(M, len1);
+        for (uint i = 0; i < len1; i++ ) {
+            csum = csum + w - 1 - uint256(_msg[i]);
+        }
+        
+        if( (log2(w) % 8) != 0) {
+            csum = csum << ( 8 - ( ( len2 * log2(w) ) % 8 ));
+        }
+        uint len_2_bytes = ceil( ( len2 * log2(w) ), 8 );
+        bytes32[] memory _msg2 = base_w(toByte(csum, len_2_bytes), len2);
+        ADRS skADRS = new ADRS();
+        skADRS.fillFrom(adrs);
+        skADRS.setType(WOTS_PRF);
+        skADRS.setKeyPairAddress(adrs.getKeyPairAddress());
+
+        bytes32[] memory sig = new bytes32[](len);
+        for (uint i = 0; i < len; i++ ) {
+            skADRS.setChainAddress(bytes4(uint32(i)));
+            skADRS.setHashAddress(0);
+            bytes32 sk = PRF(SKseed, skADRS);
+            adrs.setChainAddress(bytes4(uint32(i)));
+            adrs.setHashAddress(0);
+            if (i < len1){
+                sig[i] = chain(sk, 0, uint(_msg[i]),PKseed, adrs);
+            }
+            else{
+                sig[i] = chain(sk, 0, uint(_msg2[i-len1]),PKseed, adrs);
+            }
+        }
+        return sig;
+    }
+
+    function fors_pkFromSig(Sphincs_plus.FORS_SIG memory SIG_FORS, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
+        bytes32[2] memory  node;
+        bytes32[] memory root = new bytes32[](k);
+        for(uint i = 0; i < k; i++){
+            bytes memory idx = extractBits(M, i*a , (i+1)*a - i*a - 1);
+            bytes32 sk = SIG_FORS.sig[i].sk;
+            adrs.setTreeHeight(0);
+            adrs.setTreeIndex(bytes4(uint32(i*t + uint32(bytesToBytes4(idx)))));
+            node[0] = keccak256(abi.encodePacked(PKseed, adrs.toBytes(), sk));
+            bytes32[] memory auth = SIG_FORS.sig[i].auth;
+
+            adrs.setTreeIndex(bytes4(uint32(i*t + uint32(bytesToBytes4(idx))))); 
+            for (uint j = 0; j < a; j++ ) {
+                adrs.setTreeHeight(bytes4(uint32(j+1)));
+                if ( ((uint32(bytesToBytes4(idx)) / (2**j)) % 2) == 0 ) {
+                    adrs.setTreeIndex(bytes4(uint32(adrs.getTreeIndex()) / 2));
+                    node[1] = keccak256(abi.encodePacked(PKseed, adrs.toBytes(), node[0] , auth[j]));
+                } 
+                else {
+                    adrs.setTreeIndex(bytes4((uint32(adrs.getTreeIndex()) - 1) / 2));
+                    node[1] = keccak256(abi.encodePacked(PKseed, adrs.toBytes(), auth[j], node[0]));
+                }
+                node[0] = node[1];
+                }
+            root[i] = node[0];
+        }
+
+        ADRS forspkADRS = new ADRS();
+        forspkADRS.fillFrom(adrs);
+        forspkADRS.setType(FORS_ROOTS);
+        forspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
+        bytes32 pk = keccak256(abi.encodePacked(PKseed,forspkADRS.toBytes(),root));
+        return pk;
+    }
+
+    function fors_sign( bytes memory M, bytes32 SKseed, bytes32 PKseed, ADRS adrs) public returns (Sphincs_plus.FORS_SIG memory){
+        Sphincs_plus.FORS_SIG memory sig = Sphincs_plus.FORS_SIG(new Sphincs_plus.FORS_SIG_INNER[](k));
+        for(uint i = 0; i < k; i++){
+            uint idx = bytesToUint256(extractBits(M, i*a, (i+1)*a - i*a));
+            bytes32 sk = fors_SKgen(SKseed, adrs, i*t + idx) ;
+
+            bytes32[] memory auth = new bytes32[](a);
+            for ( uint j = 0; j < a; j++ ) {
+                uint s = (idx/ (2**j)) ^ 1;
+                auth[j] = fors_treehash(SKseed, i * t + s * 2**j, j, PKseed, adrs);
+            }
+            sig.sig[i] = Sphincs_plus.FORS_SIG_INNER(sk,auth);
+        }
+        return sig;
+    }
+
+    function fors_treehash(bytes32 SKseed, uint s, uint z, bytes32 PKseed, ADRS adrs)public returns (bytes32){
+        require( s % (1 << z) == 0, "fors_treehash condition failed");
+
+        //2^z not needed as we fake path
+        bytes32 sk = fors_SKgen(SKseed,adrs,s);
+        bytes32 node = keccak256(abi.encodePacked(PKseed, adrs.toBytes(),sk));
+        // fake path
+        for ( uint i = 0; i < z; i++ ) {
+            adrs.setTreeHeight(bytes4(uint32(i)));
+            adrs.setTreeIndex(bytes4(uint32(0)));
+            node = keccak256(abi.encodePacked(PKseed, adrs.toBytes(), node, bytes32(0) ));
+            adrs.setTreeHeight(bytes4(uint32(adrs.getTreeHeight()) + 1));
+        }
+        return node;
+    }
+
+    function fors_SKgen(bytes32 SKseed, ADRS adrs, uint idx)public returns (bytes32){
+        ADRS skADRS = new ADRS();
+        skADRS.fillFrom(adrs);
+        skADRS.setType(FORS_PRF);
+        skADRS.setKeyPairAddress(adrs.getKeyPairAddress());
+        skADRS.setTreeHeight(0);
+        skADRS.setTreeIndex(bytes4(uint32(idx)));
+
+        return PRF(SKseed,skADRS);
     }
 
     function spx_keygen()public{
@@ -66,6 +338,8 @@ contract TestSphincsPlus is Test {
         sphincs_sk.SKprf = keccak256(abi.encodePacked(block.timestamp, "SKprf"));
 
         sphincs_pk.seed =  keccak256(abi.encodePacked(block.timestamp, "PKseed"));
+
+        // key gen does not work properly because of faking
         sphincs_pk.root = ht_PKgen();
 
         sphincs_sk.PKseed = sphincs_pk.seed;
@@ -98,8 +372,8 @@ contract TestSphincsPlus is Test {
                 adrs.setTreeIndex(bytes4((uint32(adrs.getTreeIndex()) - 1) / 2));
             }
             
-            auth[i] = keccak256(abi.encodePacked(block.timestamp,h));
-            node = keccak256(abi.encodePacked(sphincs_pk.seed ,adrs.toBytes(),node,auth[i]));
+            //auth[i] = keccak256(abi.encodePacked(block.timestamp,h));
+            node = keccak256(abi.encodePacked(sphincs_pk.seed ,adrs.toBytes(),node,bytes32(0)));
             adrs.setTreeHeight(bytes4(uint32(adrs.getTreeHeight())+1));
         }
         return node;
@@ -178,5 +452,132 @@ contract TestSphincsPlus is Test {
                 y := add(y, mul(256, gt(arg, 0x8000000000000000000000000000000000000000000000000000000000000000)))
             }  
     }
+
+    function base_w(bytes memory X,uint out_len) public returns (bytes32[] memory){
+        uint iin = 0;
+        uint out = 0;
+        uint8 total = 0;
+        uint bits = 0;
+        uint consumed;
+        bytes32[] memory basew = new bytes32[](out_len);
+        for (consumed = 0; consumed < out_len; consumed++ ) {
+           if ( bits == 0 ) {
+               total = uint8(X[iin]);
+               iin++;
+               bits += 8;
+           }
+           bits -= log2(w);
+           basew[out] = bytes32((total >> bits) & (w - 1));
+           out++;
+       }
+       return basew;
+    }
+
+    function base_w(bytes32 X,uint out_len) public returns (bytes32[] memory){
+        uint iin = 0;
+        uint out = 0;
+        uint8 total = 0;
+        uint bits = 0;
+        uint consumed;
+        bytes32[] memory basew = new bytes32[](out_len);
+        for (consumed = 0; consumed < out_len; consumed++ ) {
+           if ( bits == 0 ) {
+               total = uint8(X[iin]);
+               iin++;
+               bits += 8;
+           }
+           bits -= log2(w);
+           basew[out] = bytes32((total >> bits) & (w - 1));
+           out++;
+       }
+       return basew;
+
+    }
+
+    function extractBits(bytes memory data, uint startBit, uint numBits) internal pure returns (bytes memory) {
+        uint startByte = startBit / 8;
+        uint endBit = startBit + numBits - 1;
+        uint endByte = endBit / 8;
+        uint byteLength = endByte - startByte + 1;
+
+        bytes memory result = new bytes(byteLength);
+        uint resultBitIndex = 0;
+
+        for (uint i = 0; i < byteLength; i++) {
+            uint8 currentByte = uint8(data[startByte + i]);
+
+            for (uint bit = 0; bit < 8; bit++) {
+                if (resultBitIndex >= numBits) break;
+
+                uint bitPosition = startBit + resultBitIndex;
+                bool bitValue = (currentByte & (0x80 >> bit)) != 0;
+
+                uint resultByteIndex = resultBitIndex / 8;
+                uint resultBitInByte = resultBitIndex % 8;
+
+                if (bitValue) {
+                    result[resultByteIndex] = bytes1(uint8(result[resultByteIndex]) | uint8(0x80 >> resultBitInByte));
+                }
+
+                resultBitIndex++;
+            }
+        }
+
+        return result;
+    }
+
+    function bytesToBytes4(bytes memory b) public pure returns (bytes4) {
+        require(b.length <= 4, "Bytes array too long to convert to bytes4");
+        bytes4 out;
+        if (b.length == 0) {
+            return out; // return 0x00000000 if the array is empty
+        }
+        assembly {
+            out := mload(add(b, 32))
+        }
+        // If the input is shorter than 4 bytes, shift it to the right
+        return bytes4(uint32(out) << (8 * (4 - b.length)));
+    }
+
+
+    function bytesToBytes8(bytes memory b) public pure returns (bytes8) {
+        require(b.length <= 8, "Bytes array too long to convert to bytes8");
+        bytes8 out;
+        if (b.length == 0) {
+            return out; // return 0x0000000000000000 if the array is empty
+        }
+        assembly {
+            out := mload(add(b, 32))
+        }
+        // If the input is shorter than 8 bytes, shift it to the right
+        return bytes8(uint64(out) << (8 * (8 - b.length)));
+    }
+
+    function bytesToUint256(bytes memory b) public pure returns (uint256) {
+        require(b.length <= 32, "Bytes array too long to convert to uint256");
+        uint256 out;
+        if (b.length == 0) {
+            return out; // return 0 if the array is empty
+        }
+        assembly {
+            out := mload(add(b, 32))
+        }
+        // If the input is shorter than 32 bytes, shift it to the right
+        return out >> (8 * (32 - b.length));
+    }
+
+    function toByte(uint256 x, uint y) public pure returns (bytes memory) {
+        bytes memory b = new bytes(y);
+        for (uint i = 0; i < y; i++) {
+            b[i] = bytes1(uint8(x >> (8 * (y - 1 - i))));
+        }
+        return b;
+    }
+
+    
+    function ceil(uint a, uint b) internal pure returns (uint) {
+        return (a + b - 1) / b;
+    }
+
 
 }

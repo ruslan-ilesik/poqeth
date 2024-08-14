@@ -6,11 +6,17 @@ import {Test, console} from "forge-std/Test.sol";
 import {XMSS,ADRS} from "../../src/xmss/xmss.sol";
 import "forge-std/console.sol";
 
+//4397356 h=1
+//4413730 h=2
+//4430119 h=3
 
+
+//4709188 h=20
+//4725636 h=21
 contract TestXMSSS is Test {
     XMSS xmss;
-    uint h = 20;
-    uint w = 256;
+    uint h = 21;
+    uint w = 4;
     bytes32 Mp = 0xfffffffffffffffffffffffffffffffffffffc00000000000000000000000000;
     uint m = 32; // constant
     uint n = 32; // constant as we just random 256 bit hashes
