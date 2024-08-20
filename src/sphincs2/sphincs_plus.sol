@@ -267,7 +267,7 @@ contract Sphincs_plus{
         uint256 idx_leaf_bits = h / d;
         bytes memory idx_leaf2 = abi.encodePacked(idx_leaf);
         bytes memory idx_tree2 = abi.encodePacked(idx_tree);
-        console.log("AAAAAAAAAAAAAAA");
+        //console.log("AAAAAAAAAAAAAAA");
         for (uint j = 1; j < d; j++) {
             if (j == d-1){
                 idx_tree_bits = 0;
@@ -476,7 +476,7 @@ contract Sphincs_plus{
         uint8 total = 0;
         uint bits = 0;
         uint consumed;
-        bytes32[] memory basew = new bytes32[](out_len);
+        bytes32[] memory basew = new bytes32[](out_len);    
         for (consumed = 0; consumed < out_len; consumed++ ) {
            if ( bits == 0 ) {
                total = uint8(X[iin]);

@@ -27,11 +27,11 @@ contract TestSphincsPlus is Test {
     uint n = 32; // constant
     uint m = 32; // constant
     uint w = 4;
-    uint h = 24;
-    uint d = 8;
-    uint a = 4;
-    uint k = 56;
-    bytes32 M = 0xfffffffffffffffffffffffffffffffffffffc00000000000000000000000000;
+    uint h = 3;
+    uint d = 2;
+    uint a = 5;
+    uint k = 47;
+    bytes32 M = 0xffffffffffffffffffffffffffffffff00000000000000000000000000000000;
     uint t = 2 ** a;
 
     uint len1;
@@ -50,7 +50,7 @@ contract TestSphincsPlus is Test {
         len = len1 + len2;
 
         uint tmp_md_size = (k*a+7) /8;
-        uint tmp_idx_tree_size = ((h-h/d+7)/8);
+        uint tmp_idx_tree_size = ((h+7-h/d)/8);
         uint tmp_idx_leaf_size = (h/d+7)/8;
 
         //console.logUint(tmp_md_size);
@@ -78,7 +78,6 @@ contract TestSphincsPlus is Test {
         uint tmp_md_size = (k*a+7) /8;
         uint tmp_idx_tree_size = ((h-h/d+7)/8);
         uint tmp_idx_leaf_size = (h/d+7)/8;
-
         bytes1[] memory tmp_md = new bytes1[](tmp_md_size);
         for (uint i=0; i < tmp_md_size; i++ ){
             tmp_md[i] = digest[i];
@@ -103,7 +102,7 @@ contract TestSphincsPlus is Test {
         // idx_leaf: first h/d bits after idx_tree
         uint256 idx_leaf_bits = h / d;
         bytes memory idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
-
+        
         adrs.setType(FORS_TREE);
         adrs.setLayerAddress(0);
         adrs.setTreeAddress(bytesToBytes8(idx_tree));
@@ -211,7 +210,7 @@ contract TestSphincsPlus is Test {
     function xmss_sign(bytes32 M, bytes32 SKseed, uint32 idx, bytes32 PKseed, ADRS adrs)public returns(Sphincs_plus.XMSS_SIG memory){
         bytes32[] memory AUTH = new bytes32[](h/d);
         for (uint j = 0; j < h/d; j++ ) {
-            uint k = (idx/(2**j))^1;
+    uint k = 47;
             AUTH[j] = treehash(k*(2**j),j, adrs);
         }
         adrs.setType(WOTS_HASH);
