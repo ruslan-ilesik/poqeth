@@ -23,14 +23,53 @@ contract TestSphincsPlus is Test {
     uint32 WOTS_PRF = 5;
     uint32 FORS_PRF = 6;
 
+    /*
+    h: 3, d: 2, a: 20, k: 12
+set_pk: 66863, verify: 5324561
+h: 3, d: 2, a: 24, k: 10
+set_pk: 66863, verify: 5318275
+h: 3, d: 2, a: 26, k: 9
+set_pk: 66863, verify: 5232070
+
+set_pk: not found, verify: not found
+h: 3, d: 2, a: 34, k: 7
+set_pk: not found, verify: not found
+h: 3, d: 2, a: 39, k: 6
+set_pk: not found, verify: not found
+h: 3, d: 2, a: 40, k: 6
+set_pk: not found, verify: not found
+h: 3, d: 2, a: 47, k: 5
+set_pk: not found, verify: not found
+h: 3, d: 2, a: 48, k: 5
+set_pk: not found, verify: not found
+h: 3, d: 2, a: 59, k: 4
+set_pk: not found, verify: not found
+h: 3, d: 2, a: 60, k: 4
+set_pk: not found, verify: not found
+set_pk: not found, verify: not found
+h: 4, d: 2, a: 34, k: 7
+set_pk: not found, verify: not found
+h: 4, d: 2, a: 39, k: 6
+set_pk: not found, verify: not found
+h: 4, d: 2, a: 40, k: 6
+set_pk: not found, verify: not found
+h: 4, d: 2, a: 47, k: 5
+set_pk: not found, verify: not found
+h: 4, d: 2, a: 48, k: 5
+set_pk: not found, verify: not found
+h: 4, d: 2, a: 59, k: 4
+set_pk: not found, verify: not found
+h: 4, d: 2, a: 60, k: 4
+set_pk: not found, verify: not found
+*/
 
     uint n = 32; // constant
     uint m = 32; // constant
     uint w = 4;
-    uint h = 3;
-    uint d = 2;
-    uint a = 5;
-    uint k = 47;
+    uint h = 19;
+    uint d = 9;
+    uint a = 31;
+    uint k = 7;
     bytes32 M = 0xffffffffffffffffffffffffffffffff00000000000000000000000000000000;
     uint t = 2 ** a;
 
@@ -78,11 +117,12 @@ contract TestSphincsPlus is Test {
         uint tmp_md_size = (k*a+7) /8;
         uint tmp_idx_tree_size = ((h-h/d+7)/8);
         uint tmp_idx_leaf_size = (h/d+7)/8;
+
         bytes1[] memory tmp_md = new bytes1[](tmp_md_size);
         for (uint i=0; i < tmp_md_size; i++ ){
             tmp_md[i] = digest[i];
         }
-
+        
         bytes1[] memory tmp_idx_tree = new bytes1[](tmp_idx_tree_size);
         for (uint i=0; i < tmp_idx_tree_size; i++ ){
             tmp_idx_tree[i] = digest[tmp_md_size+i];
@@ -92,7 +132,8 @@ contract TestSphincsPlus is Test {
         for (uint i=0; i < tmp_idx_leaf_size; i++ ){
             tmp_idx_leaf[i] = digest[tmp_md_size+tmp_idx_tree_size+i];
         }
-
+          
+ 
         bytes memory  md = extractBits(abi.encodePacked(tmp_md), 0, k*a);
 
         // idx_tree: first h - h/d bits after md
@@ -103,12 +144,14 @@ contract TestSphincsPlus is Test {
         uint256 idx_leaf_bits = h / d;
         bytes memory idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
         
+
         adrs.setType(FORS_TREE);
         adrs.setLayerAddress(0);
         adrs.setTreeAddress(bytesToBytes8(idx_tree));
         adrs.setKeyPairAddress(bytesToBytes4(idx_leaf));
         sphincs_sig.fors_sig = fors_sign(md, sphincs_sk.SKseed, sphincs_sk.PKseed, adrs);
         bytes32 PK_FORS = fors_pkFromSig(sphincs_sig.fors_sig,md,sphincs_sk.PKseed,adrs);
+
         //console.logBytes32(PK_FORS);
         adrs.setType(TREE);
         Sphincs_plus.HT_SIG memory SIG_HT = ht_sign(PK_FORS,sphincs_sk.SKseed,sphincs_sk.PKseed,  uint64(bytesToBytes8(idx_tree)),uint32(bytesToBytes4(idx_leaf)));
