@@ -58,13 +58,6 @@ contract WOTSPlusNaysaer is MerkleTree {
         return false;
     }
 
-    function logN(uint x, uint N) public pure returns (uint result) {
-        while (x > 1) {
-            x /= N;
-            result++;
-        }
-    }
-
     function c(bytes32 x, uint256 i, uint256 start_ind) public view returns (bytes32) {
         bytes32 result = x;
         for (uint256 j = 0; j < i; j++) {
