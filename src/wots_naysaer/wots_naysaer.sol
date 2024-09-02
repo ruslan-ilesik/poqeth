@@ -38,10 +38,6 @@ contract WOTSPlusNaysaer is MerkleTree {
             checksum += (w - 1 - uint256(M[i]));
         }
 
-        // Calculate the corresponding index in C and then in B
-        uint256 l2 = logN(l1 * (w - 1), w);
-        uint256 l = l1 + l2;
-
         uint256 bi;
         if (index < l1) {
             // If the index is in M
