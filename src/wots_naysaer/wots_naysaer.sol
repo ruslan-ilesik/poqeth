@@ -12,7 +12,7 @@ contract WOTSPlusNaysaer is MerkleTree {
     uint16 w = 4;
 
     bytes32 sign;
-    bytes32[] M;
+    bytes1[] M;
 
     function set_pk(bytes32[] calldata _r, uint256 _k, bytes32[] calldata _pk) public {
         pk = _pk;
@@ -20,7 +20,7 @@ contract WOTSPlusNaysaer is MerkleTree {
         k = _k;
     }
 
-    function set_sign(bytes32 _sign, bytes32[] memory _M) public{
+    function set_sign(bytes32 _sign, bytes1[] memory _M) public{
         sign = _sign;
         M = _M;
     }
@@ -35,18 +35,18 @@ contract WOTSPlusNaysaer is MerkleTree {
         // Directly compute the relevant checksum portion
         uint256 checksum = 0;
         for (uint256 i = 0; i < l1; i++) {
-            checksum += (w - 1 - uint256(M[i]));
+            checksum += (w - 1 - uint8(M[i]));
         }
 
-        uint256 bi;
+        uint8 bi;
         if (index < l1) {
             // If the index is in M
-            bi = uint256(M[index]);
+            bi = uint8(M[index]);
         } else {
             // If the index is in C
             index -= l1;
             for (uint256 i = 0; i <= index; i++) {
-                bi = checksum % w;
+                bi = uint8(checksum % w);
                 checksum /= w;
             }
         }

@@ -48,11 +48,11 @@ contract TestWotsPlusNaysaer is Test {
         }
 
         function test_proof_mistake_() public{
-            bytes32[] memory M2 = new bytes32[](M.length);
+            bytes1[] memory M2 = new bytes1[](M.length);
             for (uint i =0; i < M.length; i++){
-                M2[i] = M[i];
+                M2[i] = bytes1(M[i]);
             }
-            M2[2] = M2[2]^ bytes32(uint256(1));
+            M2[2] = M2[2]^ bytes1(uint8(1));
             wn.set_sign(mt.build_root(sigma),M2);
             bytes32[][] memory tree = mt.build_tree(sigma);
             bytes32[] memory proof = mt.get_proof(tree,2);
@@ -60,7 +60,11 @@ contract TestWotsPlusNaysaer is Test {
         }
 
         function test_right_sing_no_mistake() public {
-            wn.set_sign(mt.build_root(sigma),M);
+            bytes1[] memory M2 = new bytes1[](M.length);
+            for (uint i =0; i < M.length; i++){
+                M2[i] = bytes1(M[i]);
+            }
+            wn.set_sign(mt.build_root(sigma),M2);
             bytes32[][] memory tree = mt.build_tree(sigma);
             bytes32[] memory proof = mt.get_proof(tree,2);
             require(wn.naysaer(sigma[2], proof, 2) == false, "fail good sig and no miustake verefication");
@@ -73,7 +77,13 @@ contract TestWotsPlusNaysaer is Test {
             }
 
             failed_sigma[2] = failed_sigma[2] ^ bytes32(uint256(1));
-            wn.set_sign(mt.build_root(failed_sigma),M);
+
+            bytes1[] memory M2 = new bytes1[](M.length);
+            for (uint i =0; i < M.length; i++){
+                M2[i] = bytes1(M[i]);
+            }
+
+            wn.set_sign(mt.build_root(failed_sigma),M2);
             bytes32[][] memory tree = mt.build_tree(sigma);
             bytes32[] memory proof = mt.get_proof(tree,2);
             require(wn.naysaer(sigma[2], proof, 2) == false, "failed to fail failing verefication");
