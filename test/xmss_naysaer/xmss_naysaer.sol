@@ -3,7 +3,8 @@ pragma solidity ^0.8.13;
 
 
 import {Test, console} from "forge-std/Test.sol";
-import {XMSS,ADRS} from "../../src/xmss/xmss.sol";
+import {XMSSSNaysayer,ADRS} from "../../src/xmss_naysaer/xmss_naysaer.sol";
+import {MerkleTree} from "../../src/merkle_tree.sol";
 import "forge-std/console.sol";
 
 //4397356 h=1
@@ -13,11 +14,12 @@ import "forge-std/console.sol";
 
 //4709188 h=20
 //4725636 h=21
-contract TestXMSSS is Test {
-    XMSS xmss;
-    uint h = 2;
+contract TestXMSSSNaysayer is Test {
+    XMSSSNaysayer xmss;
+    MerkleTree mt;
+    uint h = 20;
     uint w = 4;
-    bytes32 Mp = 0xfffffffffffffffffffffffff000000000000000000000000000000000000000;
+    bytes32 Mp = 0xfffffffffffffffffffffffffffffffffffffc00000000000000000000000000;
     uint m = 32; // constant
     uint n = 32; // constant as we just random 256 bit hashes
     //uint a = 8;
@@ -32,18 +34,30 @@ contract TestXMSSS is Test {
     bytes32[] r;
     bytes32 k;
     bytes32 root ;
+
+    bytes32[] ht_additional_nodes;
+
     uint idx = 0;
  
-    XMSS.PK xmss_pk;
-    XMSS.SIG xmss_sig;
+    XMSSSNaysayer.PK xmss_pk;
+    XMSSSNaysayer.SIG xmss_sig;
 
+    uint256 len_1;
+    uint256 len_2;
+    uint256 length_all;
 
 
     function setUp() public{
-        xmss = new XMSS();
+        xmss = new XMSSSNaysayer();
+        mt = new MerkleTree();
         l1 = (m*8) / log2(w) + ((m*8) % log2(w) == 0 ? 0 : 1);
         l2 = log2(l1*(w-1))/log2(w);
         l = l1+l2;
+
+        len_1 = l1;
+        len_2 = l2;
+        length_all = l;
+
         XMSS_keyGen();
         xmss_sig.idx_sig =uint32(idx);
         xmss_sig.r = keccak256(abi.encodePacked(SK_PRF,idx));
@@ -52,8 +66,59 @@ contract TestXMSSS is Test {
         adrs.setOTSAddress(uint32(idx));
 
         xmss_sig.sig_ots = WOTS_sign(adrs);
+       
 
 
+    }
+
+
+    function test_xmss_all_good() public{
+        xmss.set_pk(xmss_pk);
+        bytes32[] memory sig = concatenateBytes32Arrays([xmss_sig.auth,xmss_sig.sig_ots,wots_pk,ht_additional_nodes]);
+        bytes32 root = mt.build_root(sig);
+        bytes32[][] memory tree = mt.build_tree(sig);
+        xmss.set_sig(root,xmss_sig.idx_sig,xmss_sig.r, h, Mp,xmss_sig.auth.length, xmss_sig.sig_ots.length,wots_pk.length);
+        
+        bytes32[] memory p1 = mt.get_proof(tree, xmss_sig.auth.length);
+        bytes32[] memory p2 = mt.get_proof(tree, xmss_sig.auth.length + xmss_sig.sig_ots.length);
+        /*require(xmss.naysaer_wots(0, xmss_sig.sig_ots[0], p1, wots_pk[0], p2), "failed good path");
+        p2[0] = p2[0] ^ bytes1(uint8(1));
+        require(xmss.naysaer_wots(0, xmss_sig.sig_ots[0], p1, wots_pk[0], p2) == false, "passed bad path");*/
+
+        //require(xmss.naysaer_wots(0,xmss_sig.auth.length, sig[xmss_sig.auth.length], mt.get_proof(tree,xmss_sig.auth.length)) == false,"good sign failed for xmss");
+
+        require(xmss.naysaer_wots(0, xmss_sig.sig_ots[0], p1, wots_pk[0], p2) == false, "failed no error");
+
+        xmss_sig.sig_ots[0] = xmss_sig.sig_ots[0] ^ bytes1(uint8(1));
+        sig = concatenateBytes32Arrays([xmss_sig.auth,xmss_sig.sig_ots,wots_pk,ht_additional_nodes]);
+        root = mt.build_root(sig);
+        tree = mt.build_tree(sig);
+        p1 = mt.get_proof(tree, xmss_sig.auth.length);
+        p2 = mt.get_proof(tree, xmss_sig.auth.length + xmss_sig.sig_ots.length);
+        xmss.set_sig(root,xmss_sig.idx_sig,xmss_sig.r, h, Mp,xmss_sig.auth.length, xmss_sig.sig_ots.length,wots_pk.length);
+        require(xmss.naysaer_wots(0, xmss_sig.sig_ots[0], p1, wots_pk[0], p2) , "failed to detect error");
+    }
+    
+    function WOTS_pkFromSig(bytes32[] memory sig,bytes32 M, ADRS adrs)public returns(bytes32[] memory){
+        uint csum = 0;
+        bytes32[] memory _msg = base_w(M,len_1);
+        for (uint i = 0; i < len_1; i++ ) {
+           csum = csum + w - 1 - uint(_msg[i]);
+        }
+        csum = csum << ( 8 - ( ( len_2 * log2(w) ) % 8 ));
+        uint len_2_bytes = ceil( ( len_2 * log2(w) ), 8 );
+        bytes32[] memory _msg2 = base_w(toByte(csum, len_2_bytes),len_2);
+        bytes32[] memory tmp_pk = new bytes32[](length_all);
+        for (uint i = 0; i < length_all; i++ ) {
+          adrs.setChainAddress(uint32(i));
+          if (i < len_1){
+            tmp_pk[i] = chain(sig[i], uint(_msg[i]), w - 1 - uint(_msg[i]), adrs);
+          }
+          else{
+            tmp_pk[i] = chain(sig[i], uint(_msg2[i-len_1]), w - 1 - uint(_msg2[i-len_1]), adrs);
+          }
+        }
+        return tmp_pk;
     }
 
     function XMSS_keyGen()public {
@@ -63,11 +128,13 @@ contract TestXMSSS is Test {
         ADRS adrs = new ADRS();
         //also defines auth path as we anyway fake all nodes
         root = treehash(0,adrs);
-        xmss_pk = XMSS.PK(root,SEED);
+        xmss_pk = XMSSSNaysayer.PK(root,SEED);
     }
 
     function WOTS_sign(ADRS adrs)  public returns (bytes32[] memory sig){
         uint256 csum = 0;
+        ADRS adrs_copy = new ADRS();
+        adrs_copy.fillFrom(adrs);
         bytes32[] memory _msg = base_w(Mp, l1);
         for (uint i = 0; i < l1; i++ ) {
             csum = csum + w - 1 - uint256(_msg[i]);
@@ -84,8 +151,10 @@ contract TestXMSSS is Test {
           else{
             sig[i] = chain(wots_sk[i], 0, uint(_msg2[i-l1]), adrs);
           }
-          
         }
+
+        wots_pk = WOTS_pkFromSig(sig,Mp,adrs_copy);
+
         return sig;
     }
 
@@ -135,7 +204,6 @@ contract TestXMSSS is Test {
            out++;
        }
        return basew;
-
     }
 
     function treehash(uint s, ADRS adrs) public returns (bytes32) {
@@ -152,7 +220,9 @@ contract TestXMSSS is Test {
         adrs.setTreeIndex(uint32(s));
         //fake other trees with random values, we need only one message tree for verefication testing
         xmss_sig.auth = new bytes32[](h);
+        ht_additional_nodes = new bytes32[](h);
         for (uint i =0; i < (h); i++){
+            ht_additional_nodes[i] = node;
             xmss_sig.auth[i] = random();
             node = RAND_HASH(node,xmss_sig.auth[i], adrs);
             adrs.setTreeHeight(uint32(adrs.getTreeHeight())+1);
@@ -247,11 +317,27 @@ contract TestXMSSS is Test {
         return sk;
     }
 
-    function test_xmss() public{
-        xmss.set_pk(xmss_pk);
-        require(xmss.verify(xmss_sig, Mp, w,h),"verefication failed");
-        // PLACE HOLDER START
-        // PLACE HOLDER END
+function concatenateBytes32Arrays(bytes32[][4] memory arrays) public pure returns (bytes32[] memory) {
+        // Calculate the total length of the resulting bytes32 array
+        uint256 totalLength = 0;
+        for (uint256 i = 0; i < arrays.length; i++) {
+            totalLength += arrays[i].length;
+        }
+
+        // Create a new bytes32 array to hold the concatenated result
+        bytes32[] memory result = new bytes32[](totalLength);
+
+        // Copy elements from input arrays to the result array
+        uint256 currentIndex = 0;
+        for (uint256 i = 0; i < arrays.length; i++) {
+            bytes32[] memory currentArray = arrays[i];
+            for (uint256 j = 0; j < currentArray.length; j++) {
+                result[currentIndex] = currentArray[j];
+                currentIndex++;
+            }
+        }
+
+        return result;
     }
 
     uint counter = 0;
