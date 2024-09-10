@@ -72,7 +72,7 @@ contract TestXMSSSNaysayer is Test {
     }
 
 
-    function test_xmss_all_good() public{
+    function test_xmss_wots() public{
         xmss.set_pk(xmss_pk);
         bytes32[] memory sig = concatenateBytes32Arrays([xmss_sig.auth,xmss_sig.sig_ots,wots_pk,ht_additional_nodes]);
         bytes32 root = mt.build_root(sig);
@@ -97,6 +97,23 @@ contract TestXMSSSNaysayer is Test {
         p2 = mt.get_proof(tree, xmss_sig.auth.length + xmss_sig.sig_ots.length);
         xmss.set_sig(root,xmss_sig.idx_sig,xmss_sig.r, h, Mp,xmss_sig.auth.length, xmss_sig.sig_ots.length,wots_pk.length);
         require(xmss.naysaer_wots(0, xmss_sig.sig_ots[0], p1, wots_pk[0], p2) , "failed to detect error");
+        xmss_sig.sig_ots[0] = xmss_sig.sig_ots[0] ^ bytes1(uint8(1));
+    }
+
+
+    function test_xmss_ht()public{
+        xmss.set_pk(xmss_pk);
+        bytes32[] memory sig = concatenateBytes32Arrays([xmss_sig.auth,xmss_sig.sig_ots,wots_pk,ht_additional_nodes]);
+        bytes32 root = mt.build_root(sig);
+        bytes32[][] memory tree = mt.build_tree(sig);
+        xmss.set_sig(root,xmss_sig.idx_sig,xmss_sig.r, h, Mp,xmss_sig.auth.length, xmss_sig.sig_ots.length,wots_pk.length);
+        bytes32[] memory p1 = mt.get_proof(tree, xmss_sig.auth.length+xmss_sig.sig_ots.length+wots_pk.length+2);
+        bytes32[] memory p2 = mt.get_proof(tree, xmss_sig.auth.length+xmss_sig.sig_ots.length+wots_pk.length+1);
+        bytes32[] memory p3 = mt.get_proof(tree, 1);
+
+
+        //check that elems in signature
+        require(xmss.naysaer_ht(2, ht_additional_nodes[2], p1, ht_additional_nodes[1], p2, xmss_sig.auth[1], p3),"failed good elements");
     }
     
     function WOTS_pkFromSig(bytes32[] memory sig,bytes32 M, ADRS adrs)public returns(bytes32[] memory){
@@ -220,13 +237,14 @@ contract TestXMSSSNaysayer is Test {
         adrs.setTreeIndex(uint32(s));
         //fake other trees with random values, we need only one message tree for verefication testing
         xmss_sig.auth = new bytes32[](h);
-        ht_additional_nodes = new bytes32[](h);
+        ht_additional_nodes = new bytes32[](h+1);
         for (uint i =0; i < (h); i++){
             ht_additional_nodes[i] = node;
             xmss_sig.auth[i] = random();
             node = RAND_HASH(node,xmss_sig.auth[i], adrs);
             adrs.setTreeHeight(uint32(adrs.getTreeHeight())+1);
         }
+        ht_additional_nodes[h] = node;
         //console.logBytes32(node);
         return node;
     }

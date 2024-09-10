@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import "forge-std/console.sol";
+
 contract MerkleTree {
 
     constructor(){}
@@ -18,7 +20,7 @@ contract MerkleTree {
                 if (i + 1 < hashes.length) {
                     new_level[i / 2] = keccak256(abi.encodePacked(hashes[i], hashes[i + 1]));
                 } else {
-                    new_level[i / 2] = hashes[i];
+                    new_level[i / 2] = keccak256(abi.encodePacked(hashes[i],bytes32(0)));
                 }
             }
             hashes = new_level;
@@ -35,9 +37,8 @@ contract MerkleTree {
     }
 
      // Accepts previously hashed values
-    function build_tree(bytes32[] memory hashes) public pure returns (bytes32[][] memory) {
+    function build_tree(bytes32[] memory hashes) public  returns (bytes32[][] memory) {
         require(hashes.length > 0, "No hashes provided");
-
         // Calculate the number of levels in the tree
         uint256 levels = 1;
         uint256 tempLength = hashes.length;
@@ -60,22 +61,21 @@ contract MerkleTree {
                 if (i + 1 < currentLength) {
                     tree[level + 1][i / 2] = keccak256(abi.encodePacked(tree[level][i], tree[level][i + 1]));
                 } else {
-                    tree[level + 1][i / 2] = tree[level][i];
+                    tree[level + 1][i / 2] = keccak256(abi.encodePacked(tree[level][i],bytes32(0)));
                 }
             }
         }
-
         return tree;
     }
 
-    function build_tree_from_values(bytes32[] memory values) public pure returns (bytes32[][] memory) {
+    function build_tree_from_values(bytes32[] memory values) public returns (bytes32[][] memory) {
         for (uint256 i = 0; i < values.length; i++) {
             values[i] = keccak256(abi.encodePacked(values[i]));
         }
         return build_tree(values);
     }
 
-    function get_proof(bytes32[][] memory tree, uint256 index) public pure returns (bytes32[] memory) {
+    function get_proof(bytes32[][] memory tree, uint256 index) public returns (bytes32[] memory) {
         require(tree.length > 0, "Tree is empty");
 
         uint256 totalLevels = tree.length;
@@ -86,11 +86,15 @@ contract MerkleTree {
             if (pairIndex < tree[level].length) {
                 proof[level] = tree[level][pairIndex];
             } else {
+                console.logUint(totalLevels);
+                console.logUint(level);
+                console.logUint(tree[level].length);
+                console.logUint(index);
+                console.logUint(pairIndex);
                 proof[level] = bytes32(0);
             }
             index /= 2;
         }
-
         return proof;
     }
 

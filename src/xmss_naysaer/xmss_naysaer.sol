@@ -160,6 +160,38 @@ contract XMSSSNaysayer is MerkleTree{
         wots_pk_length = wots_pk_l;
     }
     
+    function naysaer_ht(uint top_node_ind, bytes32 top_node, bytes32[] memory top_node_proof,  bytes32 bottom_node, bytes32[] memory bottom_node_proof,bytes32 auth_node, bytes32[] memory auth_node_proof ) public returns (bool){
+        if (!verify_proof(sig, top_node, top_node_proof, xmss_auth_length +wots_sig_length+wots_pk_length+top_node_ind) || !verify_proof(sig, bottom_node, bottom_node_proof, xmss_auth_length +wots_sig_length+wots_pk_length+top_node_ind-1) || !verify_proof(sig, auth_node, auth_node_proof, top_node_ind-1)){
+            return false;
+        }
+       
+        return true;
+        ADRS adrs = new ADRS();
+        adrs.setType(2);   // Type = hash tree address
+        adrs.setTreeIndex(idx_sig);
+        adrs.setTreeHeight(uint32(top_node_ind-1));
+        for (uint k = 0; k < top_node_ind-1; k++ ) {
+            if ( ((idx_sig / (2**k)) % 2) == 0 ) {
+                adrs.setTreeIndex(uint32(adrs.getTreeIndex()) / 2);
+            } 
+            else {  
+                adrs.setTreeIndex((uint32(adrs.getTreeIndex()) - 1) / 2);
+            }
+        }
+        uint k = top_node_ind-1;
+        bytes32 hashed;
+        if ( ((idx_sig / (2**k)) % 2) == 0 ) {
+            adrs.setTreeIndex(uint32(adrs.getTreeIndex()) / 2);
+            hashed = RAND_HASH(bottom_node, auth_node, adrs);
+            } 
+        else {  
+            adrs.setTreeIndex((uint32(adrs.getTreeIndex()) - 1) / 2);
+            hashed = RAND_HASH(auth_node,bottom_node, adrs);
+        }
+        return bottom_node != top_node;
+    }
+
+
     function naysaer_wots(uint wots_sig_ind, bytes32 wots_sig_elem, bytes32[] memory wots_sig_proof, 
                 bytes32 wots_pk_elem, bytes32[] memory wots_pk_proof
     ) public returns(bool){
@@ -200,6 +232,17 @@ contract XMSSSNaysayer is MerkleTree{
         return root != wots_pk_elem;
     }
 
+
+
+    function RAND_HASH(bytes32 l, bytes32 r,ADRS adrs)public returns (bytes32){
+        adrs.setKeyAndMask(0);
+        bytes32 KEY = PRF(adrs);
+        adrs.setKeyAndMask(1);
+        bytes32 BM_0 = PRF(adrs);
+        adrs.setKeyAndMask(2);
+        bytes32 BM_1 = PRF(adrs);
+        return keccak256(abi.encodePacked(KEY, (l ^ BM_0), (r ^ BM_1)));
+    }  
     function ceil(uint a, uint b) internal pure returns (uint) {
         return (a + b - 1) / b;
     }
