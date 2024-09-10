@@ -102,6 +102,7 @@ contract TestXMSSSNaysayer is Test {
 
 
     function test_xmss_ht()public{
+        {
         xmss.set_pk(xmss_pk);
         bytes32[] memory sig = concatenateBytes32Arrays([xmss_sig.auth,xmss_sig.sig_ots,wots_pk,ht_additional_nodes]);
         bytes32 root = mt.build_root(sig);
@@ -113,8 +114,32 @@ contract TestXMSSSNaysayer is Test {
 
 
         //check that elems in signature
-        require(xmss.naysaer_ht(2, ht_additional_nodes[2], p1, ht_additional_nodes[1], p2, xmss_sig.auth[1], p3),"failed good elements");
+        //require(xmss.naysaer_ht(2, ht_additional_nodes[2], p1, ht_additional_nodes[1], p2, xmss_sig.auth[1], p3),"failed good elements");
+        //require(xmss.naysaer_ht(2, ht_additional_nodes[1], p1, ht_additional_nodes[1], p2, xmss_sig.auth[1], p3) == false,"passed bad elements");
+
+        require(xmss.naysaer_ht(2, ht_additional_nodes[2], p1, ht_additional_nodes[1], p2, xmss_sig.auth[1], p3)== false,"passed with no mistake");
+        }
+        {
+            xmss.set_pk(xmss_pk);
+            ht_additional_nodes[2] = ht_additional_nodes[2] ^ bytes32(uint(1));
+            bytes32[] memory sig = concatenateBytes32Arrays([xmss_sig.auth,xmss_sig.sig_ots,wots_pk,ht_additional_nodes]);
+            bytes32 root = mt.build_root(sig);
+            bytes32[][] memory tree = mt.build_tree(sig);
+            xmss.set_sig(root,xmss_sig.idx_sig,xmss_sig.r, h, Mp,xmss_sig.auth.length, xmss_sig.sig_ots.length,wots_pk.length);
+            bytes32[] memory p1 = mt.get_proof(tree, xmss_sig.auth.length+xmss_sig.sig_ots.length+wots_pk.length+2);
+            bytes32[] memory p2 = mt.get_proof(tree, xmss_sig.auth.length+xmss_sig.sig_ots.length+wots_pk.length+1);
+            bytes32[] memory p3 = mt.get_proof(tree, 1);
+
+
+            //check that elems in signature
+            //require(xmss.naysaer_ht(2, ht_additional_nodes[2], p1, ht_additional_nodes[1], p2, xmss_sig.auth[1], p3),"failed good elements");
+            //require(xmss.naysaer_ht(2, ht_additional_nodes[1], p1, ht_additional_nodes[1], p2, xmss_sig.auth[1], p3) == false,"passed bad elements");
+
+            require(xmss.naysaer_ht(2, ht_additional_nodes[2], p1, ht_additional_nodes[1], p2, xmss_sig.auth[1], p3),"good proof failed");
+            ht_additional_nodes[2] = ht_additional_nodes[2] ^ bytes32(uint(1));
+        }
     }
+
     
     function WOTS_pkFromSig(bytes32[] memory sig,bytes32 M, ADRS adrs)public returns(bytes32[] memory){
         uint csum = 0;

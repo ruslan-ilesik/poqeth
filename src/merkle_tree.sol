@@ -86,11 +86,6 @@ contract MerkleTree {
             if (pairIndex < tree[level].length) {
                 proof[level] = tree[level][pairIndex];
             } else {
-                console.logUint(totalLevels);
-                console.logUint(level);
-                console.logUint(tree[level].length);
-                console.logUint(index);
-                console.logUint(pairIndex);
                 proof[level] = bytes32(0);
             }
             index /= 2;

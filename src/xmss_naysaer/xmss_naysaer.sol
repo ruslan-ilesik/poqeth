@@ -148,6 +148,10 @@ contract XMSSSNaysayer is MerkleTree{
     uint wots_sig_length;
     uint wots_pk_length;
 
+    //in both cases h is provided but in fact it is constant, we dont validate it as in real world use it would be constant in contract.
+    function set_sig_from_war() public{
+
+    }
 
     function set_sig(bytes32 _sig, uint32 _idx_sig, bytes32 _r, uint _h, bytes32 _M, uint xmss_auth_l, uint wots_sig_l, uint wots_pk_l )public {
         sig = _sig;
@@ -164,8 +168,6 @@ contract XMSSSNaysayer is MerkleTree{
         if (!verify_proof(sig, top_node, top_node_proof, xmss_auth_length +wots_sig_length+wots_pk_length+top_node_ind) || !verify_proof(sig, bottom_node, bottom_node_proof, xmss_auth_length +wots_sig_length+wots_pk_length+top_node_ind-1) || !verify_proof(sig, auth_node, auth_node_proof, top_node_ind-1)){
             return false;
         }
-       
-        return true;
         ADRS adrs = new ADRS();
         adrs.setType(2);   // Type = hash tree address
         adrs.setTreeIndex(idx_sig);
@@ -188,7 +190,7 @@ contract XMSSSNaysayer is MerkleTree{
             adrs.setTreeIndex((uint32(adrs.getTreeIndex()) - 1) / 2);
             hashed = RAND_HASH(auth_node,bottom_node, adrs);
         }
-        return bottom_node != top_node;
+        return top_node != hashed;
     }
 
 
