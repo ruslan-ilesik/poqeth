@@ -134,11 +134,11 @@ contract XMSSSNaysayer is MerkleTree{
         pk = _pk;
     }
 
-    uint len_1;
-    uint len_2;
-    uint length_all;
-    uint w = 4;
-    uint h;
+    uint16 len_1;
+    uint16 len_2;
+    uint16 length_all;
+    uint8 w = 4;
+    uint8 h;
     bytes32 sig;
     uint32 idx_sig;
     bytes32 r;
@@ -149,11 +149,44 @@ contract XMSSSNaysayer is MerkleTree{
     uint wots_pk_length;
 
     //in both cases h is provided but in fact it is constant, we dont validate it as in real world use it would be constant in contract.
-    function set_sig_from_war() public{
+    function set_sig_from_var(bytes32[] memory wots_pk_hash,bytes32[] memory auth,bytes32[] memory sig_ots,bytes32[] memory wots_pk,bytes32[] memory ht_additional_nodes, uint32 _idx_sig, bytes32 _r, uint8 _h,  bytes32 _M) public{
+        idx_sig = _idx_sig;
+        r = _r;
+        h = _h;
+        M = _M;
+        xmss_auth_length = auth.length;
+        wots_sig_length = sig_ots.length;
+        wots_pk_length = wots_pk.length;
+        bytes32[] memory sig_full = concatenateBytes32Arrays([wots_pk_hash,auth,sig_ots,wots_pk,ht_additional_nodes]);
+        bytes32 root = build_root(sig_full);
+        sig = root;
 
     }
 
-    function set_sig(bytes32 _sig, uint32 _idx_sig, bytes32 _r, uint _h, bytes32 _M, uint xmss_auth_l, uint wots_sig_l, uint wots_pk_l )public {
+    function concatenateBytes32Arrays(bytes32[][5] memory arrays) public pure returns (bytes32[] memory) {
+        // Calculate the total length of the resulting bytes32 array
+        uint256 totalLength = 0;
+        for (uint256 i = 0; i < arrays.length; i++) {
+            totalLength += arrays[i].length;
+        }
+
+        // Create a new bytes32 array to hold the concatenated result
+        bytes32[] memory result = new bytes32[](totalLength);
+
+        // Copy elements from input arrays to the result array
+        uint256 currentIndex = 0;
+        for (uint256 i = 0; i < arrays.length; i++) {
+            bytes32[] memory currentArray = arrays[i];
+            for (uint256 j = 0; j < currentArray.length; j++) {
+                result[currentIndex] = currentArray[j];
+                currentIndex++;
+            }
+        }
+
+        return result;
+    }
+
+    function set_sig(bytes32 _sig, uint32 _idx_sig, bytes32 _r, uint8 _h, bytes32 _M, uint xmss_auth_l, uint wots_sig_l, uint wots_pk_l )public {
         sig = _sig;
         idx_sig = _idx_sig;
         r = _r;
@@ -324,10 +357,10 @@ contract XMSSSNaysayer is MerkleTree{
         return tmp;
     }
 
-    function compute_lengths(uint n, uint w) public pure returns (uint len_1, uint len_2, uint len_all) {
-        uint m = 32; // constant
-        len_1 = (m*8) / log2(w) + ((m*8) % log2(w) == 0 ? 0 : 1);
-        len_2 = log2(len_1*(w-1))/log2(w);
+    function compute_lengths(uint8 n, uint8 w) public pure returns (uint16 len_1, uint16 len_2, uint16 len_all) {
+        uint16 m = 32; // constant
+        len_1 = (m*8) / uint16(log2(w)) + ((m*8) % uint16(log2(w)) == 0 ? 0 : 1);
+        len_2 = uint16(log2(len_1*(w-1))/log2(w));
         len_all = len_1 + len_2;
     }
 
