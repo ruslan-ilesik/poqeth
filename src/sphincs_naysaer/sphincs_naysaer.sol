@@ -281,6 +281,71 @@ contract Sphincs_plus_naysaer is MerkleTree{
         return node[0] != fors_root;
     }
 
+    //offset fors =  1+3*k+1
+
+    function naysayer_fors_hash(bytes32[] memory roots, bytes32[][] memory proofs, bytes32 hashed, bytes32[] memory hashed_proof) public returns (bool){
+        for (uint i =0; i < k; i++){
+            if (!verify_proof(sig, roots[i], proofs[i], 1+3*i+2)){
+                return false;
+            }
+        }
+        if (!verify_proof(sig, hashed, hashed_proof, 1+3*k)){
+            return false;
+        }
+
+        ADRS adrs = new ADRS();
+    
+        //bytes32 R = SIG.r;
+        //FORS_SIG memory SIG_FORS = SIG.fors_sig;
+        //HT_SIG memory SIG_HT = SIG.ht_sig;
+
+
+        //We assume M is already diggest for testing hamming weight propouses
+        bytes32 digest = M;
+
+
+        uint tmp_md_size = (k*a+7) /8;
+        uint tmp_idx_tree_size = ((h-h/d+7)/8);
+        uint tmp_idx_leaf_size = (h/d+7)/8;
+
+        bytes1[] memory tmp_md = new bytes1[](tmp_md_size);
+        for (uint i=0; i < tmp_md_size; i++ ){
+            tmp_md[i] = digest[i];
+        }
+
+        bytes1[] memory tmp_idx_tree = new bytes1[](tmp_idx_tree_size);
+        for (uint i=0; i < tmp_idx_tree_size; i++ ){
+            tmp_idx_tree[i] = digest[tmp_md_size+i];
+        }
+
+        bytes1[] memory tmp_idx_leaf = new bytes1[](tmp_idx_leaf_size);
+        for (uint i=0; i < tmp_idx_leaf_size; i++ ){
+            tmp_idx_leaf[i] = digest[tmp_md_size+tmp_idx_tree_size+i];
+        }
+
+        bytes memory  md = extractBits(abi.encodePacked(tmp_md), 0, k*a);
+
+        // idx_tree: first h - h/d bits after md
+        uint256 idx_tree_bits = h - h / d;
+        bytes memory  idx_tree = extractBits(abi.encodePacked(tmp_idx_tree), 0, idx_tree_bits);
+
+        // idx_leaf: first h/d bits after idx_tree
+        uint256 idx_leaf_bits = h / d;
+        bytes memory idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
+
+        adrs.setType(FORS_TREE);
+        adrs.setLayerAddress(0);
+        adrs.setTreeAddress(bytesToBytes4(idx_tree));
+        adrs.setKeyPairAddress(bytesToBytes4(idx_leaf));
+
+        ADRS forspkADRS = new ADRS();
+        forspkADRS.setType(FORS_ROOTS);
+        forspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
+        //console.logBytes32(hashed);
+        bytes32 pk = keccak256(abi.encodePacked(pk.seed,forspkADRS.toBytes(),roots));
+        return pk !=hashed;
+    }
+
     /*function fors_pkFromSig(FORS_SIG memory SIG_FORS, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
         bytes32[2] memory  node;
         bytes32[] memory root = new bytes32[](k);
