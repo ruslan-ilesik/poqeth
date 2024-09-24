@@ -95,12 +95,69 @@ contract TestSphincsPlusNaysayer is Test {
         verify_parts_assign(M,sphincs_sig);
     }
 
+
+    function test_sphincs_wots() public{
+        sph.set_params(n, w, h, d, k, a, t);
+        sph.set_pk(sphincs_pk);
+        bytes32[] memory sigma = flattenSPHINCS(naysayer_sig);
+        uint xmss_f_ind = 1 + 3 * k+1;
+        uint xmss_len = 1+h/d + len+len+h/d+1;
+        {
+            sph.set_sign(mt.build_root(sigma),M);
+
+            uint tree_index = 1;
+            uint wots_sig_ind = 2;
+            bytes32[][] memory tree = mt.build_tree(sigma);
+            uint wots_pk_elem_ind = xmss_f_ind+xmss_len*tree_index+1+h/d+len+wots_sig_ind;
+            uint wots_sig_elem_ind = xmss_f_ind+xmss_len*tree_index+1+h/d + wots_sig_ind;
+            uint m_ind = xmss_f_ind+xmss_len*tree_index-1;
+            bytes32 m = naysayer_sig.sig[tree_index-1].ht_additional_nodes[h/d];
+            bytes32 wots_pk_elem = naysayer_sig.sig[tree_index].wots_pk[wots_sig_ind];
+            bytes32 wots_sig_elem = naysayer_sig.sig[tree_index].sig[wots_sig_ind];
+
+            bytes32[] memory m_proof =  mt.get_proof(tree,m_ind);
+            bytes32[] memory wots_pk_proof =  mt.get_proof(tree,wots_pk_elem_ind);
+            bytes32[] memory wots_sig_elem_proof =  mt.get_proof(tree,wots_sig_elem_ind);
+
+            //check auth path works
+            //require (sph.wots_naysayer(tree_index, wots_sig_ind, m, m_proof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elem_proof),"failed good auth path");
+            //require (sph.wots_naysayer(tree_index+1, wots_sig_ind, m, m_proof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elem_proof) == false,"passed bad auth path");
+
+            require (sph.wots_naysayer(tree_index, wots_sig_ind, m, m_proof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elem_proof) == false,"passed with no actual error");
+        }
+        {
+            uint tree_index = 1;
+            uint wots_sig_ind = 2;
+            naysayer_sig.sig[tree_index].wots_pk[wots_sig_ind] = naysayer_sig.sig[tree_index].wots_pk[wots_sig_ind] ^ bytes32(uint(1));
+            sigma = flattenSPHINCS(naysayer_sig);
+            sph.set_sign(mt.build_root(sigma),M);
+            bytes32[][] memory tree = mt.build_tree(sigma);
+            uint wots_pk_elem_ind = xmss_f_ind+xmss_len*tree_index+1+h/d+len+wots_sig_ind;
+            uint wots_sig_elem_ind = xmss_f_ind+xmss_len*tree_index+1+h/d + wots_sig_ind;
+            uint m_ind = xmss_f_ind+xmss_len*tree_index-1;
+            bytes32 m = naysayer_sig.sig[tree_index-1].ht_additional_nodes[h/d];
+            bytes32 wots_pk_elem = naysayer_sig.sig[tree_index].wots_pk[wots_sig_ind];
+            bytes32 wots_sig_elem = naysayer_sig.sig[tree_index].sig[wots_sig_ind];
+
+            bytes32[] memory m_proof =  mt.get_proof(tree,m_ind);
+            bytes32[] memory wots_pk_proof =  mt.get_proof(tree,wots_pk_elem_ind);
+            bytes32[] memory wots_sig_elem_proof =  mt.get_proof(tree,wots_sig_elem_ind);
+
+            //check auth path works
+            //require (sph.wots_naysayer(tree_index, wots_sig_ind, m, m_proof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elem_proof),"failed good auth path");
+            //require (sph.wots_naysayer(tree_index+1, wots_sig_ind, m, m_proof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elem_proof) == false,"passed bad auth path");
+
+            require (sph.wots_naysayer(tree_index, wots_sig_ind, m, m_proof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elem_proof) == true,"failed with actual proof");
+            naysayer_sig.sig[tree_index].wots_pk[wots_sig_ind] = naysayer_sig.sig[tree_index].wots_pk[wots_sig_ind] ^ bytes32(uint(1));
+        }
+    }
+
     function test_sphincs_xmss()public{
         sph.set_params(n, w, h, d, k, a, t);
         sph.set_pk(sphincs_pk);
         bytes32[] memory sigma = flattenSPHINCS(naysayer_sig);
         uint xmss_f_ind = 1 + 3 * k+1;
-        uint xmss_len = 1+h/d + len+len+h/d+1;//d + len + 2 * h / d + 2;
+        uint xmss_len = 1+h/d + len+len+h/d+1;
         {
             sph.set_sign(mt.build_root(sigma),M);
             uint tree_ind = 2;
@@ -128,7 +185,7 @@ contract TestSphincsPlusNaysayer is Test {
             uint tree_ind = 2;
             uint top_ind = 1;
             uint baseIndex = xmss_f_ind + xmss_len * tree_ind +  1+h/d + len+len;
-            sigma[baseIndex+top_ind] = sigma[baseIndex+top_ind] & bytes32(uint(1));
+            sigma[baseIndex+top_ind] = sigma[baseIndex+top_ind] ^ bytes32(uint(1));
             sph.set_sign(mt.build_root(sigma),M);
 
             bytes32[][] memory tree = mt.build_tree(sigma);
@@ -148,7 +205,7 @@ contract TestSphincsPlusNaysayer is Test {
             //proof3 = mt.get_proof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind - 1);
 
             require(sph.xmss_naysayer(tree_ind, top_ind, top_node, proof, bottom_node, proof2, auth_node, proof3) == true,"failed proof with nactual mistake");
-            sigma[baseIndex+top_ind] = sigma[baseIndex+top_ind] & bytes32(uint(1));
+            sigma[baseIndex+top_ind] = sigma[baseIndex+top_ind] ^ bytes32(uint(1));
         }
     }
 
@@ -544,6 +601,7 @@ contract TestSphincsPlusNaysayer is Test {
           else{
             tmp[i] = chain(sig[i], uint(_msg2[i-len1]), w - 1 - uint(_msg2[i-len1]),PKseed, adrs);
           }
+
         }
         wotspkADRS.setType(WOTS_PK);
         wotspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());

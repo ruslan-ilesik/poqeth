@@ -4,5 +4,11 @@ out = "out"
 libs = ["lib"]
 gas_limit = "18446744073709551615"
 memory_limit = 99999999999
+via_ir = true
+sparse_mode = true
+
+[profile.default.optimizer_details]
+constantOptimizer = true
+yul = true
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

@@ -201,6 +201,131 @@ contract Sphincs_plus_naysaer is MerkleTree{
     //xmss total length = d+h/d+len+h/d+1+1 = d+len+2*h/d+2;
 
 
+    function wots_naysayer(
+        uint tree_index,
+        uint wots_sig_ind,
+        bytes32 M2,
+        bytes32[] memory M_proof,
+        bytes32 wots_pk_elem,
+        bytes32[] memory wots_pk_proof,
+        bytes32 wots_sig_elem,
+        bytes32[] memory wots_sig_proof
+    ) public returns (bool) {
+
+        // Memory variables to avoid stack depth issues
+        {
+            uint xmss_f_ind = 1 + 3 * k + 1;
+            uint xmss_len = 1 + h / d + len + len + h / d + 1;
+
+            if (tree_index == 0) {
+                M2 = M;
+            } else if (!verify_proof(sig, M2, M_proof, xmss_f_ind + xmss_len * tree_index - 1)) {
+                return false;
+            }
+
+            uint wots_pk_elem_ind = xmss_f_ind + xmss_len * tree_index + 1 + h / d + len + wots_sig_ind;
+            if (!verify_proof(sig, wots_pk_elem, wots_pk_proof, wots_pk_elem_ind)) {
+                return false;
+            }
+
+            uint wots_sig_elem_ind = xmss_f_ind + xmss_len * tree_index + 1 + h / d + wots_sig_ind;
+            if (!verify_proof(sig, wots_sig_elem, wots_sig_proof, wots_sig_elem_ind)) {
+                return false;
+            }
+        }
+
+        uint tmp_md_size = (k * a + 7) / 8;
+        uint tmp_idx_tree_size = ((h - h / d + 7) / 8);
+        uint tmp_idx_leaf_size = (h / d + 7) / 8;
+
+        // Processing digest
+        bytes1[] memory tmp_md = new bytes1[](tmp_md_size);
+        for (uint i = 0; i < tmp_md_size; i++) {
+            tmp_md[i] = M2[i];
+        }
+
+        bytes1[] memory tmp_idx_tree = new bytes1[](tmp_idx_tree_size);
+        for (uint i = 0; i < tmp_idx_tree_size; i++) {
+            tmp_idx_tree[i] = M2[tmp_md_size + i];
+        }
+
+        bytes1[] memory tmp_idx_leaf = new bytes1[](tmp_idx_leaf_size);
+        for (uint i = 0; i < tmp_idx_leaf_size; i++) {
+            tmp_idx_leaf[i] = M2[tmp_md_size + tmp_idx_tree_size + i];
+        }
+
+  
+        bytes memory md;
+        bytes memory idx_leaf2;
+        bytes memory idx_tree2;
+        ADRS adrs = new ADRS();
+
+        {
+            bytes memory idx_leaf;
+            bytes memory idx_tree;
+            md = extractBits(abi.encodePacked(tmp_md), 0, k * a);
+            uint256 idx_tree_bits = h - h / d;
+            idx_tree = extractBits(abi.encodePacked(tmp_idx_tree), 0, idx_tree_bits);
+            uint256 idx_leaf_bits = h / d;
+            idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
+
+
+            bytes memory idx_leaf2 = abi.encodePacked(idx_leaf);
+            bytes memory idx_tree2 = abi.encodePacked(idx_tree);
+
+            for (uint j = 1; j < tree_index; j++) {
+                if (j == d - 1) {
+                    idx_tree_bits = 0;
+                    idx_leaf2 = new bytes(4);
+                    idx_tree2 = new bytes(4);
+                } else {
+                    idx_leaf2 = extractBits(idx_tree2, idx_tree_bits - (h / d), h / d);
+                    idx_tree_bits -= h / d;
+                    idx_tree2 = extractBits(idx_tree2, 0, idx_tree_bits);
+                }
+            }
+        }
+
+        uint32 idx = uint32(bytesToBytes4(idx_leaf2));
+        adrs.setType(WOTS_HASH);
+        adrs.setKeyPairAddress(bytes4(idx));
+        adrs.setLayerAddress(bytes4(uint32(tree_index)));
+        bytes32 node;
+        {
+            uint csum = 0;
+            ADRS wotspkADRS = new ADRS();
+            wotspkADRS.fillFrom(adrs);
+
+            bytes32[] memory _msg = base_w(M2, len1);
+            for (uint i = 0; i < len1; i++) {
+                csum += w - 1 - uint(_msg[i]);
+            }
+
+            csum <<= (8 - ((len2 * log2(w)) % 8));
+            uint len_2_bytes = ceil((len2 * log2(w)), 8);
+            bytes32[] memory _msg2 = base_w(toByte(csum, len_2_bytes), len2);
+
+            adrs.setChainAddress(bytes4(uint32(wots_sig_ind)));
+
+           
+            if (wots_sig_ind < len1) {
+                uint tempp = uint(_msg[wots_sig_ind]);
+                uint tmp2 = w - 1 - tempp;
+                node = chain(wots_sig_elem, tempp, tmp2, pk.seed, adrs);
+            } else {
+                uint tempp = uint(_msg2[wots_sig_ind - len1]);
+                uint tmp2 = w - 1 - tempp;
+                node = chain(wots_sig_elem, tempp, tmp2, pk.seed, adrs);
+            }
+        }
+
+        //return false; // Or return the actual result based on your logic
+        return node != wots_pk_elem;
+    }
+
+
+
+
     function xmss_naysayer(
         uint tree_ind, 
         uint top_node_ind, 
@@ -320,6 +445,8 @@ contract Sphincs_plus_naysaer is MerkleTree{
     }
 
 
+
+
     function naysaer_fors( uint fors_ind, bytes32 fors_sk,bytes32[] memory fors_sk_proof, bytes32[] memory fors_proof, bytes32[] memory fors_proof_proof, bytes32 fors_root, bytes32[] memory fors_root_proof) public returns(bool){
         if (!verify_proof(sig, fors_sk, fors_sk_proof, 1+fors_ind*3) || !verify_proof(sig, keccak256(abi.encodePacked(fors_proof)), fors_proof_proof, 1+fors_ind*3+1) || !verify_proof(sig,fors_root,fors_root_proof,1+fors_ind*3+2)){
             return false;
@@ -407,6 +534,8 @@ contract Sphincs_plus_naysaer is MerkleTree{
     }
 
     //offset fors =  1+3*k+1
+
+
 
     function naysayer_fors_hash(bytes32[] memory roots, bytes32[][] memory proofs, bytes32 hashed, bytes32[] memory hashed_proof) public returns (bool){
         for (uint i =0; i < k; i++){
@@ -498,6 +627,57 @@ contract Sphincs_plus_naysaer is MerkleTree{
         return bytes8(uint64(out) << (8 * (8 - b.length)));
     }
 
+     function base_w(bytes memory X,uint out_len) public returns (bytes32[] memory){
+        uint iin = 0;
+        uint out = 0;
+        uint8 total = 0;
+        uint bits = 0;
+        uint consumed;
+        bytes32[] memory basew = new bytes32[](out_len);
+        for (consumed = 0; consumed < out_len; consumed++ ) {
+           if ( bits == 0 ) {
+               total = uint8(X[iin]);
+               iin++;
+               bits += 8;
+           }
+           bits -= log2(w);
+           basew[out] = bytes32((total >> bits) & (w - 1));
+           out++;
+       }
+       return basew;
+    }
+
+    function base_w(bytes32 X,uint out_len) public returns (bytes32[] memory){
+        uint iin = 0;
+        uint out = 0;
+        uint8 total = 0;
+        uint bits = 0;
+        uint consumed;
+        bytes32[] memory basew = new bytes32[](out_len);
+        for (consumed = 0; consumed < out_len; consumed++ ) {
+           if ( bits == 0 ) {
+               total = uint8(X[iin]);
+               iin++;
+               bits += 8;
+           }
+           bits -= log2(w);
+           basew[out] = bytes32((total >> bits) & (w - 1));
+           out++;
+       }
+       return basew;
+
+    }
+
+        
+    function toByte(uint256 x, uint y) public pure returns (bytes memory) {
+        bytes memory b = new bytes(y);
+        for (uint i = 0; i < y; i++) {
+            b[i] = bytes1(uint8(x >> (8 * (y - 1 - i))));
+        }
+        return b;
+    }
+
+
     function extractBits(bytes memory data, uint startBit, uint numBits) internal pure returns (bytes memory) {
         uint startByte = startBit / 8;
         uint endBit = startBit + numBits - 1;
@@ -533,6 +713,20 @@ contract Sphincs_plus_naysaer is MerkleTree{
 
     function ceil(uint a, uint b) internal pure returns (uint) {
         return (a + b - 1) / b;
+    }
+
+    
+    function chain(bytes32 X, uint i, uint s,bytes32 SEED, ADRS adrs) public returns (bytes32) {
+        if ( s == 0 ) {
+            return X;
+        }
+        if ( (i + s) > (w - 1) ) {
+            return 0;
+        }
+        bytes32 tmp = chain(X, i, s - 1, SEED, adrs);
+        adrs.setHashAddress(bytes4(uint32(i + s - 1)));
+        tmp = keccak256(abi.encodePacked(SEED, adrs.toBytes(), tmp));
+        return tmp;
     }
 
     //CODE FROM: https://ethereum.stackexchange.com/questions/8086/logarithm-math-operation-in-solidity
