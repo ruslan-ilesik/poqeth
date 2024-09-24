@@ -316,7 +316,7 @@ contract Sphincs_plus{
                 node[1] = keccak256(abi.encodePacked(PKseed, adrs.toBytes(), AUTH[k], node[0]));
             }
             node[0] = node[1];
-            }
+        }
         return node[0];
     }
 

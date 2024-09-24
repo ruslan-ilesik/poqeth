@@ -193,6 +193,131 @@ contract Sphincs_plus_naysaer is MerkleTree{
     //fors_sigs amount = k;
     //fors sig len = 3;
 
+    //xmss sig len = len
+    //xmss auth len = h/d
+    //wots pk len = len 
+    //xmss additional nodes = h/d+1;
+    //xmss additional words = 1;
+    //xmss total length = d+h/d+len+h/d+1+1 = d+len+2*h/d+2;
+
+
+    function xmss_naysayer(
+        uint tree_ind, 
+        uint top_node_ind, 
+        bytes32 top_node, 
+        bytes32[] memory top_node_proof,  
+        bytes32 bottom_node, 
+        bytes32[] memory bottom_node_proof,
+        bytes32 auth_node, 
+        bytes32[] memory auth_node_proof 
+    ) public returns (bool) {
+        //required because compiler crashes trying to inline it
+        uint xmss_f_ind = 1 + 3 * k+1;
+        uint xmss_len =  1+h/d + len+len+h/d+1;
+        uint baseIndex = xmss_f_ind + xmss_len * tree_ind +  1+h/d + len+len;
+
+        // Split the complex expressions into intermediate variables
+        uint top_node_index = baseIndex + top_node_ind;
+        uint bottom_node_index = baseIndex + top_node_ind - 1;
+        uint auth_node_index = xmss_f_ind + xmss_len * tree_ind + 1 + top_node_ind - 1;
+
+        // Verify each proof separately and return false early if any fails
+        if (!verify_proof(sig, top_node, top_node_proof, top_node_index)) {
+            return false;
+        }
+
+        if (!verify_proof(sig, bottom_node, bottom_node_proof, bottom_node_index)) {
+            return false;
+        }
+
+        if (!verify_proof(sig, auth_node, auth_node_proof, auth_node_index)) {
+            return false;
+        }
+
+
+        //We assume M is already diggest for testing hamming weight propouses
+        bytes32 digest = M;
+
+
+        uint tmp_md_size = (k*a+7) /8;
+        uint tmp_idx_tree_size = ((h-h/d+7)/8);
+        uint tmp_idx_leaf_size = (h/d+7)/8;
+
+        bytes1[] memory tmp_md = new bytes1[](tmp_md_size);
+        for (uint i=0; i < tmp_md_size; i++ ){
+            tmp_md[i] = digest[i];
+        }
+
+        bytes1[] memory tmp_idx_tree = new bytes1[](tmp_idx_tree_size);
+        for (uint i=0; i < tmp_idx_tree_size; i++ ){
+            tmp_idx_tree[i] = digest[tmp_md_size+i];
+        }
+
+        bytes1[] memory tmp_idx_leaf = new bytes1[](tmp_idx_leaf_size);
+        for (uint i=0; i < tmp_idx_leaf_size; i++ ){
+            tmp_idx_leaf[i] = digest[tmp_md_size+tmp_idx_tree_size+i];
+        }
+
+        bytes memory  md = extractBits(abi.encodePacked(tmp_md), 0, k*a);
+
+        // idx_tree: first h - h/d bits after md
+        uint256 idx_tree_bits = h - h / d;
+        bytes memory  idx_tree = extractBits(abi.encodePacked(tmp_idx_tree), 0, idx_tree_bits);
+
+        // idx_leaf: first h/d bits after idx_tree
+        uint256 idx_leaf_bits = h / d;
+        bytes memory idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
+
+        bytes memory idx_leaf2 = abi.encodePacked(idx_leaf);
+        bytes memory idx_tree2 = abi.encodePacked(idx_tree);
+        ADRS adrs = new ADRS();
+        for (uint j = 1; j < tree_ind; j++) {
+            if (j == d-1){
+                idx_tree_bits = 0;
+                idx_leaf2 = new bytes(4);
+                idx_tree2 = new bytes(4);
+            }
+            else{
+                // Extract idx_leaf as the least significant (h / d) bits of idx_tree
+                idx_leaf2 = extractBits(idx_tree2, idx_tree_bits - (h / d), h / d);
+
+                // Update idx_tree to the most significant (h - (j + 1) * (h / d)) bits
+                idx_tree_bits -= h / d;
+                
+                idx_tree2 = extractBits(idx_tree2, 0, idx_tree_bits);
+            }
+        }
+    
+        uint32 idx = uint32(bytesToBytes4(idx_leaf2));
+        adrs.setType(TREE);
+        adrs.setTreeIndex(bytes4(idx));
+        //console.logString("___________________");
+        adrs.setLayerAddress(bytes4(uint32(tree_ind)));
+        //console.logBytes(adrs.toBytes());
+         for (uint k = 0; k < top_node_ind; k++ ) {
+           
+            if ((idx / (2**k)) % 2 == 0 ) {
+                adrs.setTreeIndex(bytes4(uint32(adrs.getTreeIndex()) / 2));
+            }
+            else {
+                adrs.setTreeIndex(bytes4((uint32(adrs.getTreeIndex()) - 1) / 2));
+            }
+            //console.logBytes(adrs.toBytes());
+        }
+        bytes32 node;
+        adrs.setTreeHeight(bytes4(uint32(top_node_ind)));
+        if ((idx / (2**top_node_ind)) % 2 == 0 ) {
+            adrs.setTreeIndex(bytes4(uint32(adrs.getTreeIndex()) / 2));
+            node = keccak256(abi.encodePacked(pk.seed, adrs.toBytes(), bottom_node , auth_node));
+        } 
+        else {
+            adrs.setTreeIndex(bytes4((uint32(adrs.getTreeIndex()) - 1) / 2));
+            node = keccak256(abi.encodePacked(pk.seed, adrs.toBytes(), auth_node, bottom_node));
+        }
+       // console.logBytes(adrs.toBytes());
+
+        return node !=top_node;
+    }
 
 
     function naysaer_fors( uint fors_ind, bytes32 fors_sk,bytes32[] memory fors_sk_proof, bytes32[] memory fors_proof, bytes32[] memory fors_proof_proof, bytes32 fors_root, bytes32[] memory fors_root_proof) public returns(bool){
@@ -346,42 +471,8 @@ contract Sphincs_plus_naysaer is MerkleTree{
         return pk !=hashed;
     }
 
-    /*function fors_pkFromSig(FORS_SIG memory SIG_FORS, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
-        bytes32[2] memory  node;
-        bytes32[] memory root = new bytes32[](k);
-        for(uint i = 0; i < k; i++){
-            bytes memory idx = extractBits(M, i*a , (i+1)*a - i*a - 1);
-            bytes32 sk = SIG_FORS.sig[i].sk;
-            adrs.setTreeHeight(0);
-            adrs.setTreeIndex(bytes4(uint32(i*t + uint32(bytesToBytes4(idx)))));
-            node[0] = keccak256(abi.encodePacked(PKseed, adrs.toBytes(), sk));
-            bytes32[] memory auth = SIG_FORS.sig[i].auth;
 
-            adrs.setTreeIndex(bytes4(uint32(i*t + uint32(bytesToBytes4(idx))))); 
-            for (uint j = 0; j < a; j++ ) {
-                adrs.setTreeHeight(bytes4(uint32(j+1)));
-                if ( ((uint32(bytesToBytes4(idx)) / (2**j)) % 2) == 0 ) {
-                    adrs.setTreeIndex(bytes4(uint32(adrs.getTreeIndex()) / 2));
-                    node[1] = keccak256(abi.encodePacked(PKseed, adrs.toBytes(), node[0] , auth[j]));
-                } 
-                else {
-                    adrs.setTreeIndex(bytes4((uint32(adrs.getTreeIndex()) - 1) / 2));
-                    node[1] = keccak256(abi.encodePacked(PKseed, adrs.toBytes(), auth[j], node[0]));
-                }
-                node[0] = node[1];
-                }
-            root[i] = node[0];
-        }
-
-        ADRS forspkADRS = new ADRS();
-        forspkADRS.fillFrom(adrs);
-        forspkADRS.setType(FORS_ROOTS);
-        forspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
-        bytes32 pk = keccak256(abi.encodePacked(PKseed,forspkADRS.toBytes(),root));
-        return pk;
-    }*/
-
-        function bytesToBytes4(bytes memory b) public pure returns (bytes4) {
+    function bytesToBytes4(bytes memory b) public pure returns (bytes4) {
         require(b.length <= 4, "Bytes array too long to convert to bytes4");
         bytes4 out;
         if (b.length == 0) {
