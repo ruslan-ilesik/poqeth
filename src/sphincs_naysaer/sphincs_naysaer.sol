@@ -199,8 +199,104 @@ contract Sphincs_plus_naysaer is MerkleTree{
     //xmss additional nodes = h/d+1;
     //xmss additional words = 1;
     //xmss total length = d+h/d+len+h/d+1+1 = d+len+2*h/d+2;
+    function wots_hash_naysayer(
+        uint tree_index,
+        bytes32[] memory wots_pk,
+        bytes32[][] memory wots_pk_proof,
+        bytes32 hashed,
+        bytes32[] memory hashed_proof,
+        bytes32 M2,
+        bytes32[] memory M_proof
+    ) public returns (bool){
+        uint xmss_f_ind = 1 + 3 * k + 1;
+        uint xmss_len = 1 + h / d + len + len + h / d + 1;
+        for (uint i =0; i < wots_pk.length;i++){
+            if (!verify_proof(sig, wots_pk[i], wots_pk_proof[i], xmss_f_ind+xmss_len*tree_index+1+h/d+len+i)){
+                return false;
+            }
+        }
+
+        if (!verify_proof(sig, hashed, hashed_proof, xmss_f_ind+xmss_len*tree_index)){
+            return false;
+        }
+
+        if (tree_index == 0) {
+            if (!verify_proof(sig, M2, M_proof,xmss_f_ind+xmss_len*d )){
+                return false;
+            }
+        } else if (!verify_proof(sig, M2, M_proof, xmss_f_ind + xmss_len * tree_index - 1)) {
+            return false;
+        }
 
 
+        uint tmp_md_size = (k * a + 7) / 8;
+        uint tmp_idx_tree_size = ((h - h / d + 7) / 8);
+        uint tmp_idx_leaf_size = (h / d + 7) / 8;
+
+        // Processing digest
+        bytes1[] memory tmp_md = new bytes1[](tmp_md_size);
+        for (uint i = 0; i < tmp_md_size; i++) {
+            tmp_md[i] = M2[i];
+        }
+
+        bytes1[] memory tmp_idx_tree = new bytes1[](tmp_idx_tree_size);
+        for (uint i = 0; i < tmp_idx_tree_size; i++) {
+            tmp_idx_tree[i] = M2[tmp_md_size + i];
+        }
+
+        bytes1[] memory tmp_idx_leaf = new bytes1[](tmp_idx_leaf_size);
+        for (uint i = 0; i < tmp_idx_leaf_size; i++) {
+            tmp_idx_leaf[i] = M2[tmp_md_size + tmp_idx_tree_size + i];
+        }
+
+  
+        bytes memory md;
+        bytes memory idx_leaf2;
+        bytes memory idx_tree2;
+        ADRS adrs = new ADRS();
+
+        {
+            bytes memory idx_leaf;
+            bytes memory idx_tree;
+            md = extractBits(abi.encodePacked(tmp_md), 0, k * a);
+            uint256 idx_tree_bits = h - h / d;
+            idx_tree = extractBits(abi.encodePacked(tmp_idx_tree), 0, idx_tree_bits);
+            uint256 idx_leaf_bits = h / d;
+            idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
+
+
+            bytes memory idx_leaf2 = abi.encodePacked(idx_leaf);
+            bytes memory idx_tree2 = abi.encodePacked(idx_tree);
+
+            for (uint j = 1; j < tree_index; j++) {
+                if (j == d - 1) {
+                    idx_tree_bits = 0;
+                    idx_leaf2 = new bytes(4);
+                    idx_tree2 = new bytes(4);
+                } else {
+                    idx_leaf2 = extractBits(idx_tree2, idx_tree_bits - (h / d), h / d);
+                    idx_tree_bits -= h / d;
+                    idx_tree2 = extractBits(idx_tree2, 0, idx_tree_bits);
+                }
+            }
+        }
+
+        uint32 idx = uint32(bytesToBytes4(idx_leaf2));
+        adrs.setType(WOTS_HASH);
+        adrs.setKeyPairAddress(bytes4(idx));
+        adrs.setLayerAddress(bytes4(uint32(tree_index)));
+        adrs.setChainAddress(bytes4(uint32(len-1)));
+
+        ADRS wotspkADRS = new ADRS();
+        wotspkADRS.fillFrom(adrs);
+
+        wotspkADRS.setType(WOTS_PK);
+        wotspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
+        bytes32 pk = keccak256(abi.encodePacked(pk.seed,wotspkADRS.toBytes(),wots_pk));
+        return pk !=hashed;
+    }
+
+   
     function wots_naysayer(
         uint tree_index,
         uint wots_sig_ind,
@@ -218,7 +314,9 @@ contract Sphincs_plus_naysaer is MerkleTree{
             uint xmss_len = 1 + h / d + len + len + h / d + 1;
 
             if (tree_index == 0) {
-                M2 = M;
+                if (!verify_proof(sig, M2, M_proof,xmss_f_ind+xmss_len*d )){
+                    return false;
+                }
             } else if (!verify_proof(sig, M2, M_proof, xmss_f_ind + xmss_len * tree_index - 1)) {
                 return false;
             }

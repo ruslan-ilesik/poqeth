@@ -31,6 +31,7 @@ contract TestSphincsPlusNaysayer is Test {
         bytes32 r;
         NAYSAYER_FORS_SIG fors_sig;
         NAYSAYER_XMSS_SIG[] sig;
+        bytes32 fors_pk;
     }
 
     bytes32[][] naysayer_fors_proofs;
@@ -93,6 +94,66 @@ contract TestSphincsPlusNaysayer is Test {
         spx_keygen();
         spx_sign();
         verify_parts_assign(M,sphincs_sig);
+    }
+
+
+    function test_sphincs_wots_hash() public {
+        sph.set_params(n, w, h, d, k, a, t);
+        sph.set_pk(sphincs_pk);
+        bytes32[] memory sigma = flattenSPHINCS(naysayer_sig);
+        uint xmss_f_ind = 1 + 3 * k+1;
+        uint xmss_len = 1+h/d + len+len+h/d+1;
+        {
+            sph.set_sign(mt.build_root(sigma),M);
+            uint tree_ind = 1;
+            bytes32[][] memory tree = mt.build_tree(sigma);
+
+            bytes32[][] memory proofs = new bytes32[][](len);
+            for (uint i =0 ; i < len; i++){
+                proofs[i] = mt.get_proof(tree,xmss_f_ind+tree_ind* xmss_len + 1+h/d+len+i);
+            }
+
+            bytes32[] memory proof2 = mt.get_proof(tree,xmss_f_ind+tree_ind* xmss_len);
+
+            uint m_ind = xmss_f_ind+xmss_len*tree_ind-1;
+            bytes32 m = naysayer_sig.sig[tree_ind-1].ht_additional_nodes[h/d];
+            bytes32[] memory m_proof =  mt.get_proof(tree,m_ind);
+
+            //check proofs
+            //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,m_proof),"failed good proof");
+            //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind-1].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,m_proof) == false,"passed bad proof");
+        
+            require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,m_proof)==false,"passed proof without mistake");
+        }
+        {
+         
+            uint tree_ind = 1;
+            naysayer_sig.sig[tree_ind].wots_pk[0] = naysayer_sig.sig[tree_ind].wots_pk[0] ^ bytes32(uint(1));
+
+            sigma = flattenSPHINCS(naysayer_sig);
+            bytes32[][] memory tree = mt.build_tree(sigma);
+
+            sph.set_sign(mt.build_root(sigma),M);
+
+            bytes32[][] memory proofs = new bytes32[][](len);
+            for (uint i =0 ; i < len; i++){
+                proofs[i] = mt.get_proof(tree,xmss_f_ind+tree_ind* xmss_len + 1+h/d+len+i);
+            }
+
+            bytes32[] memory proof2 = mt.get_proof(tree,xmss_f_ind+tree_ind* xmss_len);
+
+            uint m_ind = xmss_f_ind+xmss_len*tree_ind-1;
+            bytes32 m = naysayer_sig.sig[tree_ind-1].ht_additional_nodes[h/d];
+            bytes32[] memory m_proof =  mt.get_proof(tree,m_ind);
+
+            //check proofs
+            //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,m_proof),"failed good proof");
+            //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind-1].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,m_proof) == false,"passed bad proof");
+        
+            require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,m_proof)==true,"failed proof with mistake");
+            naysayer_sig.sig[tree_ind].wots_pk[0] = naysayer_sig.sig[tree_ind].wots_pk[0] ^ bytes32(uint(1));
+        }
+
     }
 
 
@@ -377,6 +438,7 @@ contract TestSphincsPlusNaysayer is Test {
         forspkADRS.setType(FORS_ROOTS);
         forspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
         bytes32 pk = keccak256(abi.encodePacked(PKseed,forspkADRS.toBytes(),root));
+        naysayer_sig.fors_pk = pk;
         return pk;
     }
 
