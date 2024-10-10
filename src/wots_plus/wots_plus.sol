@@ -4,19 +4,25 @@ pragma solidity ^0.8.13;
 import "forge-std/console.sol";
 
 contract WOTSPlus {
-    bytes32[] pk;
-    bytes32[] r;
-    uint256 k;
+
+
+    bytes32 hashed;
+    uint w;
 
     constructor() {}
 
-    function set_pk(bytes32[] calldata _r, uint256 _k, bytes32[] calldata _pk) public {
-        pk = _pk;
-        r = _r;
-        k = _k;
+    function set_pk(bytes32 h) public {
+        hashed = h;
     }
 
-    function verify(uint256 w, bytes32[] calldata M, bytes32[] calldata sigma) public view returns (bool) {
+    function set_w(uint16 _w)public{
+        w=_w;
+    }
+
+    function verify(bytes32[] calldata M, bytes32[] calldata sigma, bytes32[] calldata pk, bytes32[] calldata r, uint256 k) public view returns (bool) {
+        if (keccak256(abi.encodePacked(r,k,pk)) != hashed){
+            return false;
+        }
         uint256 l1 = M.length;
         uint256 l2 = logN(l1*(w-1), w); //log2(l1*(w-1))/log2(w);
 
@@ -49,14 +55,15 @@ contract WOTSPlus {
         // Verify signature
         for (uint256 i = 0; i < pk.length; i++) {
             uint256 bi = uint256(B[i]);
-            if (pk[i] != c(sigma[i], w - 1 - bi,bi)) {
+            if (pk[i] != c(sigma[i], w - 1 - bi,bi,r,k)) {
                 return false;
             }
         }
         return true;
     }
 
-    function c(bytes32 x, uint256 i, uint256 start_ind) public view returns (bytes32) {
+
+    function c(bytes32 x, uint256 i, uint256 start_ind, bytes32[] calldata r, uint256 k) public view returns (bytes32) {
         bytes32 result = x;
         for (uint256 j = 0; j < i; j++) {
             result = keccak256(abi.encodePacked(result ^ r[start_ind+j], k));

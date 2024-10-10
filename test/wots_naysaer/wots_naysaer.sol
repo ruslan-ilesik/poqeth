@@ -35,7 +35,7 @@ contract TestWotsPlusNaysaer is Test {
         (sk,pk,r,k) = key_gen(n,l,w);
         
 
-        bytes32 hashed_message = hex"0000000000000000000000000000000000000000000000000000000000000000";
+        bytes32 hashed_message = hex"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe";
         //keccak256(abi.encodePacked(message));
         uint256 nhm = uint256(hashed_message);
         M = new bytes32[](l1);

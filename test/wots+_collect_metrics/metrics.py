@@ -43,9 +43,9 @@ def replace_w_value_in_file(file_path, new_w_value):
 
 FILE_PATH = os.path.dirname(os.path.abspath(__file__))+"/wots_plus.sol"
 
-for w in tqdm.tqdm([256]):
+for w in tqdm.tqdm([4,8,16,256]):
     replace_w_value_in_file(FILE_PATH, w)
-    with open(f'{w}.csv', 'w', newline='') as csvfile:
+    with open(f'./wots_regular/{w}.csv', 'w', newline='') as csvfile:
         csvwriter = csv.writer(csvfile)
         # Write the header
         csvwriter.writerow(['i', 'hex_value', 'set_pk_max', 'verify_value'])

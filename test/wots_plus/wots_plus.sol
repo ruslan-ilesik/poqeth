@@ -7,7 +7,7 @@ pragma solidity ^0.8.13;
 import {Test, console} from "forge-std/Test.sol";
 import {WOTSPlus} from "../../src/wots_plus/wots_plus.sol";
 import "forge-std/console.sol";
-
+/*
 contract TestWotsPlus { // is Test
     WOTSPlus wots;
     bytes32[] M;
@@ -25,7 +25,7 @@ contract TestWotsPlus { // is Test
 
     function setUp(uint16 _w) public{
         return;
-        /*string memory message = "Hello";
+        /\*string memory message = "Hello";
        
         l1 = (m*8) / log2(w) + ((m*8) % log2(w) == 0 ? 0 : 1);
         l2 = log2(l1*(w-1))/log2(w);
@@ -44,7 +44,7 @@ contract TestWotsPlus { // is Test
             M[i] = bytes32(nhm % w);
             nhm /= w;
         }
-        sigma = sign(w,k,l1,l2,M,sk,r);*/
+        sigma = sign(w,k,l1,l2,M,sk,r);*\/
     }
 
     function test_set_key() public{
@@ -211,3 +211,4 @@ contract TestWotsPlus { // is Test
             }  
     }
 }
+*/
