@@ -5,18 +5,15 @@ import "forge-std/console.sol";
 import "../merkle_tree.sol";
 
 contract WOTSPlusNaysaer is MerkleTree {
-    bytes32[] pk;
-    bytes32[] r;
-    uint256 k;
 
+
+    uint256 k;
     uint16 w;
 
     bytes32 sign;
     //bytes1[] M;
 
-    function set_pk(bytes32[] calldata _r, uint256 _k, bytes32[] calldata _pk) public {
-        pk = _pk;
-        r = _r;
+    function set_pk( uint256 _k) public {
         k = _k;
     }
 
@@ -31,14 +28,20 @@ contract WOTSPlusNaysaer is MerkleTree {
 
 
     //returns true if naysayer proof accepted, false otherwise (incorrect data or no actuall mistake)
-    function naysaer(bytes32 sign_leaf, bytes32[] memory proof, uint256 index, bytes1[] memory M, bytes32[] memory M_proof) public returns (bool){
+    function naysaer(bytes32 sign_leaf, bytes32[] memory proof, uint256 index, bytes1[] memory M, bytes32[] memory M_proof, bytes32 pki, bytes32[] memory pki_proof, bytes32[] calldata r, bytes32[] memory r_proof) public returns (bool){
         if (!verify_proof(sign,sign_leaf,proof,index)){
             return false;
         }
         uint256 l1 = M.length;
         uint256 l2 = log2(l1*(w-1))/log2(w);
         uint l = l1+l2;
-         if (!verify_proof(sign,keccak256(abi.encodePacked(M)),M_proof,l)){
+        if (!verify_proof(sign,keccak256(abi.encodePacked(M)),M_proof,l)){
+            return false;
+        }
+        if (!verify_proof(sign,pki,pki_proof,l+1+index)){
+            return false;
+        }
+        if (!verify_proof(sign,keccak256(abi.encodePacked(r)),r_proof,l*2+1)){
             return false;
         }
 
@@ -62,13 +65,13 @@ contract WOTSPlusNaysaer is MerkleTree {
         }
         
 
-        if (pk[index] != c(sign_leaf, w - 1 - bi,bi)) {
+        if (pki != c(sign_leaf, w - 1 - bi,bi,r)) {
             return true;
         }
         return false;
     }
 
-    function naysaer(bytes32 sign_leaf, bytes32[] memory proof, uint256 index, bytes2[] memory M, bytes32[] memory M_proof) public returns (bool){
+    function naysaer(bytes32 sign_leaf, bytes32[] memory proof, uint256 index, bytes2[] memory M, bytes32[] memory M_proof, bytes32 pki, bytes32[] memory pki_proof, bytes32[] calldata r, bytes32[] memory r_proof) public returns (bool){
         if (!verify_proof(sign,sign_leaf,proof,index)){
             return false;
         }
@@ -80,7 +83,12 @@ contract WOTSPlusNaysaer is MerkleTree {
         if (!verify_proof(sign,keccak256(abi.encodePacked(M)),M_proof,l)){
             return false;
         }
-
+        if (!verify_proof(sign,pki,pki_proof,l+1+index)){
+            return false;
+        }
+        if (!verify_proof(sign,keccak256(abi.encodePacked(r)),r_proof,l*2+1)){
+            return false;
+        }
         // Directly compute the relevant checksum portion
         uint256 checksum = 0;
         for (uint256 i = 0; i < l1; i++) {
@@ -101,7 +109,7 @@ contract WOTSPlusNaysaer is MerkleTree {
         }
         
 
-        if (pk[index] != c(sign_leaf, w - 1 - bi,bi)) {
+        if (pki != c(sign_leaf, w - 1 - bi,bi,r)) {
             return true;
         }
         return false;
@@ -109,14 +117,20 @@ contract WOTSPlusNaysaer is MerkleTree {
 
 
   //returns true if naysayer proof accepted, false otherwise (incorrect data or no actuall mistake)
-    function naysaer(bytes32 sign_leaf, bytes32[] memory proof, uint256 index, bytes32[] memory M, bytes32[] memory M_proof) public returns (bool){
+    function naysaer(bytes32 sign_leaf, bytes32[] memory proof, uint256 index, bytes32[] memory M, bytes32[] memory M_proof, bytes32 pki, bytes32[] memory pki_proof, bytes32[] calldata r, bytes32[] memory r_proof) public returns (bool){
         if (!verify_proof(sign,sign_leaf,proof,index)){
             return false;
         }
         uint256 l1 = M.length;
         uint256 l2 = log2(l1*(w-1))/log2(w);
         uint l = l1+l2;
-         if (!verify_proof(sign,keccak256(abi.encodePacked(M)),M_proof,l)){
+        if (!verify_proof(sign,keccak256(abi.encodePacked(M)),M_proof,l)){
+            return false;
+        }
+        if (!verify_proof(sign,pki,pki_proof,l+1+index)){
+            return false;
+        }
+        if (!verify_proof(sign,keccak256(abi.encodePacked(r)),r_proof,l*2+1)){
             return false;
         }
 
@@ -140,7 +154,7 @@ contract WOTSPlusNaysaer is MerkleTree {
         }
         
 
-        if (pk[index] != c(sign_leaf, w - 1 - bi,bi)) {
+        if (pki != c(sign_leaf, w - 1 - bi,bi,r)) {
             return true;
         }
         return false;
@@ -148,7 +162,7 @@ contract WOTSPlusNaysaer is MerkleTree {
 
 
 
-    function c(bytes32 x, uint256 i, uint256 start_ind) public view returns (bytes32) {
+    function c(bytes32 x, uint256 i, uint256 start_ind, bytes32[] calldata r) public view returns (bytes32) {
         bytes32 result = x;
         for (uint256 j = 0; j < i; j++) {
             result = keccak256(abi.encodePacked(result ^ r[start_ind+j], k));

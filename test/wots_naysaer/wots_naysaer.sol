@@ -35,7 +35,8 @@ contract TestWotsPlusNaysaer is Test {
         (sk,pk,r,k) = key_gen(n,l,w);
         
 
-        bytes32 hashed_message = hex"0000000000000000000000000000000000000000000000000000000000000000";//keccak256(abi.encodePacked(message));
+        bytes32 hashed_message = hex"0000000000000000000000000000000000000000000000000000000000000000";
+        //keccak256(abi.encodePacked(message));
         uint256 nhm = uint256(hashed_message);
         M = new bytes32[](l1);
         for (uint256 i = 0; i < l1; i++) {
@@ -44,7 +45,7 @@ contract TestWotsPlusNaysaer is Test {
         }
         wn.set_param(w);
         sigmacpy = sign(w,k,l1,l2,M,sk,r);
-        wn.set_pk(r,k,pk);
+        wn.set_pk(k);
 
         }
 
@@ -56,10 +57,12 @@ contract TestWotsPlusNaysaer is Test {
                 }
                 M2[2] = M2[2]^ bytes1(uint8(1));
                 bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
+                sigma = concatenateBytes32Arrays(sigma, pk);
+                sigma = concatenateBytes32Arrays(sigma, keccak256(abi.encodePacked(r)));
                 wn.set_sign(mt.build_root(sigma));
                 bytes32[][] memory tree = mt.build_tree(sigma);
                 bytes32[] memory proof = mt.get_proof(tree,2);
-                require(wn.naysaer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length)), "fail good verefication");
+                require(wn.naysaer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length),pk[2],mt.get_proof(tree, sigmacpy.length+1+2),r,mt.get_proof(tree, sigmacpy.length*2+1)), "fail good verefication");
             }
            else if (w == 16) {
                 bytes2[] memory M2 = new bytes2[]((M.length));  // Adjusting for the fact that we are copying 2 bytes at a time
@@ -73,13 +76,15 @@ contract TestWotsPlusNaysaer is Test {
 
                 // Continue the logic as before
                 bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
+                sigma = concatenateBytes32Arrays(sigma, pk);
+                sigma = concatenateBytes32Arrays(sigma, keccak256(abi.encodePacked(r)));
                 wn.set_sign(mt.build_root(sigma));
 
                 bytes32[][] memory tree = mt.build_tree(sigma);
                 bytes32[] memory proof = mt.get_proof(tree, 2);
                 console.logUint(sigma.length);
                 require(
-                    wn.naysaer(sigma[2], proof, 2, M2, mt.get_proof(tree, sigmacpy.length)), 
+                    wn.naysaer(sigma[2], proof, 2, M2, mt.get_proof(tree, sigmacpy.length),pk[2],mt.get_proof(tree, sigmacpy.length+1+2),r,mt.get_proof(tree, sigmacpy.length*2+1)), 
                     "fail good verification"
                 );
             }
@@ -95,19 +100,34 @@ contract TestWotsPlusNaysaer is Test {
 
                 // Continue the logic as before
                 bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
+                sigma = concatenateBytes32Arrays(sigma, pk);
+                sigma = concatenateBytes32Arrays(sigma, keccak256(abi.encodePacked(r)));
                 wn.set_sign(mt.build_root(sigma));
 
                 bytes32[][] memory tree = mt.build_tree(sigma);
                 bytes32[] memory proof = mt.get_proof(tree, 2);
                 console.logUint(sigma.length);
                 require(
-                    wn.naysaer(sigma[2], proof, 2, M2, mt.get_proof(tree, sigmacpy.length)), 
+                    wn.naysaer(sigma[2], proof, 2, M2, mt.get_proof(tree, sigmacpy.length),pk[2],mt.get_proof(tree, sigmacpy.length+1+2),r,mt.get_proof(tree, sigmacpy.length*2+1)), 
                     "fail good verification"
                 );
             }
         }
 
         function test_right_sing_no_mistake() public {
+            if (w ==256){
+                bytes32[] memory M2 = new bytes32[](M.length);
+                for (uint i =0; i < M.length; i++){
+                    M2[i] = bytes32(M[i]);
+                }
+                bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
+                sigma = concatenateBytes32Arrays(sigma, pk);
+                sigma = concatenateBytes32Arrays(sigma, keccak256(abi.encodePacked(r)));
+                wn.set_sign(mt.build_root(sigma));
+                bytes32[][] memory tree = mt.build_tree(sigma);
+                bytes32[] memory proof = mt.get_proof(tree,2);
+                require(wn.naysaer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length),pk[2],mt.get_proof(tree, sigmacpy.length+1+2),r,mt.get_proof(tree, sigmacpy.length*2+1)) == false, "fail good sig and no miustake verefication");
+            }
             if (w!=4){
                 return;
             }
@@ -116,10 +136,12 @@ contract TestWotsPlusNaysaer is Test {
                 M2[i] = bytes1(M[i]);
             }
             bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
+            sigma = concatenateBytes32Arrays(sigma, pk);
+            sigma = concatenateBytes32Arrays(sigma, keccak256(abi.encodePacked(r)));
             wn.set_sign(mt.build_root(sigma));
             bytes32[][] memory tree = mt.build_tree(sigma);
             bytes32[] memory proof = mt.get_proof(tree,2);
-            require(wn.naysaer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length)) == false, "fail good sig and no miustake verefication");
+            require(wn.naysaer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length),pk[2],mt.get_proof(tree, sigmacpy.length+1+2),r,mt.get_proof(tree, sigmacpy.length*2+1)) == false, "fail good sig and no miustake verefication");
         }
 
         function test_false_signature() public{
@@ -138,10 +160,13 @@ contract TestWotsPlusNaysaer is Test {
                 M2[i] = bytes1(M[i]);
             }
             bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
+            sigma = concatenateBytes32Arrays(sigma, pk);
+            sigma = concatenateBytes32Arrays(sigma, keccak256(abi.encodePacked(r)));
             wn.set_sign(mt.build_root(failed_sigma));
+            
             bytes32[][] memory tree = mt.build_tree(sigma);
             bytes32[] memory proof = mt.get_proof(tree,2);
-            require(wn.naysaer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length)) == false, "failed to fail failing verefication");
+            require(wn.naysaer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length),pk[2],mt.get_proof(tree, sigmacpy.length+1+2),r,mt.get_proof(tree, sigmacpy.length*2+1)) == false, "failed to fail failing verefication");
         }
 
 
