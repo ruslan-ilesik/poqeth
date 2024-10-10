@@ -30,7 +30,7 @@ def replace_w_value_in_file(file_path, new_w_value):
 
     # Modify the specific line
     for i in range(len(lines)):
-        if 'uint8 w = ' in lines[i]:
+        if 'uint16 w = ' in lines[i]:
             start_index = lines[i].index('uint16 w = ') + len('uint16 w = ')
             end_index = lines[i].index(';', start_index)
             lines[i] = lines[i][:start_index] + str(new_w_value) + lines[i][end_index:]

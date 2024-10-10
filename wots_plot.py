@@ -52,7 +52,7 @@ def main():
     
     # Read the data for each value of w
     for w in [4, 8, 16, 256]:
-        file_path = f'{w}.csv'
+        file_path = f'./wots_regular/{w}.csv'
         i_values, verify_values = read_csv(file_path)
         i_values_dict[w] = (i_values, verify_values)
     

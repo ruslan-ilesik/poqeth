@@ -17,7 +17,7 @@ contract TestWotsPlusCollect is Test {
     bytes32[] r;
     uint256 k;
     uint256 m = 32; //bytes, can not be changed!
-    uint16 w = 16; 
+    uint16 w = 256; 
     // bits, lets assume it will divisible by 8
     uint256 l1 ;
     uint256 l2;
@@ -35,7 +35,7 @@ contract TestWotsPlusCollect is Test {
         (sk,pk,r,k) = key_gen(n,l,w);
         
 
-        bytes32 hashed_message = hex"fff0000000000000000000000000000000000000000000000000000000000000";
+        bytes32 hashed_message = hex"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe";
         //keccak256(abi.encodePacked(message));
         uint256 nhm = uint256(hashed_message);
         M = new bytes32[](l1);
