@@ -9,7 +9,7 @@ contract WOTSPlusNaysaer is MerkleTree {
     bytes32[] r;
     uint256 k;
 
-    uint16 w = 4;
+    uint16 w;
 
     bytes32 sign;
     //bytes1[] M;
@@ -18,6 +18,10 @@ contract WOTSPlusNaysaer is MerkleTree {
         pk = _pk;
         r = _r;
         k = _k;
+    }
+
+    function set_param(uint16 _w) public{
+        w = _w;
     }
 
     function set_sign(bytes32 _sign) public{
@@ -31,13 +35,13 @@ contract WOTSPlusNaysaer is MerkleTree {
         if (!verify_proof(sign,sign_leaf,proof,index)){
             return false;
         }
-
         uint256 l1 = M.length;
         uint256 l2 = log2(l1*(w-1))/log2(w);
         uint l = l1+l2;
          if (!verify_proof(sign,keccak256(abi.encodePacked(M)),M_proof,l)){
             return false;
         }
+
         // Directly compute the relevant checksum portion
         uint256 checksum = 0;
         for (uint256 i = 0; i < l1; i++) {
@@ -63,6 +67,86 @@ contract WOTSPlusNaysaer is MerkleTree {
         }
         return false;
     }
+
+    function naysaer(bytes32 sign_leaf, bytes32[] memory proof, uint256 index, bytes2[] memory M, bytes32[] memory M_proof) public returns (bool){
+        if (!verify_proof(sign,sign_leaf,proof,index)){
+            return false;
+        }
+
+        uint256 l1 = M.length;
+        uint256 l2 = log2(l1*(w-1))/log2(w);
+        uint l = l1+l2;
+
+        if (!verify_proof(sign,keccak256(abi.encodePacked(M)),M_proof,l)){
+            return false;
+        }
+
+        // Directly compute the relevant checksum portion
+        uint256 checksum = 0;
+        for (uint256 i = 0; i < l1; i++) {
+            checksum += (w - 1 - uint16(M[i]));
+        }
+
+        uint16 bi;
+        if (index < l1) {
+            // If the index is in M
+            bi = uint16(M[index]);
+        } else {
+            // If the index is in C
+            index -= l1;
+            for (uint256 i = 0; i <= index; i++) {
+                bi = uint16(checksum % w);
+                checksum /= w;
+            }
+        }
+        
+
+        if (pk[index] != c(sign_leaf, w - 1 - bi,bi)) {
+            return true;
+        }
+        return false;
+}
+
+
+  //returns true if naysayer proof accepted, false otherwise (incorrect data or no actuall mistake)
+    function naysaer(bytes32 sign_leaf, bytes32[] memory proof, uint256 index, bytes32[] memory M, bytes32[] memory M_proof) public returns (bool){
+        if (!verify_proof(sign,sign_leaf,proof,index)){
+            return false;
+        }
+        uint256 l1 = M.length;
+        uint256 l2 = log2(l1*(w-1))/log2(w);
+        uint l = l1+l2;
+         if (!verify_proof(sign,keccak256(abi.encodePacked(M)),M_proof,l)){
+            return false;
+        }
+
+        // Directly compute the relevant checksum portion
+        uint256 checksum = 0;
+        for (uint256 i = 0; i < l1; i++) {
+            checksum += (w - 1 - uint256(M[i]));
+        }
+
+        uint256 bi;
+        if (index < l1) {
+            // If the index is in M
+            bi = uint256(M[index]);
+        } else {
+            // If the index is in C
+            index -= l1;
+            for (uint256 i = 0; i <= index; i++) {
+                bi = uint256(checksum % w);
+                checksum /= w;
+            }
+        }
+        
+
+        if (pk[index] != c(sign_leaf, w - 1 - bi,bi)) {
+            return true;
+        }
+        return false;
+    }
+
+
 
     function c(bytes32 x, uint256 i, uint256 start_ind) public view returns (bytes32) {
         bytes32 result = x;

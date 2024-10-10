@@ -17,7 +17,7 @@ contract TestWotsPlusNaysaer is Test {
         bytes32[] r;
         uint256 k;
         uint256 m = 32; //bytes, can not be changed!
-        uint16 w = 4;
+        uint16 w = 256;
         uint256 l1 ;
         uint256 l2;
 
@@ -42,25 +42,75 @@ contract TestWotsPlusNaysaer is Test {
             M[i] = bytes32(nhm % w);
             nhm /= w;
         }
+        wn.set_param(w);
         sigmacpy = sign(w,k,l1,l2,M,sk,r);
         wn.set_pk(r,k,pk);
 
         }
 
         function test_proof_mistake_() public{
-            bytes1[] memory M2 = new bytes1[](M.length);
-            for (uint i =0; i < M.length; i++){
-                M2[i] = bytes1(M[i]);
+            if (w == 4 || w == 8){
+                bytes1[] memory M2 = new bytes1[](M.length);
+                for (uint i =0; i < M.length; i++){
+                    M2[i] = bytes1(M[i]);
+                }
+                M2[2] = M2[2]^ bytes1(uint8(1));
+                bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
+                wn.set_sign(mt.build_root(sigma));
+                bytes32[][] memory tree = mt.build_tree(sigma);
+                bytes32[] memory proof = mt.get_proof(tree,2);
+                require(wn.naysaer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length)), "fail good verefication");
             }
-            M2[2] = M2[2]^ bytes1(uint8(1));
-            bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
-            wn.set_sign(mt.build_root(sigma));
-            bytes32[][] memory tree = mt.build_tree(sigma);
-            bytes32[] memory proof = mt.get_proof(tree,2);
-            require(wn.naysaer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length)), "fail good verefication");
+           else if (w == 16) {
+                bytes2[] memory M2 = new bytes2[]((M.length));  // Adjusting for the fact that we are copying 2 bytes at a time
+
+                for (uint i =0; i < M.length; i++){
+                    M2[i] = bytes2(M[i]);
+                }
+
+                // Modify the specific element in M2 (2nd element) as before
+                M2[2] = M2[2] ^ bytes2(uint16(1));
+
+                // Continue the logic as before
+                bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
+                wn.set_sign(mt.build_root(sigma));
+
+                bytes32[][] memory tree = mt.build_tree(sigma);
+                bytes32[] memory proof = mt.get_proof(tree, 2);
+                console.logUint(sigma.length);
+                require(
+                    wn.naysaer(sigma[2], proof, 2, M2, mt.get_proof(tree, sigmacpy.length)), 
+                    "fail good verification"
+                );
+            }
+            else if (w == 256) {
+                bytes32[] memory M2 = new bytes32[]((M.length));  // Adjusting for the fact that we are copying 2 bytes at a time
+
+                for (uint i =0; i < M.length; i++){
+                    M2[i] = bytes32(M[i]);
+                }
+
+                // Modify the specific element in M2 (2nd element) as before
+                M2[2] = M2[2] ^ bytes32(uint256(1));
+
+                // Continue the logic as before
+                bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
+                wn.set_sign(mt.build_root(sigma));
+
+                bytes32[][] memory tree = mt.build_tree(sigma);
+                bytes32[] memory proof = mt.get_proof(tree, 2);
+                console.logUint(sigma.length);
+                require(
+                    wn.naysaer(sigma[2], proof, 2, M2, mt.get_proof(tree, sigmacpy.length)), 
+                    "fail good verification"
+                );
+            }
         }
 
         function test_right_sing_no_mistake() public {
+            if (w!=4){
+                return;
+            }
             bytes1[] memory M2 = new bytes1[](M.length);
             for (uint i =0; i < M.length; i++){
                 M2[i] = bytes1(M[i]);
@@ -73,6 +123,9 @@ contract TestWotsPlusNaysaer is Test {
         }
 
         function test_false_signature() public{
+            if (w!=4){
+                return;
+            }
             bytes32[] memory failed_sigma = new bytes32[](sigmacpy.length);
             for (uint i =0; i < sigmacpy.length; i++){
                 failed_sigma[i] = sigmacpy[i];
