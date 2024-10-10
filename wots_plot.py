@@ -32,16 +32,19 @@ def plot_graphs(i_values_dict, file_name):
     for w, (i_values, verify_values) in i_values_dict.items():
         # Use slicing to select every 5th element
         i_values_sliced = i_values[::5]
-        verify_values_sliced = [math.log2(i) for i in verify_values[::5]]
+        verify_values_sliced = [i for i in verify_values[::5]]
         #plt.plot(i_values, verify_values, linestyle='-', label=f'w={w}') # Plot full line
         plt.plot(i_values_sliced, verify_values_sliced, marker=markers[w], linestyle='-', label=f'w={w}') # Plot every 5th dot
     
     
-    plt.xlabel('Hamming weight of M')
-    plt.ylabel('$log_2$(Gas cost)')
-    plt.title('Verefication cost for WOTS+ with w={4, 8, 16, 256}')
+    plt.xlabel('$\\vert\\vert M \\vert\\vert _1$')
+    plt.ylabel('Gas')
+    plt.yscale("log")
+    #plt.ticklabel_format(axis='y', scilimits=[0, 22])
+    #plt.title('Verefication cost for WOTS+ with w={4, 8, 16, 256}')
     plt.legend()
     plt.grid(True)
+    plt.tight_layout()
     plt.show()
 
 def main():

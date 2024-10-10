@@ -50,10 +50,9 @@ def calculate_efficiency_improvement(sum_w1, sum_w2):
 
 def main():
     # File paths for different w values
-    file_path_w8 = '8.csv'
+    file_path_w8 = '256.csv'
     file_path_w16 = '16.csv'
     file_path_w4 = '4.csv'
-    
     # Calculate the sum of verify_values for each w
     sum_w8 = sum_verify_values(file_path_w8)
     sum_w16 = sum_verify_values(file_path_w16)

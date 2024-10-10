@@ -9,7 +9,6 @@ contract TestSphincsPlusNaysayer is Test {
 
     struct NAYSAYER_XMSS_SIG{
         bytes32 wots_pk_hash;
-       // bytes32 xmss_root;
         bytes32[] xmss_auth;
         bytes32[] sig;
         bytes32[] wots_pk;
@@ -107,14 +106,13 @@ contract TestSphincsPlusNaysayer is Test {
             sph.set_sign(mt.build_root(sigma),M);
             uint tree_ind = 1;
             bytes32[][] memory tree = mt.build_tree(sigma);
-
             bytes32[][] memory proofs = new bytes32[][](len);
             for (uint i =0 ; i < len; i++){
                 proofs[i] = mt.get_proof(tree,xmss_f_ind+tree_ind* xmss_len + 1+h/d+len+i);
             }
 
-            bytes32[] memory proof2 = mt.get_proof(tree,xmss_f_ind+tree_ind* xmss_len);
 
+            bytes32[] memory proof2 = mt.get_proof(tree,xmss_f_ind+tree_ind* xmss_len);
             uint m_ind = xmss_f_ind+xmss_len*tree_ind-1;
             bytes32 m = naysayer_sig.sig[tree_ind-1].ht_additional_nodes[h/d];
             bytes32[] memory m_proof =  mt.get_proof(tree,m_ind);
