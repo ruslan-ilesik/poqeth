@@ -17,7 +17,7 @@ contract TestWotsPlusCollect is Test {
     bytes32[] r;
     uint256 k;
     uint256 m = 32; //bytes, can not be changed!
-    uint16 w = 256; 
+    uint16 w = 4; 
     // bits, lets assume it will divisible by 8
     uint256 l1 ;
     uint256 l2;

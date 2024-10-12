@@ -162,6 +162,12 @@ contract XMSSSNaysayer is MerkleTree{
         sig = root;
 
     }
+    
+
+    function set_args(uint8 _w, uint8 _h)public {
+        w = _w;
+        h = _h;
+    }
 
     function concatenateBytes32Arrays(bytes32[][5] memory arrays) public pure returns (bytes32[] memory) {
         // Calculate the total length of the resulting bytes32 array
@@ -249,7 +255,7 @@ contract XMSSSNaysayer is MerkleTree{
         if (!verify_proof(sig, wots_sig_elem, wots_sig_proof, 1+xmss_auth_length+wots_sig_ind) || !verify_proof(sig, wots_pk_elem, wots_pk_proof, 1+xmss_auth_length+wots_sig_length+wots_sig_ind)){
             return false;
         }
-                uint8 n = 32; 
+        uint8 n = 32; 
         uint len_1;
         uint len_2;
         uint length_all;

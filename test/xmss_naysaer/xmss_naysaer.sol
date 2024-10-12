@@ -18,8 +18,8 @@ contract TestXMSSSNaysayer is Test {
     XMSSSNaysayer xmss;
     MerkleTree mt;
     uint h = 20;
-    uint w = 4;
-    bytes32 Mp = 0xfffffffffffffffffffffffffffffffffffffc00000000000000000000000000;
+    uint w = 16;
+    bytes32 Mp = 0xfffffffffffffffffffffffffffffffffffffff0000000000000000000000000;
     uint m = 32; // constant
     uint n = 32; // constant as we just random 256 bit hashes
     //uint a = 8;
@@ -70,6 +70,7 @@ contract TestXMSSSNaysayer is Test {
         adrs.setOTSAddress(uint32(idx));
 
         xmss_sig.sig_ots = WOTS_sign(adrs);
+        xmss.set_args(uint8(w),uint8(h));
 
     }
 
