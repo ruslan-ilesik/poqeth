@@ -510,7 +510,6 @@ contract Sphincs_plus_naysaer is MerkleTree{
                 idx_tree2 = extractBits(idx_tree2, 0, idx_tree_bits);
             }
         }
-    
         uint32 idx = uint32(bytesToBytes4(idx_leaf2));
         adrs.setType(TREE);
         adrs.setTreeIndex(bytes4(idx));

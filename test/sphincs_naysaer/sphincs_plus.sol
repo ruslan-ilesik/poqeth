@@ -54,10 +54,10 @@ contract TestSphincsPlusNaysayer is Test {
     uint n = 32; // constant
     uint m = 32; // constant
     uint w = 4;
-    uint h = 16;
-    uint d = 6;
-    uint a = 25;
-    uint k = 9;
+    uint h = 19;
+    uint d = 9;
+    uint a = 56;
+    uint k = 4;
     bytes32 M = 0xffffffffffffffffffffffffffffffff00000000000000000000000000000000;
     uint t = 2 ** a;
 
@@ -217,10 +217,10 @@ contract TestSphincsPlusNaysayer is Test {
         bytes32[] memory sigma = flattenSPHINCS(naysayer_sig);
         uint xmss_f_ind = 1 + 3 * k+1;
         uint xmss_len = 1+h/d + len+len+h/d+1;
+        uint tree_ind = 0;
+        uint top_ind = 1;
         {
             sph.set_sign(mt.build_root(sigma),M);
-            uint tree_ind = 2;
-            uint top_ind = 1;
             bytes32[][] memory tree = mt.build_tree(sigma);
             uint baseIndex = xmss_f_ind + xmss_len * tree_ind +  1+h/d + len+len;
 
@@ -241,8 +241,6 @@ contract TestSphincsPlusNaysayer is Test {
             require(sph.xmss_naysayer(tree_ind, top_ind, top_node, proof, bottom_node, proof2, auth_node, proof3) == false,"passed proof with no mistake");
         }
         {
-            uint tree_ind = 2;
-            uint top_ind = 1;
             uint baseIndex = xmss_f_ind + xmss_len * tree_ind +  1+h/d + len+len;
             sigma[baseIndex+top_ind] = sigma[baseIndex+top_ind] ^ bytes32(uint(1));
             sph.set_sign(mt.build_root(sigma),M);
