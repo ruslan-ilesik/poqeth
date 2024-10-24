@@ -18,14 +18,15 @@ os.makedirs(output_dir, exist_ok=True)
 csv_file_path = os.path.join(output_dir, 'results.csv')
 
 # The range for each parameter
-h_range = range(1, 20)  # Example range for h
-d_range = range(2, 10)   # Example range for d
-a_range = range(1, 64)   # Example range for a
-k_range = range(1, 64)  # Example range for k
+h_range = range(63, 64)  # Example range for h
+d_range = range(10, 20)   # Example range for d
+a_range = range(12, 100)   # Example range for a
+k_range = range(14, 60)  # Example range for k
 m_value = 32            # Example value for m (you can adjust this as needed)
-
+h_progress = None
 # Function to check the condition
 def check_condition(h, d, a, k, m):
+    #h_progress.write(str((k * a + 7) // 8 + (h - h // d + 7) // 8 + (h // d + 7) // 8))
     return (k * a + 7) // 8 + (h - h // d + 7) // 8 + (h // d + 7) // 8 == m
 
 # Function to modify the Solidity file
@@ -71,6 +72,8 @@ with open(csv_file_path, mode='w', newline='') as csv_file:
                 for k in k_range:
                     k_progress.set_description(f"Processing k={k}")
                     if check_condition(h, d, a, k, m_value) and (h - h // d) > 0 and h > d:
+                        tqdm.write(f"h: {h}, d: {d}, a: {a}, k: {k}")
+                        exit()
                         modify_solidity_file(file_path, h, d, a, k, m_value)
                         
                         # Execute the console command

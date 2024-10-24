@@ -14,6 +14,7 @@ contract ADRS {
 
     bytes4 public keyAndMask;
 
+
     constructor() {
         layerAddress = bytes4(0);
         treeAddress = bytes8(0);
@@ -84,6 +85,8 @@ contract ADRS {
 }
 
 contract XMSS{
+    uint expected_sig_id = 0;
+
     struct PK{
         bytes32 root;
         bytes32 seed;
@@ -110,6 +113,9 @@ contract XMSS{
     uint w;
     uint h;
     function verify(SIG calldata Sig, bytes32 M, uint _w, uint _h) public returns(bool){
+        if (expected_sig_id != Sig.idx_sig){
+            return false;
+        }
         ADRS adrs = new ADRS();
         uint8 n = 32; // len(M) / 2
         h = _h;

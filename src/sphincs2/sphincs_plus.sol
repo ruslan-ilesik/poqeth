@@ -349,7 +349,7 @@ contract Sphincs_plus{
     }
 
     function bytesToBytes4(bytes memory b) public pure returns (bytes4) {
-        require(b.length <= 4, "Bytes array too long to convert to bytes4");
+       // require(b.length <= 4, "Bytes array too long to convert to bytes4");
         bytes4 out;
         if (b.length == 0) {
             return out; // return 0x00000000 if the array is empty
@@ -358,7 +358,11 @@ contract Sphincs_plus{
             out := mload(add(b, 32))
         }
         // If the input is shorter than 4 bytes, shift it to the right
-        return bytes4(uint32(out) << (8 * (4 - b.length)));
+        if (b.length < 4){
+            return bytes4(uint32(out) << (8 * (4 - b.length)));
+        }
+        return out;
+  
     }
 
     function bytesToBytes8(bytes memory b) public pure returns (bytes8) {
