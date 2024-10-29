@@ -65,7 +65,7 @@ set_pk: not found, verify: not found
 
     uint n = 32; // constant
     uint m = 32; // constant
-    uint w = 16;
+    uint w = 4;
     uint h = 63;
     uint d = 10;
     uint a = 12;

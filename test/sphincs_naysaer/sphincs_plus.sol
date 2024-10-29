@@ -54,10 +54,10 @@ contract TestSphincsPlusNaysayer is Test {
     uint n = 32; // constant
     uint m = 32; // constant
     uint w = 4;
-    uint h = 19;
-    uint d = 9;
-    uint a = 56;
-    uint k = 4;
+    uint h = 63;
+    uint d = 10;
+    uint a = 12;
+    uint k = 15;
     bytes32 M = 0xffffffffffffffffffffffffffffffff00000000000000000000000000000000;
     uint t = 2 ** a;
 
@@ -993,7 +993,7 @@ contract TestSphincsPlusNaysayer is Test {
     }
 
     function bytesToBytes4(bytes memory b) public pure returns (bytes4) {
-        require(b.length <= 4, "Bytes array too long to convert to bytes4");
+       // require(b.length <= 4, "Bytes array too long to convert to bytes4");
         bytes4 out;
         if (b.length == 0) {
             return out; // return 0x00000000 if the array is empty
@@ -1002,7 +1002,11 @@ contract TestSphincsPlusNaysayer is Test {
             out := mload(add(b, 32))
         }
         // If the input is shorter than 4 bytes, shift it to the right
-        return bytes4(uint32(out) << (8 * (4 - b.length)));
+        if (b.length < 4){
+            return bytes4(uint32(out) << (8 * (4 - b.length)));
+        }
+        return out;
+  
     }
 
 
