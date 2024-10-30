@@ -228,7 +228,7 @@ contract XMSSSNaysayer is MerkleTree{
         else {  
             adrs.setTreeIndex((uint32(adrs.getTreeIndex()) - 1) / 2);
             hashed = RAND_HASH(auth_node,bottom_node, adrs);
-        }
+        }   
         return top_node != hashed;
     }
 
