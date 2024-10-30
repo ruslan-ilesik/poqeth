@@ -24,8 +24,8 @@ for i, param in enumerate(parameters):
     # Plotting
     axes[i].plot(avg_values.index, avg_values.values, marker='o', color='blue', linestyle='-')
     axes[i].set_xlabel(param)
-    axes[i].set_ylabel('Average Gas')
-    axes[i].set_title(f'Impact of {param} on Average Gas')
+    axes[i].set_ylabel('Gas')
+    #axes[i].set_title(f'{param}')
     axes[i].grid(True)
 
 #plt.tight_layout()
@@ -53,8 +53,8 @@ for i, param in enumerate(parameters):
     # Plotting
     axes[i+1].plot(avg_values.index, avg_values.values, marker='o', color='blue', linestyle='-')
     axes[i+1].set_xlabel(param)
-    axes[i+1].set_ylabel('Average Gas')
-    axes[i+1].set_title(f'Impact of {param} on Average Gas (d = {min_d_value})')
+    axes[i+1].set_ylabel('Gas')
+    axes[i+1].set_title(f'd = {min_d_value}')
     axes[i+1].grid(True)
 
 plt.tight_layout()
