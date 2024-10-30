@@ -40,10 +40,10 @@ if __name__ == '__main__':
     current_dir = os.path.dirname(os.path.abspath(__file__))
     
     # Define the file path for xmss.sol
-    file_path = os.path.join(current_dir, 'xmss.sol')
+    file_path = os.path.join(current_dir, '../../../test/xmss/xmss.sol')
     for w in tqdm([4,16],desc='param w',leave=False):
         for h in tqdm(range(2,21,2),desc='param h',leave=False):
-            with open(f'./xmss_data/w_{w}_h_{h}.csv', 'w', newline='') as csvfile:
+            with open(os.path.join(current_dir,f'./w_{w}_h_{h}.csv'), 'w', newline='') as csvfile:
                 csvwriter = csv.writer(csvfile)
                 # Write the header
                 csvwriter.writerow(['w','h','i', 'hex_value', 'set_pk', 'verify'])

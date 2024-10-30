@@ -123,7 +123,7 @@ def plot_graphs_for_w4_and_w8(data):
 
 
 if __name__ == '__main__':
-    folder_path = './xmss_data'  # Replace with the path to your folder
+    folder_path = os.path.dirname(os.path.realpath(__file__))  # Replace with the path to your folder
     data = read_csv_files(folder_path)
     
     # Extract only the required columns

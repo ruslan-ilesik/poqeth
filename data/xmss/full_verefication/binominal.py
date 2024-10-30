@@ -55,7 +55,8 @@ def weighted_average_verify(file_path, n, p, min_i=100, max_i=156):
 
 def main():
     # Define the folder path
-    folder_path = './xmss_data/'  # Replace with the correct folder path
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    folder_path = os.path.join(script_dir,'')  # Replace with the correct folder path
     n = 256  # Number of trials (based on your description)
     p = 0.5  # Probability of success (e.g., 0.5 for uniform distribution)
 
