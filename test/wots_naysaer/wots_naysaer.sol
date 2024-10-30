@@ -65,6 +65,8 @@ contract TestWotsPlusNaysaer is Test {
             
         }
 
+        
+
         function test_right_sing_no_mistake() public {
             if (w!=4){
                 return;

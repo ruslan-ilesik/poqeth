@@ -53,7 +53,7 @@ contract TestSphincsPlusNaysayer is Test {
 
     uint n = 32; // constant
     uint m = 32; // constant
-    uint w = 4;
+    uint w = 16;
     uint h = 63;
     uint d = 10;
     uint a = 12;

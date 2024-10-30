@@ -36,8 +36,8 @@ def plot_graphs_grouped_by_w(data):
         plt.ylabel('verify')
         plt.title(f'Verification cost vs i for w={w}')
         plt.legend()
-        plt.grid(True)
         plt.tight_layout()
+        plt.grid(True)
         plt.show()
         
         # Identify cheapest and most expensive for this w
@@ -78,13 +78,13 @@ def plot_graphs_for_min_max_h(data):
     
     #plt.title('Verification Cost vs i for min and max h values across all w')
     plt.legend()
-    plt.grid(True)
     plt.tight_layout()
+    plt.grid(True)
     plt.show()
 
 
 def plot_graphs_for_w4_and_w8(data):
-    # Filter the data for w=4 and w=8
+    # Filter the data for w=4 and w=16
     subset_w4 = data[data['w'] == 4]
     subset_w16 = data[data['w'] == 16]
 
@@ -92,29 +92,33 @@ def plot_graphs_for_w4_and_w8(data):
     plt.figure(figsize=(12, 6))
     
     grouped_w4 = subset_w4.groupby('h')
-    markers=['o','v','d','+']
+    markers = ['o', 'v', 'd', '+']
     cnt = 0
     for h, group in grouped_w4:
         plt.plot(group['i'], group['verify'], marker=markers[cnt], linestyle='-', label=f'w=4, h={h}')
-        cnt+=1
-    # Plot for w=8
+        cnt += 1
+
+    # Plot for w=16
     grouped_w16 = subset_w16.groupby('h')
-    markers=['x','D','h','*']
+    markers = ['x', 'D', 'h', '*']
     cnt = 0
     for h, group in grouped_w16:
         plt.plot(group['i'], group['verify'], marker=markers[cnt], linestyle='--', label=f'w=16, h={h}')
-        cnt+=1
+        cnt += 1
 
-    # Set labels and title
+    # Set labels, title, and y-axis scale
     plt.xlabel('$\\vert\\vert M \\vert\\vert _1$')
     plt.ylabel('Gas')
     plt.yscale("log")
     
+    # Enable grid lines on both major and minor ticks
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    
     # Show the legend, grid, and plot
-    plt.legend()
-    plt.grid(True)
+    plt.legend()    
     plt.tight_layout()
     plt.show()
+
 
 
 

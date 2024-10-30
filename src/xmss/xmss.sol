@@ -167,7 +167,7 @@ contract XMSS{
             adrs.setTreeHeight(uint32(k));
             if ( ((Sig.idx_sig / (2**k)) % 2) == 0 ) {
                 adrs.setTreeIndex(uint32(adrs.getTreeIndex()) / 2);
-                node[1] = RAND_HASH(node[0], Sig.auth[k], adrs);
+                node[1] =   (node[0], Sig.auth[k], adrs);
             } 
             else {
                 
