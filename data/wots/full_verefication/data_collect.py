@@ -41,11 +41,11 @@ def replace_w_value_in_file(file_path, new_w_value):
         file.writelines(lines)
 
 
-FILE_PATH = os.path.dirname(os.path.abspath(__file__))+"/wots_plus.sol"
+FILE_PATH = os.path.dirname(os.path.abspath(__file__))+"/../../../test/wots/wots.sol"
 
 for w in tqdm.tqdm([4,8,16,256]):
     replace_w_value_in_file(FILE_PATH, w)
-    with open(f'./wots_regular/{w}.csv', 'w', newline='') as csvfile:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f'{w}.csv'), 'w', newline='') as csvfile:
         csvwriter = csv.writer(csvfile)
         # Write the header
         csvwriter.writerow(['i', 'hex_value', 'set_pk_max', 'verify_value'])
@@ -64,7 +64,7 @@ for w in tqdm.tqdm([4,8,16,256]):
             
 
             # Execute the console command
-            command = ["forge", "test", "--gas-report", "--via-ir", "-vvv", "--match-path", "test/wots+_collect_metrics/wots_plus.sol"]
+            command = ["forge", "test", "--gas-report", "--via-ir", "-vvv", "--match-path", "test/wots/wots.sol"]
             result = subprocess.run(command, capture_output=True, text=True)
 
             output = result.stdout

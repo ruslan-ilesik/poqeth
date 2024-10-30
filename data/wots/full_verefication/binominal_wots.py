@@ -52,8 +52,9 @@ def weighted_average_verify(file_path, n, p):
     return total_weighted_verify / total_probability if total_probability > 0 else 0
 
 def main():
+    script_dir = os.path.dirname(os.path.realpath(__file__))
     # Define the prefix path
-    prefix_path = './wots_naysayer/'  # Replace with the correct folder path
+    prefix_path = os.path.join(script_dir,'')  # Replace with the correct folder path
     n = 256  # For example, WOTS+ uses n = 256
     p = 0.5  # Probability of success (e.g., 0.5 for uniform distribution)
 

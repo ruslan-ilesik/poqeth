@@ -5,7 +5,7 @@ pragma solidity ^0.8.13;
 
 
 import {Test, console} from "forge-std/Test.sol";
-import {WOTSPlus} from "../../src/wots_plus/wots_plus.sol";
+import {WOTSPlus} from "../../src/wots/wots.sol";
 import "forge-std/console.sol";
 
 contract TestWotsPlusCollect is Test {
@@ -35,7 +35,7 @@ contract TestWotsPlusCollect is Test {
         (sk,pk,r,k) = key_gen(n,l,w);
         
 
-        bytes32 hashed_message = hex"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe";
+        bytes32 hashed_message = hex"8000000000000000000000000000000000000000000000000000000000000000";
         //keccak256(abi.encodePacked(message));
         uint256 nhm = uint256(hashed_message);
         M = new bytes32[](l1);

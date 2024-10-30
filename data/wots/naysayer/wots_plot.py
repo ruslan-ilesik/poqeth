@@ -2,6 +2,7 @@ import csv
 import matplotlib.pyplot as plt
 import matplotlib
 import math
+import os
 
 
 
@@ -49,10 +50,11 @@ def plot_graphs(i_values_dict, file_name):
 
 def main():
     i_values_dict = {}
+    script_dir = os.path.dirname(os.path.realpath(__file__))
     
     # Read the data for each value of w
     for w in [4, 8, 16, 256]:
-        file_path = f'./wots_naysayer/{w}.csv'
+        file_path = os.path.join(script_dir,f'/{w}.csv')
         i_values, verify_values = read_csv(file_path)
         i_values_dict[w] = (i_values, verify_values)
     
