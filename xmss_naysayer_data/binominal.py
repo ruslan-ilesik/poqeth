@@ -27,7 +27,7 @@ def weighted_average_verify(file_path, n, p, min_i=100, max_i=156, column_index=
     p (float): Probability of success (e.g., 0.5)
     min_i (int): Minimum i value to consider (e.g., 100)
     max_i (int): Maximum i value to consider (e.g., 156)
-    column_index (int): The index of the column containing the values to average (e.g., 'naysaer_ht')
+    column_index (int): The index of the column containing the values to average (e.g., 'naysayer_ht')
     
     Returns:
     float: Weighted average of values in the specified column
@@ -40,7 +40,7 @@ def weighted_average_verify(file_path, n, p, min_i=100, max_i=156, column_index=
         header = next(csvreader)  # Skip the header row
         for row in csvreader:
             i = int(row[2])  # 'i' is in the third column (index 2)
-            value = int(row[column_index])  # Get the specific column value (e.g., 'naysaer_ht')
+            value = int(row[column_index])  # Get the specific column value (e.g., 'naysayer_ht')
 
             # Only consider rows with i in the range [min_i, max_i]
             if min_i <= i <= max_i:

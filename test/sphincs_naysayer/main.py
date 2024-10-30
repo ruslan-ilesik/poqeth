@@ -53,7 +53,7 @@ def modify_solidity_file(file_path, h, d, a, k, m):
 with open(csv_file_path, mode='w', newline='') as csv_file:
     csv_writer = csv.writer(csv_file)
     # Write the header row
-    csv_writer.writerow(['h', 'd', 'a', 'k', 'set_pk_max', 'naysaer_fors','naysayer_fors_hash','wots_hash_naysayer','wots_naysayer','xmss_naysayer','set_sign'])
+    csv_writer.writerow(['h', 'd', 'a', 'k', 'set_pk_max', 'naysayer_fors','naysayer_fors_hash','wots_hash_naysayer','wots_naysayer','xmss_naysayer','set_sign'])
 
     # Set up progress bars
     h_progress = tqdm(total=len(h_range), desc="Processing h", position=0, leave=True)
@@ -74,13 +74,13 @@ with open(csv_file_path, mode='w', newline='') as csv_file:
                         modify_solidity_file(file_path, h, d, a, k, m_value)
                         
                         # Execute the console command
-                        command = ["forge", "test", "--gas-report", "--via-ir", "-vvv", "--match-path", "test/sphincs_naysaer/sphincs_plus.sol"]
+                        command = ["forge", "test", "--gas-report", "--via-ir", "-vvv", "--match-path", "test/sphincs_naysayer/sphincs_plus.sol"]
                         result = subprocess.run(command, capture_output=True, text=True)
 
                         output = result.stdout
 
                         set_pk_max = re.search(r'set_pk\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
-                        naysaer_fors = re.search(r'naysaer_fors\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
+                        naysayer_fors = re.search(r'naysayer_fors\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
                         naysayer_fors_hash = re.search(r'naysayer_fors_hash\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
                         wots_hash_naysayer = re.search(r'wots_hash_naysayer\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
                         wots_naysayer = re.search(r'wots_naysayer\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
@@ -89,7 +89,7 @@ with open(csv_file_path, mode='w', newline='') as csv_file:
                         
                                                 # Extract values from the command output
                         set_pk_max_value = set_pk_max.group(1) if set_pk_max else 'not found'
-                        naysaer_fors_value = naysaer_fors.group(1) if naysaer_fors else 'not found'
+                        naysayer_fors_value = naysayer_fors.group(1) if naysayer_fors else 'not found'
                         naysayer_fors_hash_value = naysayer_fors_hash.group(1) if naysayer_fors_hash else 'not found'
                         wots_hash_naysayer_value = wots_hash_naysayer.group(1) if wots_hash_naysayer else 'not found'
                         wots_naysayer_value = wots_naysayer.group(1) if wots_naysayer else 'not found'
@@ -97,11 +97,11 @@ with open(csv_file_path, mode='w', newline='') as csv_file:
                         set_sign_value = set_sign.group(1) if set_sign else 'not found'
 
                         # Write the result to the CSV file
-                        csv_writer.writerow([h, d, a, k, set_pk_max_value, naysaer_fors_value, naysayer_fors_hash_value, wots_hash_naysayer_value, wots_naysayer_value, xmss_naysayer_value, set_sign_value])
+                        csv_writer.writerow([h, d, a, k, set_pk_max_value, naysayer_fors_value, naysayer_fors_hash_value, wots_hash_naysayer_value, wots_naysayer_value, xmss_naysayer_value, set_sign_value])
 
                         # Print the result to the terminal
                         h_progress .write(f"h: {h}, d: {d}, a: {a}, k: {k}")
-                        h_progress .write(f"set_pk_max: {set_pk_max_value}, naysaer_fors: {naysaer_fors_value}, naysayer_fors_hash: {naysayer_fors_hash_value}, wots_hash_naysayer: {wots_hash_naysayer_value}")
+                        h_progress .write(f"set_pk_max: {set_pk_max_value}, naysayer_fors: {naysayer_fors_value}, naysayer_fors_hash: {naysayer_fors_hash_value}, wots_hash_naysayer: {wots_hash_naysayer_value}")
                         h_progress .write(f"wots_naysayer: {wots_naysayer_value}, xmss_naysayer: {xmss_naysayer_value}, set_sign: {set_sign_value}")
                         h_progress.write("_________________________________________________________")
                 

@@ -41,11 +41,11 @@ def replace_w_value_in_file(file_path, new_w_value):
         file.writelines(lines)
 
 
-FILE_PATH = os.path.dirname(os.path.abspath(__file__))+"/wots_naysaer.sol"
+FILE_PATH = os.path.dirname(os.path.abspath(__file__))+"/../../../test/wots_naysayer/wots_naysayer.sol"
 
 for w in tqdm.tqdm([4,8,16,256]):
     replace_w_value_in_file(FILE_PATH, w)
-    with open(f'wots_naysayer/{w}.csv', 'w', newline='') as csvfile:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f'{w}.csv'), 'w', newline='') as csvfile:
         csvwriter = csv.writer(csvfile)
         # Write the header
         csvwriter.writerow(['i', 'hex_value', 'set_pk_max', 'verify_value'])
@@ -64,12 +64,12 @@ for w in tqdm.tqdm([4,8,16,256]):
             
 
             # Execute the console command
-            command = ["forge", "test", "--gas-report", "--via-ir", "-vvv", "--match-path", "test/wots_naysaer/wots_naysaer.sol"]
+            command = ["forge", "test", "--gas-report", "--via-ir", "-vvv", "--match-path", "test/wots_naysayer/wots_naysayer.sol"]
             result = subprocess.run(command, capture_output=True, text=True)
 
             output = result.stdout
             set_pk_max = re.search(r'set_pk\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
-            verify_value = re.search(r'naysaer\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
+            verify_value = re.search(r'naysayer\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
             
             # Extract and print the command output
             set_pk_max_value = set_pk_max.group(1) if set_pk_max else 'not found'

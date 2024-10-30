@@ -4,11 +4,11 @@ pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
 import "forge-std/console.sol";
-import {WOTSPlusNaysaer,MerkleTree} from "../../src/wots_naysaer/wots_naysaer.sol";
+import {WOTSPlusnaysayer,MerkleTree} from "../../src/wots_naysayer/wots_naysayer.sol";
 
-contract TestWotsPlusNaysaer is Test {
+contract TestWotsPlusnaysayer is Test {
         MerkleTree mt;
-        WOTSPlusNaysaer wn;
+        WOTSPlusnaysayer wn;
 
         bytes32[] M;
         bytes32[] sigmacpy;
@@ -17,13 +17,13 @@ contract TestWotsPlusNaysaer is Test {
         bytes32[] r;
         uint256 k;
         uint256 m = 32; //bytes, can not be changed!
-        uint16 w = 256;
+        uint16 w = 4;
         uint256 l1 ;
         uint256 l2;
 
         function setUp() public{
         mt = new MerkleTree();
-        wn = new WOTSPlusNaysaer();
+        wn = new WOTSPlusnaysayer();
 
         string memory message = "Hello";
        
@@ -35,7 +35,7 @@ contract TestWotsPlusNaysaer is Test {
         (sk,pk,r,k) = key_gen(n,l,w);
         
 
-        bytes32 hashed_message = hex"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe";
+        bytes32 hashed_message = hex"8000000000000000000000000000000000000000000000000000000000000000";
         //keccak256(abi.encodePacked(message));
         uint256 nhm = uint256(hashed_message);
         M = new bytes32[](l1);
@@ -61,7 +61,7 @@ contract TestWotsPlusNaysaer is Test {
             wn.set_sign(mt.build_root(sigma));
             bytes32[][] memory tree = mt.build_tree(sigma);
             bytes32[] memory proof = mt.get_proof(tree,2);
-            require(wn.naysaer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length),pk[2],mt.get_proof(tree, sigmacpy.length+1+2),r,mt.get_proof(tree, sigmacpy.length*2+1)), "fail good verefication");
+            require(wn.naysayer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length),pk[2],mt.get_proof(tree, sigmacpy.length+1+2),r,mt.get_proof(tree, sigmacpy.length*2+1)), "fail good verefication");
             
         }
 
@@ -81,7 +81,7 @@ contract TestWotsPlusNaysaer is Test {
             wn.set_sign(mt.build_root(sigma));
             bytes32[][] memory tree = mt.build_tree(sigma);
             bytes32[] memory proof = mt.get_proof(tree,2);
-            require(wn.naysaer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length),pk[2],mt.get_proof(tree, sigmacpy.length+1+2),r,mt.get_proof(tree, sigmacpy.length*2+1)) == false, "fail good sig and no miustake verefication");
+            require(wn.naysayer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length),pk[2],mt.get_proof(tree, sigmacpy.length+1+2),r,mt.get_proof(tree, sigmacpy.length*2+1)) == false, "fail good sig and no miustake verefication");
         }
 
         function test_false_signature() public{
@@ -106,7 +106,7 @@ contract TestWotsPlusNaysaer is Test {
             
             bytes32[][] memory tree = mt.build_tree(sigma);
             bytes32[] memory proof = mt.get_proof(tree,2);
-            require(wn.naysaer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length),pk[2],mt.get_proof(tree, sigmacpy.length+1+2),r,mt.get_proof(tree, sigmacpy.length*2+1)) == false, "failed to fail failing verefication");
+            require(wn.naysayer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length),pk[2],mt.get_proof(tree, sigmacpy.length+1+2),r,mt.get_proof(tree, sigmacpy.length*2+1)) == false, "failed to fail failing verefication");
         }
 
 

@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/console.sol";
 import "../merkle_tree.sol";
 
-contract WOTSPlusNaysaer is MerkleTree {
+contract WOTSPlusnaysayer is MerkleTree {
 
 
     uint256 k;
@@ -28,7 +28,7 @@ contract WOTSPlusNaysaer is MerkleTree {
 
 
     //returns true if naysayer proof accepted, false otherwise (incorrect data or no actuall mistake)
-    function naysaer(bytes32 sign_leaf, bytes32[] memory proof, uint256 index, bytes1[] memory M, bytes32[] memory M_proof, bytes32 pki, bytes32[] memory pki_proof, bytes32[] calldata r, bytes32[] memory r_proof) public returns (bool){
+    function naysayer(bytes32 sign_leaf, bytes32[] memory proof, uint256 index, bytes1[] memory M, bytes32[] memory M_proof, bytes32 pki, bytes32[] memory pki_proof, bytes32[] calldata r, bytes32[] memory r_proof) public returns (bool){
         if (!verify_proof(sign,sign_leaf,proof,index)){
             return false;
         }

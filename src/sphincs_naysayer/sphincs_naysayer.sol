@@ -101,7 +101,7 @@ contract ADRS {
 }
 
 
-contract Sphincs_plus_naysaer is MerkleTree{
+contract Sphincs_plus_naysayer is MerkleTree{
     uint n;
     uint w;
     uint h;
@@ -544,7 +544,7 @@ contract Sphincs_plus_naysaer is MerkleTree{
 
 
 
-    function naysaer_fors( uint fors_ind, bytes32 fors_sk,bytes32[] memory fors_sk_proof, bytes32[] memory fors_proof, bytes32[] memory fors_proof_proof, bytes32 fors_root, bytes32[] memory fors_root_proof) public returns(bool){
+    function naysayer_fors( uint fors_ind, bytes32 fors_sk,bytes32[] memory fors_sk_proof, bytes32[] memory fors_proof, bytes32[] memory fors_proof_proof, bytes32 fors_root, bytes32[] memory fors_root_proof) public returns(bool){
         if (!verify_proof(sig, fors_sk, fors_sk_proof, 1+fors_ind*3) || !verify_proof(sig, keccak256(abi.encodePacked(fors_proof)), fors_proof_proof, 1+fors_ind*3+1) || !verify_proof(sig,fors_root,fors_root_proof,1+fors_ind*3+2)){
             return false;
         }

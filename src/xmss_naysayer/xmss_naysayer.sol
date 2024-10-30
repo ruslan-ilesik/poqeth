@@ -203,7 +203,7 @@ contract XMSSSNaysayer is MerkleTree{
         wots_pk_length = wots_pk_l;
     }
     
-    function naysaer_ht(uint top_node_ind, bytes32 top_node, bytes32[] memory top_node_proof,  bytes32 bottom_node, bytes32[] memory bottom_node_proof,bytes32 auth_node, bytes32[] memory auth_node_proof ) public returns (bool){
+    function naysayer_ht(uint top_node_ind, bytes32 top_node, bytes32[] memory top_node_proof,  bytes32 bottom_node, bytes32[] memory bottom_node_proof,bytes32 auth_node, bytes32[] memory auth_node_proof ) public returns (bool){
         if (!verify_proof(sig, top_node, top_node_proof, 1+xmss_auth_length +wots_sig_length+wots_pk_length+top_node_ind) || !verify_proof(sig, bottom_node, bottom_node_proof, 1+xmss_auth_length +wots_sig_length+wots_pk_length+top_node_ind-1) || !verify_proof(sig, auth_node, auth_node_proof, 1+top_node_ind-1)){
             return false;
         }
@@ -232,7 +232,7 @@ contract XMSSSNaysayer is MerkleTree{
         return top_node != hashed;
     }
 
-    function naysaer_ltree(bytes32[] memory wots_pk, bytes32[] memory wots_pk_proof, bytes32 ltree_result, bytes32[] memory ltree_result_proof) public returns(bool){
+    function naysayer_ltree(bytes32[] memory wots_pk, bytes32[] memory wots_pk_proof, bytes32 ltree_result, bytes32[] memory ltree_result_proof) public returns(bool){
         bytes32 wots_hash = keccak256(abi.encodePacked(wots_pk));
         if (!verify_proof(sig, wots_hash, wots_pk_proof, 0) || !verify_proof(sig, ltree_result, ltree_result_proof, 1+xmss_auth_length +wots_sig_length+wots_pk_length)){
             return false;
@@ -248,7 +248,7 @@ contract XMSSSNaysayer is MerkleTree{
     }
 
 
-    function naysaer_wots(uint wots_sig_ind, bytes32 wots_sig_elem, bytes32[] memory wots_sig_proof, 
+    function naysayer_wots(uint wots_sig_ind, bytes32 wots_sig_elem, bytes32[] memory wots_sig_proof, 
                 bytes32 wots_pk_elem, bytes32[] memory wots_pk_proof
     ) public returns(bool){
 

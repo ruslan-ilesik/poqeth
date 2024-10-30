@@ -2,7 +2,7 @@ pragma solidity ^0.8.26;
 
 import {Test, console} from "forge-std/Test.sol";
 import "forge-std/console.sol";
-import {Sphincs_plus_naysaer, ADRS,MerkleTree} from "../../src/sphincs_naysaer/sphincs_naysaer.sol";
+import {Sphincs_plus_naysayer, ADRS,MerkleTree} from "../../src/sphincs_naysayer/sphincs_naysayer.sol";
 
 
 contract TestSphincsPlusNaysayer is Test {
@@ -66,17 +66,17 @@ contract TestSphincsPlusNaysayer is Test {
     uint len;
 
     SPHINCS_SK sphincs_sk;
-    Sphincs_plus_naysaer.SPHINCS_PK sphincs_pk;
-    Sphincs_plus_naysaer.SPHINCS_SIG sphincs_sig;
+    Sphincs_plus_naysayer.SPHINCS_PK sphincs_pk;
+    Sphincs_plus_naysayer.SPHINCS_SIG sphincs_sig;
     MerkleTree mt;
 
 
     NAYSAYER_SPHINCS_SIG naysayer_sig;
 
-    Sphincs_plus_naysaer sph;
+    Sphincs_plus_naysayer sph;
     function setUp()public{
         mt = new MerkleTree();
-        sph = new Sphincs_plus_naysaer();
+        sph = new Sphincs_plus_naysayer();
         len1 = (n) / log2(w) + ((n) % log2(w) == 0 ? 0 : 1);
         len2 = (log2(len1 * (w - 1)) / log2(w)) + 1;
         len = len1 + len2;
@@ -279,11 +279,11 @@ contract TestSphincsPlusNaysayer is Test {
             bytes32[] memory proof3 = mt.get_proof(tree,1+1*3+2);
 
             //test only verefication path
-            //require(sph.naysaer_fors(1,naysayer_sig.fors_sig.sig[1].sk,proof,naysayer_fors_proofs[1],proof2,naysayer_sig.fors_sig.sig[1].root,proof3),"failed good argument for verefication path");
-            //require(sph.naysaer_fors(1,naysayer_sig.fors_sig.sig[1].sk,proof,naysayer_fors_proofs[2],proof2,naysayer_sig.fors_sig.sig[1].root,proof3) == false,"passed bad argument for verefication path");
+            //require(sph.naysayer_fors(1,naysayer_sig.fors_sig.sig[1].sk,proof,naysayer_fors_proofs[1],proof2,naysayer_sig.fors_sig.sig[1].root,proof3),"failed good argument for verefication path");
+            //require(sph.naysayer_fors(1,naysayer_sig.fors_sig.sig[1].sk,proof,naysayer_fors_proofs[2],proof2,naysayer_sig.fors_sig.sig[1].root,proof3) == false,"passed bad argument for verefication path");
 
             
-            require(sph.naysaer_fors(1,naysayer_sig.fors_sig.sig[1].sk,proof,naysayer_fors_proofs[1],proof2,naysayer_sig.fors_sig.sig[1].root,proof3) == false,"passed bad proof where there is no mistakes");
+            require(sph.naysayer_fors(1,naysayer_sig.fors_sig.sig[1].sk,proof,naysayer_fors_proofs[1],proof2,naysayer_sig.fors_sig.sig[1].root,proof3) == false,"passed bad proof where there is no mistakes");
             
         }
         {
@@ -295,7 +295,7 @@ contract TestSphincsPlusNaysayer is Test {
             bytes32[] memory proof2 = mt.get_proof(tree,1+1*3+1);
             bytes32[] memory proof3 = mt.get_proof(tree,1+1*3+2);
 
-            require(sph.naysaer_fors(1,naysayer_sig.fors_sig.sig[1].sk,proof,naysayer_fors_proofs[1],proof2,sigma[1+1*3+2],proof3),"failed good proof");
+            require(sph.naysayer_fors(1,naysayer_sig.fors_sig.sig[1].sk,proof,naysayer_fors_proofs[1],proof2,sigma[1+1*3+2],proof3),"failed good proof");
             sigma[1+1*3+2] = sigma[1+1*3+2]^bytes32(uint(1));
         }
     }
@@ -346,10 +346,10 @@ contract TestSphincsPlusNaysayer is Test {
     }
 
 
- function verify_parts_assign(bytes32 M, Sphincs_plus_naysaer.SPHINCS_SIG memory SIG)public returns (bool){
+ function verify_parts_assign(bytes32 M, Sphincs_plus_naysayer.SPHINCS_SIG memory SIG)public returns (bool){
         ADRS adrs = new ADRS();
         bytes32 R = SIG.r;
-        Sphincs_plus_naysaer.FORS_SIG memory SIG_FORS = SIG.fors_sig;
+        Sphincs_plus_naysayer.FORS_SIG memory SIG_FORS = SIG.fors_sig;
         //HT_SIG memory SIG_HT = SIG.ht_sig;
 
 
@@ -393,7 +393,7 @@ contract TestSphincsPlusNaysayer is Test {
         fors_pkFromSig_parts_assign(SIG_FORS,md,sphincs_pk.seed,adrs);
     }
 
-    function fors_pkFromSig_parts_assign(Sphincs_plus_naysaer.FORS_SIG memory SIG_FORS, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
+    function fors_pkFromSig_parts_assign(Sphincs_plus_naysayer.FORS_SIG memory SIG_FORS, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
         bytes32[2] memory  node;
         bytes32[] memory root = new bytes32[](k);
         for(uint i = 0; i < k; i++){
@@ -552,22 +552,22 @@ contract TestSphincsPlusNaysayer is Test {
 
         //console.logBytes32(PK_FORS);
         adrs.setType(TREE);
-        Sphincs_plus_naysaer.HT_SIG memory SIG_HT = ht_sign(PK_FORS,sphincs_sk.SKseed,sphincs_sk.PKseed,  uint64(bytesToBytes8(idx_tree)),uint32(bytesToBytes4(idx_leaf)));
+        Sphincs_plus_naysayer.HT_SIG memory SIG_HT = ht_sign(PK_FORS,sphincs_sk.SKseed,sphincs_sk.PKseed,  uint64(bytesToBytes8(idx_tree)),uint32(bytesToBytes4(idx_leaf)));
         sphincs_sig.ht_sig = SIG_HT;
     }
 
     NAYSAYER_XMSS_SIG[] xmssnsig;
     uint xmssn_sig_ind = 0;
 
-    function ht_sign(bytes32 M, bytes32 SKseed, bytes32 PKseed, uint64 idx_tree, uint32 idx_leaf)public returns(Sphincs_plus_naysaer.HT_SIG memory){
-        Sphincs_plus_naysaer.HT_SIG memory SIG_HT = Sphincs_plus_naysaer.HT_SIG(new Sphincs_plus_naysaer.XMSS_SIG[](d));
+    function ht_sign(bytes32 M, bytes32 SKseed, bytes32 PKseed, uint64 idx_tree, uint32 idx_leaf)public returns(Sphincs_plus_naysayer.HT_SIG memory){
+        Sphincs_plus_naysayer.HT_SIG memory SIG_HT = Sphincs_plus_naysayer.HT_SIG(new Sphincs_plus_naysayer.XMSS_SIG[](d));
         xmssnsig = new NAYSAYER_XMSS_SIG[](d);
         ADRS adrs = new ADRS();
         adrs.setLayerAddress(0);
         adrs.setTreeAddress(bytes8(idx_tree));
         uint256 idx_tree_bits = h - h / d;
         uint256 idx_leaf_bits = h / d;
-        Sphincs_plus_naysaer.XMSS_SIG memory SIG_tmp = xmss_sign(M,SKseed,idx_leaf,PKseed,adrs);
+        Sphincs_plus_naysayer.XMSS_SIG memory SIG_tmp = xmss_sign(M,SKseed,idx_leaf,PKseed,adrs);
         SIG_HT.sig[0] = SIG_tmp;
         bytes32 root = xmss_pkFromSig(idx_leaf, SIG_tmp, M, PKseed, adrs);
         //xmssnsig[0].xmss_root = root;
@@ -609,7 +609,7 @@ contract TestSphincsPlusNaysayer is Test {
         return SIG_HT;
     }
 
-    function xmss_pkFromSig(uint32 idx, Sphincs_plus_naysaer.XMSS_SIG memory SIG_XMSS, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
+    function xmss_pkFromSig(uint32 idx, Sphincs_plus_naysayer.XMSS_SIG memory SIG_XMSS, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
     adrs.setType(WOTS_HASH);
     //console.logUint(idx);
     adrs.setKeyPairAddress(bytes4(idx));
@@ -669,7 +669,7 @@ contract TestSphincsPlusNaysayer is Test {
         return pk;
     }
 
-    function xmss_sign(bytes32 M, bytes32 SKseed, uint32 idx, bytes32 PKseed, ADRS adrs)public returns(Sphincs_plus_naysaer.XMSS_SIG memory){
+    function xmss_sign(bytes32 M, bytes32 SKseed, uint32 idx, bytes32 PKseed, ADRS adrs)public returns(Sphincs_plus_naysayer.XMSS_SIG memory){
         bytes32[] memory AUTH = new bytes32[](h/d);
         for (uint j = 0; j < h/d; j++ ) {
             AUTH[j] = treehash(k*(2**j),j, adrs);
@@ -677,7 +677,7 @@ contract TestSphincsPlusNaysayer is Test {
         adrs.setType(WOTS_HASH);
         adrs.setKeyPairAddress(bytes4(idx));
         bytes32[] memory sig = wots_sign(M,SKseed,PKseed,adrs);
-        Sphincs_plus_naysaer.XMSS_SIG memory xmss_sig = Sphincs_plus_naysaer.XMSS_SIG(sig,AUTH);
+        Sphincs_plus_naysayer.XMSS_SIG memory xmss_sig = Sphincs_plus_naysayer.XMSS_SIG(sig,AUTH);
         return xmss_sig;
     } 
 
@@ -715,7 +715,7 @@ contract TestSphincsPlusNaysayer is Test {
         return sig;
     }
 
-    function fors_pkFromSig(Sphincs_plus_naysaer.FORS_SIG memory SIG_FORS, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
+    function fors_pkFromSig(Sphincs_plus_naysayer.FORS_SIG memory SIG_FORS, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
         bytes32[2] memory  node;
         bytes32[] memory root = new bytes32[](k);
         for(uint i = 0; i < k; i++){
@@ -750,8 +750,8 @@ contract TestSphincsPlusNaysayer is Test {
         return pk;
     }
 
-    function fors_sign( bytes memory M, bytes32 SKseed, bytes32 PKseed, ADRS adrs) public returns (Sphincs_plus_naysaer.FORS_SIG memory){
-        Sphincs_plus_naysaer.FORS_SIG memory sig = Sphincs_plus_naysaer.FORS_SIG(new Sphincs_plus_naysaer.FORS_SIG_INNER[](k));
+    function fors_sign( bytes memory M, bytes32 SKseed, bytes32 PKseed, ADRS adrs) public returns (Sphincs_plus_naysayer.FORS_SIG memory){
+        Sphincs_plus_naysayer.FORS_SIG memory sig = Sphincs_plus_naysayer.FORS_SIG(new Sphincs_plus_naysayer.FORS_SIG_INNER[](k));
         NAYSAYER_FORS_SIG memory nsig = NAYSAYER_FORS_SIG(new NAYSAYER_FORS_SIG_INNER[](k),0);
         naysayer_fors_proofs = new bytes32[][](k);
         for(uint i = 0; i < k; i++){
@@ -763,7 +763,7 @@ contract TestSphincsPlusNaysayer is Test {
                 uint s = (idx/ (2**j)) ^ 1;
                 auth[j] = fors_treehash(SKseed, i * t + s * 2**j, j, PKseed, adrs);
             }
-            sig.sig[i] = Sphincs_plus_naysaer.FORS_SIG_INNER(sk,auth);
+            sig.sig[i] = Sphincs_plus_naysayer.FORS_SIG_INNER(sk,auth);
             nsig.sig[i] = NAYSAYER_FORS_SIG_INNER(sk,keccak256(abi.encodePacked(auth)),0); //3rd value should be defined later
             naysayer_fors_proofs[i] = auth;
         }
