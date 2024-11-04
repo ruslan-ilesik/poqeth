@@ -2,7 +2,7 @@ pragma solidity ^0.8.26;
 
 import {Test, console} from "forge-std/Test.sol";
 import "forge-std/console.sol";
-import {Sphincs_plus, ADRS} from "../../src/sphincs/sphincs.sol";
+import {SphincsPlus, ADRS} from "../../src/sphincs/sphincs.sol";
 
 
 contract TestSphincsPlus is Test {
@@ -16,12 +16,12 @@ contract TestSphincsPlus is Test {
     }
 
     uint32 WOTSHASH = 0;
-    uint32 wotsPk = 1;
+    uint32 WOTSPK = 1;
     uint32 TREE = 2;
-    uint32 FORS_TREE = 3;
-    uint32 forsRootS = 4;
-    uint32 WOTS_PRF = 5;
-    uint32 FORS_PRF = 6;
+    uint32 FORSTREE = 3;
+    uint32 FORSROOT = 4;
+    uint32 WOTSPRF = 5;
+    uint32 FORSPRF = 6;
 
 
     uint n = 32; // constant
@@ -39,12 +39,12 @@ contract TestSphincsPlus is Test {
     uint len;
 
     SphincsSk sphincsSk;
-    Sphincs_plus.SphincsPk sphincsPk;
-    Sphincs_plus.SphincsSig sphincsSig;
+    SphincsPlus.SphincsPk sphincsPk;
+    SphincsPlus.SphincsSig sphincsSig;
 
-    Sphincs_plus sph;
+    SphincsPlus sph;
     function setUp()public{
-        sph = new Sphincs_plus();
+        sph = new SphincsPlus();
         len1 = (n) / log2(w) + ((n) % log2(w) == 0 ? 0 : 1);
         len2 = (log2(len1 * (w - 1)) / log2(w)) + 1;
         len = len1 + len2;
@@ -62,7 +62,7 @@ contract TestSphincsPlus is Test {
         spxSign();
     }
 
-    function test_sphincs()public{
+    function testSphincs()public{
         sph.setParams(n, w, h, d, k, a, t);
         sph.setPk(sphincsPk);
         require(sph.verify(M, sphincsSig),"verefication failed");
@@ -106,7 +106,7 @@ contract TestSphincsPlus is Test {
         bytes memory idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeafBits);
         
 
-        adrs.setType(FORS_TREE);
+        adrs.setType(FORSTREE);
         adrs.setLayerAddress(0);
         adrs.setTreeAddress(bytesToBytes8(idxTree));
         adrs.setKeyPairAddress(bytesToBytes4(idxLeaf));
@@ -115,18 +115,18 @@ contract TestSphincsPlus is Test {
 
         //console.logBytes32(pkFors);
         adrs.setType(TREE);
-        Sphincs_plus.HtSig memory sigHt = htSign(pkFors,sphincsSk.SKseed,sphincsSk.PKseed,  uint64(bytesToBytes8(idxTree)),uint32(bytesToBytes4(idxLeaf)));
+        SphincsPlus.HtSig memory sigHt = htSign(pkFors,sphincsSk.SKseed,sphincsSk.PKseed,  uint64(bytesToBytes8(idxTree)),uint32(bytesToBytes4(idxLeaf)));
         sphincsSig.htSig = sigHt;
     }
 
-    function htSign(bytes32 M, bytes32 SKseed, bytes32 PKseed, uint64 idxTree, uint32 idxLeaf)public returns(Sphincs_plus.HtSig memory){
-        Sphincs_plus.HtSig memory sigHt = Sphincs_plus.HtSig(new Sphincs_plus.XmssSig[](d));
+    function htSign(bytes32 M, bytes32 SKseed, bytes32 PKseed, uint64 idxTree, uint32 idxLeaf)public returns(SphincsPlus.HtSig memory){
+        SphincsPlus.HtSig memory sigHt = SphincsPlus.HtSig(new SphincsPlus.XmssSig[](d));
         ADRS adrs = new ADRS();
         adrs.setLayerAddress(0);
         adrs.setTreeAddress(bytes8(idxTree));
         uint256 idxTreeBits = h - h / d;
         uint256 idxLeafBits = h / d;
-        Sphincs_plus.XmssSig memory SigTmp = xmssSign(M,SKseed,idxLeaf,PKseed,adrs);
+        SphincsPlus.XmssSig memory SigTmp = xmssSign(M,SKseed,idxLeaf,PKseed,adrs);
         sigHt.sig[0] = SigTmp;
         bytes32 root = xmssPkFromSig(idxLeaf, SigTmp, M, PKseed, adrs);
         //console.logBytes32(root);
@@ -160,7 +160,7 @@ contract TestSphincsPlus is Test {
         return sigHt;
     }
 
-    function xmssPkFromSig(uint32 idx, Sphincs_plus.XmssSig memory sigXmss, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
+    function xmssPkFromSig(uint32 idx, SphincsPlus.XmssSig memory sigXmss, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
     adrs.setType(WOTSHASH);
     adrs.setKeyPairAddress(bytes4(idx));
     bytes32[] memory sig = sigXmss.sig;
@@ -205,22 +205,22 @@ contract TestSphincsPlus is Test {
             tmp[i] = chain(sig[i], uint(msg2[i-len1]), w - 1 - uint(msg2[i-len1]),PKseed, adrs);
           }
         }
-        wotspkADRS.setType(wotsPk);
+        wotspkADRS.setType(WOTSPK);
         wotspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
         bytes32 pk = keccak256(abi.encodePacked(PKseed,wotspkADRS.toBytes(),tmp));
         return pk;
     }
 
-    function xmssSign(bytes32 M, bytes32 SKseed, uint32 idx, bytes32 PKseed, ADRS adrs)public returns(Sphincs_plus.XmssSig memory){
+    function xmssSign(bytes32 M, bytes32 SKseed, uint32 idx, bytes32 PKseed, ADRS adrs)public returns(SphincsPlus.XmssSig memory){
         bytes32[] memory AUTH = new bytes32[](h/d);
         for (uint j = 0; j < h/d; j++ ) {
-    uint k = 60;
+            uint k = 60;
             AUTH[j] = treehash(k*(2**j),j, adrs);
         }
         adrs.setType(WOTSHASH);
         adrs.setKeyPairAddress(bytes4(idx));
         bytes32[] memory sig = wotsSign(M,SKseed,PKseed,adrs);
-        Sphincs_plus.XmssSig memory xmssSig = Sphincs_plus.XmssSig(sig,AUTH);
+        SphincsPlus.XmssSig memory xmssSig = SphincsPlus.XmssSig(sig,AUTH);
         return xmssSig;
     } 
 
@@ -238,7 +238,7 @@ contract TestSphincsPlus is Test {
         bytes32[] memory msg2 = baseW(toByte(csum, len2Bytes), len2);
         ADRS skADRS = new ADRS();
         skADRS.fillFrom(adrs);
-        skADRS.setType(WOTS_PRF);
+        skADRS.setType(WOTSPRF);
         skADRS.setKeyPairAddress(adrs.getKeyPairAddress());
 
         bytes32[] memory sig = new bytes32[](len);
@@ -258,7 +258,7 @@ contract TestSphincsPlus is Test {
         return sig;
     }
 
-    function forsPkFromSig(Sphincs_plus.ForsSig memory sigFors, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
+    function forsPkFromSig(SphincsPlus.ForsSig memory sigFors, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
         bytes32[2] memory  node;
         bytes32[] memory root = new bytes32[](k);
         for(uint i = 0; i < k; i++){
@@ -287,14 +287,14 @@ contract TestSphincsPlus is Test {
 
         ADRS forspkADRS = new ADRS();
         forspkADRS.fillFrom(adrs);
-        forspkADRS.setType(forsRootS);
+        forspkADRS.setType(FORSROOT);
         forspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
         bytes32 pk = keccak256(abi.encodePacked(PKseed,forspkADRS.toBytes(),root));
         return pk;
     }
 
-    function forsSign( bytes memory M, bytes32 SKseed, bytes32 PKseed, ADRS adrs) public returns (Sphincs_plus.ForsSig memory){
-        Sphincs_plus.ForsSig memory sig = Sphincs_plus.ForsSig(new Sphincs_plus.ForsSigInner[](k));
+    function forsSign( bytes memory M, bytes32 SKseed, bytes32 PKseed, ADRS adrs) public returns (SphincsPlus.ForsSig memory){
+        SphincsPlus.ForsSig memory sig = SphincsPlus.ForsSig(new SphincsPlus.ForsSigInner[](k));
         for(uint i = 0; i < k; i++){
             uint idx = bytesToUint256(extractBits(M, i*a, (i+1)*a - i*a));
             bytes32 sk = forsSkgen(SKseed, adrs, i*t + idx) ;
@@ -304,7 +304,7 @@ contract TestSphincsPlus is Test {
                 uint s = (idx/ (2**j)) ^ 1;
                 auth[j] = forsTreehash(SKseed, i * t + s * 2**j, j, PKseed, adrs);
             }
-            sig.sig[i] = Sphincs_plus.ForsSigInner(sk,auth);
+            sig.sig[i] = SphincsPlus.ForsSigInner(sk,auth);
         }
         return sig;
     }
@@ -328,7 +328,7 @@ contract TestSphincsPlus is Test {
     function forsSkgen(bytes32 SKseed, ADRS adrs, uint idx)public returns (bytes32){
         ADRS skADRS = new ADRS();
         skADRS.fillFrom(adrs);
-        skADRS.setType(FORS_PRF);
+        skADRS.setType(FORSPRF);
         skADRS.setKeyPairAddress(adrs.getKeyPairAddress());
         skADRS.setTreeHeight(0);
         skADRS.setTreeIndex(bytes4(uint32(idx)));
@@ -388,7 +388,7 @@ contract TestSphincsPlus is Test {
         wotspkADRS.fillFrom(adrs);
         ADRS skADRS = new ADRS();
         skADRS.fillFrom(adrs);
-        skADRS.setType(WOTS_PRF);
+        skADRS.setType(WOTSPRF);
         skADRS.setKeyPairAddress(adrs.getKeyPairAddress());
         bytes32[] memory sk = new bytes32[](len);
         bytes32[] memory tmp = new bytes32[](len);
@@ -400,7 +400,7 @@ contract TestSphincsPlus is Test {
             adrs.setHashAddress(0);
             tmp[i] = chain(sk[i], 0, w - 1,  sphincsPk.seed, adrs);
         }
-        wotspkADRS.setType(wotsPk);
+        wotspkADRS.setType(WOTSPK);
         wotspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
 
         return keccak256(abi.encodePacked(sphincsPk.seed,wotspkADRS.toBytes(), tmp));

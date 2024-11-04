@@ -100,7 +100,7 @@ contract ADRS {
 }
 
 
-contract Sphincs_plus{
+contract SphincsPlus{
     uint n;
     uint w;
     uint h;
@@ -253,10 +253,10 @@ contract Sphincs_plus{
         //console.logBytes32(pkFors);
 
         adrs.setType(TREE);
-        return ht_verify(pkFors, sigHt, pk.seed, bytesToBytes8(idxTree), bytesToBytes4(idxLeaf), pk.root);
+        return htVerify(pkFors, sigHt, pk.seed, bytesToBytes8(idxTree), bytesToBytes4(idxLeaf), pk.root);
     }
 
-    function ht_verify(bytes32 M, HtSig memory sigHt, bytes32 PKseed,bytes8 idxTree, bytes4 idxLeaf,bytes32 PK_HT )public returns(bool){
+    function htVerify(bytes32 M, HtSig memory sigHt, bytes32 PKseed,bytes8 idxTree, bytes4 idxLeaf,bytes32 pkHt )public returns(bool){
         ADRS adrs = new ADRS();
         XmssSig memory SigTmp = sigHt.sig[0];
         adrs.setLayerAddress(0);
@@ -292,11 +292,11 @@ contract Sphincs_plus{
         }
        // console.log();
 
-        //console.logBytes32(PK_HT);
-        return PK_HT == node;
+        //console.logBytes32(pkHt);
+        return pkHt == node;
     }
 
-    function xmssPkFromSig(uint32 idx, Sphincs_plus.XmssSig memory sigXmss, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
+    function xmssPkFromSig(uint32 idx, SphincsPlus.XmssSig memory sigXmss, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
         adrs.setType(WOTSHASH);
         adrs.setKeyPairAddress(bytes4(idx));
         bytes32[] memory sig = sigXmss.sig;
