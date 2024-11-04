@@ -46,13 +46,13 @@ contract TestWotsPlusCollect is Test {
         sigma = sign(w,k,l1,l2,M,sk,r);
     }
 
-    function test_set_key() public{
+    function testSetKey() public{
          wots.setPk(keccak256(abi.encodePacked(r,k,pk)));
-         wots.set_w(w);
+         wots.setW(w);
     }
 
     function testWots() public {
-        wots.set_w(w);
+        wots.setW(w);
         wots.setPk(keccak256(abi.encodePacked(r,k,pk)));
         assertTrue(wots.verify(M, sigma,pk,r,k));
     }
@@ -86,7 +86,7 @@ contract TestWotsPlusCollect is Test {
         return (sk,pk,r,k);
     }
 
-    function sign(uint256 w, uint256 k, uint256 l1, uint256 l2, bytes32[] memory M, bytes32[] memory sk, bytes32[] memory r) public view returns (bytes32[] memory sigma) {
+    function sign(uint256 w, uint256 k, uint256 l1, uint256 l2, bytes32[] memory M, bytes32[] memory sk, bytes32[] memory r) public pure returns (bytes32[] memory sigma) {
         uint256 checksum = 0;
         for (uint256 i = 0; i < l1; i++) {
             checksum += (w - 1 - uint256(M[i]));

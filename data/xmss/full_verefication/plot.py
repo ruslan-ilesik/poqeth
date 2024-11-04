@@ -85,13 +85,13 @@ def plot_graphs_for_min_max_h(data):
 
 def plot_graphs_for_w4_and_w8(data):
     # Filter the data for w=4 and w=16
-    subset_w4 = data[data['w'] == 4]
-    subset_w16 = data[data['w'] == 16]
+    subsetW4 = data[data['w'] == 4]
+    subsetW16 = data[data['w'] == 16]
 
     # Plot for w=4
     plt.figure(figsize=(12, 6))
     
-    grouped_w4 = subset_w4.groupby('h')
+    grouped_w4 = subsetW4.groupby('h')
     markers = ['o', 'v', 'd', '+']
     cnt = 0
     for h, group in grouped_w4:
@@ -99,7 +99,7 @@ def plot_graphs_for_w4_and_w8(data):
         cnt += 1
 
     # Plot for w=16
-    grouped_w16 = subset_w16.groupby('h')
+    grouped_w16 = subsetW16.groupby('h')
     markers = ['x', 'D', 'h', '*']
     cnt = 0
     for h, group in grouped_w16:

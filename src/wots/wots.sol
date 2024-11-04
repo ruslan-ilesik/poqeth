@@ -15,7 +15,7 @@ contract WOTSPlus {
         hashed = h;
     }
 
-    function set_w(uint16 _w)public{
+    function setW(uint16 _w)public{
         w=_w;
     }
 
