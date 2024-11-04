@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
 import "forge-std/console.sol";
-import {WOTSPlusnaysayer,MerkleTree} from "../../src/wots_naysayer/wots_naysayer.sol";
+import {WOTSPlusnaysayer,MerkleTree} from "../../src/wotsNaysayer/wotsNaysayer.sol";
 
 contract TestWotsPlusnaysayer is Test {
         MerkleTree mt;

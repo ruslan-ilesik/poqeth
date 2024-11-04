@@ -259,10 +259,10 @@ contract SphincsPlusNaysayer is MerkleTree{
             bytes memory idxLeaf;
             bytes memory idxTree;
             md = extractBits(abi.encodePacked(tmpMd), 0, k * a);
-            uint256 idxTree_bits = h - h / d;
-            idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTree_bits);
-            uint256 idxLeaf_bits = h / d;
-            idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeaf_bits);
+            uint256 idxTreeBits = h - h / d;
+            idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTreeBits);
+            uint256 idxLeafBits = h / d;
+            idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeafBits);
 
 
             bytes memory idxLeaf2 = abi.encodePacked(idxLeaf);
@@ -270,13 +270,13 @@ contract SphincsPlusNaysayer is MerkleTree{
 
             for (uint j = 1; j < treeIndex; j++) {
                 if (j == d - 1) {
-                    idxTree_bits = 0;
+                    idxTreeBits = 0;
                     idxLeaf2 = new bytes(4);
                     idxTree2 = new bytes(4);
                 } else {
-                    idxLeaf2 = extractBits(idxTree2, idxTree_bits - (h / d), h / d);
-                    idxTree_bits -= h / d;
-                    idxTree2 = extractBits(idxTree2, 0, idxTree_bits);
+                    idxLeaf2 = extractBits(idxTree2, idxTreeBits - (h / d), h / d);
+                    idxTreeBits -= h / d;
+                    idxTree2 = extractBits(idxTree2, 0, idxTreeBits);
                 }
             }
         }
@@ -297,15 +297,15 @@ contract SphincsPlusNaysayer is MerkleTree{
     }
 
    
-    function wots_naysayer(
+    function wotsNaysayer(
         uint treeIndex,
         uint wotsSigInd,
         bytes32 M2,
         bytes32[] memory mProof,
-        bytes32 wotsPk_elem,
+        bytes32 wotsPkElem,
         bytes32[] memory wotsPkProof,
-        bytes32 wots_sig_elem,
-        bytes32[] memory wots_sig_proof
+        bytes32 wotsSigElem,
+        bytes32[] memory wotsSigProof
     ) public returns (bool) {
 
         // Memory variables to avoid stack depth issues
@@ -321,13 +321,13 @@ contract SphincsPlusNaysayer is MerkleTree{
                 return false;
             }
 
-            uint wotsPk_elem_ind = xmssFInd + xmssLen * treeIndex + 1 + h / d + len + wotsSigInd;
-            if (!verifyProof(sig, wotsPk_elem, wotsPkProof, wotsPk_elem_ind)) {
+            uint wotsPkElemInd = xmssFInd + xmssLen * treeIndex + 1 + h / d + len + wotsSigInd;
+            if (!verifyProof(sig, wotsPkElem, wotsPkProof, wotsPkElemInd)) {
                 return false;
             }
 
-            uint wots_sig_elem_ind = xmssFInd + xmssLen * treeIndex + 1 + h / d + wotsSigInd;
-            if (!verifyProof(sig, wots_sig_elem, wots_sig_proof, wots_sig_elem_ind)) {
+            uint wotsSigElemInd = xmssFInd + xmssLen * treeIndex + 1 + h / d + wotsSigInd;
+            if (!verifyProof(sig, wotsSigElem, wotsSigProof, wotsSigElemInd)) {
                 return false;
             }
         }
@@ -362,10 +362,10 @@ contract SphincsPlusNaysayer is MerkleTree{
             bytes memory idxLeaf;
             bytes memory idxTree;
             md = extractBits(abi.encodePacked(tmpMd), 0, k * a);
-            uint256 idxTree_bits = h - h / d;
-            idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTree_bits);
-            uint256 idxLeaf_bits = h / d;
-            idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeaf_bits);
+            uint256 idxTreeBits = h - h / d;
+            idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTreeBits);
+            uint256 idxLeafBits = h / d;
+            idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeafBits);
 
 
             bytes memory idxLeaf2 = abi.encodePacked(idxLeaf);
@@ -373,13 +373,13 @@ contract SphincsPlusNaysayer is MerkleTree{
 
             for (uint j = 1; j < treeIndex; j++) {
                 if (j == d - 1) {
-                    idxTree_bits = 0;
+                    idxTreeBits = 0;
                     idxLeaf2 = new bytes(4);
                     idxTree2 = new bytes(4);
                 } else {
-                    idxLeaf2 = extractBits(idxTree2, idxTree_bits - (h / d), h / d);
-                    idxTree_bits -= h / d;
-                    idxTree2 = extractBits(idxTree2, 0, idxTree_bits);
+                    idxLeaf2 = extractBits(idxTree2, idxTreeBits - (h / d), h / d);
+                    idxTreeBits -= h / d;
+                    idxTree2 = extractBits(idxTree2, 0, idxTreeBits);
                 }
             }
         }
@@ -409,51 +409,51 @@ contract SphincsPlusNaysayer is MerkleTree{
             if (wotsSigInd < len1) {
                 uint tempp = uint(msg[wotsSigInd]);
                 uint tmp2 = w - 1 - tempp;
-                node = chain(wots_sig_elem, tempp, tmp2, pk.seed, adrs);
+                node = chain(wotsSigElem, tempp, tmp2, pk.seed, adrs);
             } else {
                 uint tempp = uint(msg2[wotsSigInd - len1]);
                 uint tmp2 = w - 1 - tempp;
-                node = chain(wots_sig_elem, tempp, tmp2, pk.seed, adrs);
+                node = chain(wotsSigElem, tempp, tmp2, pk.seed, adrs);
             }
         }
 
         //return false; // Or return the actual result based on your logic
-        return node != wotsPk_elem;
+        return node != wotsPkElem;
     }
 
 
 
 
     function xmssNaysayer(
-        uint tree_ind, 
-        uint top_node_ind, 
-        bytes32 top_node, 
-        bytes32[] memory top_node_proof,  
-        bytes32 bottom_node, 
-        bytes32[] memory bottom_node_proof,
-        bytes32 auth_node, 
-        bytes32[] memory auth_node_proof 
+        uint treeInd, 
+        uint topNodeInd, 
+        bytes32 topNode, 
+        bytes32[] memory topNodeProof,  
+        bytes32 bottomNode, 
+        bytes32[] memory bottomNodeProof,
+        bytes32 authNode, 
+        bytes32[] memory authNodeProof 
     ) public returns (bool) {
         //required because compiler crashes trying to inline it
         uint xmssFInd = 1 + 3 * k+1;
         uint xmssLen =  1+h/d + len+len+h/d+1;
-        uint baseIndex = xmssFInd + xmssLen * tree_ind +  1+h/d + len+len;
+        uint baseIndex = xmssFInd + xmssLen * treeInd +  1+h/d + len+len;
 
         // Split the complex expressions into intermediate variables
-        uint top_node_index = baseIndex + top_node_ind;
-        uint bottom_node_index = baseIndex + top_node_ind - 1;
-        uint auth_node_index = xmssFInd + xmssLen * tree_ind + 1 + top_node_ind - 1;
+        uint topNodeIndex = baseIndex + topNodeInd;
+        uint bottomNodeIndex = baseIndex + topNodeInd - 1;
+        uint authNodeIndex = xmssFInd + xmssLen * treeInd + 1 + topNodeInd - 1;
 
         // Verify each proof separately and return false early if any fails
-        if (!verifyProof(sig, top_node, top_node_proof, top_node_index)) {
+        if (!verifyProof(sig, topNode, topNodeProof, topNodeIndex)) {
             return false;
         }
 
-        if (!verifyProof(sig, bottom_node, bottom_node_proof, bottom_node_index)) {
+        if (!verifyProof(sig, bottomNode, bottomNodeProof, bottomNodeIndex)) {
             return false;
         }
 
-        if (!verifyProof(sig, auth_node, auth_node_proof, auth_node_index)) {
+        if (!verifyProof(sig, authNode, authNodeProof, authNodeIndex)) {
             return false;
         }
 
@@ -484,39 +484,38 @@ contract SphincsPlusNaysayer is MerkleTree{
         bytes memory  md = extractBits(abi.encodePacked(tmpMd), 0, k*a);
 
         // idxTree: first h - h/d bits after md
-        uint256 idxTree_bits = h - h / d;
-        bytes memory  idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTree_bits);
+        uint256 idxTreeBits = h - h / d;
+        bytes memory  idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTreeBits);
 
         // idxLeaf: first h/d bits after idxTree
-        uint256 idxLeaf_bits = h / d;
-        bytes memory idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeaf_bits);
+        uint256 idxLeafBits = h / d;
+        bytes memory idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeafBits);
 
         bytes memory idxLeaf2 = abi.encodePacked(idxLeaf);
         bytes memory idxTree2 = abi.encodePacked(idxTree);
         ADRS adrs = new ADRS();
-        for (uint j = 1; j < tree_ind; j++) {
+        for (uint j = 1; j < treeInd; j++) {
             if (j == d-1){
-                idxTree_bits = 0;
+                idxTreeBits = 0;
                 idxLeaf2 = new bytes(4);
                 idxTree2 = new bytes(4);
             }
             else{
                 // Extract idxLeaf as the least significant (h / d) bits of idxTree
-                idxLeaf2 = extractBits(idxTree2, idxTree_bits - (h / d), h / d);
+                idxLeaf2 = extractBits(idxTree2, idxTreeBits - (h / d), h / d);
 
                 // Update idxTree to the most significant (h - (j + 1) * (h / d)) bits
-                idxTree_bits -= h / d;
+                idxTreeBits -= h / d;
                 
-                idxTree2 = extractBits(idxTree2, 0, idxTree_bits);
+                idxTree2 = extractBits(idxTree2, 0, idxTreeBits);
             }
         }
         uint32 idx = uint32(bytesToBytes4(idxLeaf2));
         adrs.setType(TREE);
         adrs.setTreeIndex(bytes4(idx));
-        //console.logString("___________________");
-        adrs.setLayerAddress(bytes4(uint32(tree_ind)));
+        adrs.setLayerAddress(bytes4(uint32(treeInd)));
         //console.logBytes(adrs.toBytes());
-         for (uint k = 0; k < top_node_ind; k++ ) {
+         for (uint k = 0; k < topNodeInd; k++ ) {
            
             if ((idx / (2**k)) % 2 == 0 ) {
                 adrs.setTreeIndex(bytes4(uint32(adrs.getTreeIndex()) / 2));
@@ -527,33 +526,28 @@ contract SphincsPlusNaysayer is MerkleTree{
             //console.logBytes(adrs.toBytes());
         }
         bytes32 node;
-        adrs.setTreeHeight(bytes4(uint32(top_node_ind)));
-        if ((idx / (2**top_node_ind)) % 2 == 0 ) {
+        adrs.setTreeHeight(bytes4(uint32(topNodeInd)));
+        if ((idx / (2**topNodeInd)) % 2 == 0 ) {
             adrs.setTreeIndex(bytes4(uint32(adrs.getTreeIndex()) / 2));
-            node = keccak256(abi.encodePacked(pk.seed, adrs.toBytes(), bottom_node , auth_node));
+            node = keccak256(abi.encodePacked(pk.seed, adrs.toBytes(), bottomNode , authNode));
         } 
         else {
             adrs.setTreeIndex(bytes4((uint32(adrs.getTreeIndex()) - 1) / 2));
-            node = keccak256(abi.encodePacked(pk.seed, adrs.toBytes(), auth_node, bottom_node));
+            node = keccak256(abi.encodePacked(pk.seed, adrs.toBytes(), authNode, bottomNode));
         }
        // console.logBytes(adrs.toBytes());
 
-        return node !=top_node;
+        return node !=topNode;
     }
 
 
 
 
-    function naysayer_fors( uint fors_ind, bytes32 fors_sk,bytes32[] memory fors_sk_proof, bytes32[] memory fors_proof, bytes32[] memory fors_proof_proof, bytes32 fors_root, bytes32[] memory fors_root_proof) public returns(bool){
-        if (!verifyProof(sig, fors_sk, fors_sk_proof, 1+fors_ind*3) || !verifyProof(sig, keccak256(abi.encodePacked(fors_proof)), fors_proof_proof, 1+fors_ind*3+1) || !verifyProof(sig,fors_root,fors_root_proof,1+fors_ind*3+2)){
+    function naysayerFors( uint forsInd, bytes32 forsSk,bytes32[] memory forsSkProof, bytes32[] memory forsProof, bytes32[] memory forsProofProof, bytes32 forsRoot, bytes32[] memory forsRootProof) public returns(bool){
+        if (!verifyProof(sig, forsSk, forsSkProof, 1+forsInd*3) || !verifyProof(sig, keccak256(abi.encodePacked(forsProof)), forsProofProof, 1+forsInd*3+1) || !verifyProof(sig,forsRoot,forsRootProof,1+forsInd*3+2)){
             return false;
         }
         ADRS adrs = new ADRS();
-    
-        //bytes32 R = SIG.r;
-        //forsSig memory SIG_FORS = SIG.forsSig;
-        //htSig memory SIG_HT = SIG.htSig;
-
 
         //We assume M is already diggest for testing hamming weight propouses
         bytes32 digest = M;
@@ -581,26 +575,24 @@ contract SphincsPlusNaysayer is MerkleTree{
         bytes memory  md = extractBits(abi.encodePacked(tmpMd), 0, k*a);
 
         // idxTree: first h - h/d bits after md
-        uint256 idxTree_bits = h - h / d;
-        bytes memory  idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTree_bits);
+        uint256 idxTreeBits = h - h / d;
+        bytes memory  idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTreeBits);
 
         // idxLeaf: first h/d bits after idxTree
-        uint256 idxLeaf_bits = h / d;
-        bytes memory idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeaf_bits);
+        uint256 idxLeafBits = h / d;
+        bytes memory idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeafBits);
 
         adrs.setType(FORSTREE);
         adrs.setLayerAddress(0);
         adrs.setTreeAddress(bytesToBytes4(idxTree));
         adrs.setKeyPairAddress(bytesToBytes4(idxLeaf));
 
-        //fors_pkFromSig(SIG_FORS,md,pk.seed,adrs);
-
         //FORS 
         bytes32[2] memory node;
 
 
-        uint i = fors_ind;
-        bytes32 sk = fors_sk;
+        uint i = forsInd;
+        bytes32 sk = forsSk;
 
         bytes memory idx = extractBits(abi.encodePacked(md), i*a , (i+1)*a - i*a - 1);
         adrs.setTreeHeight(0);
@@ -611,7 +603,7 @@ contract SphincsPlusNaysayer is MerkleTree{
         node[0] = keccak256(abi.encodePacked(pk.seed, adrs.toBytes(), sk));
         //console.logBytes32(node[0]);
 
-        bytes32[] memory auth = fors_proof;
+        bytes32[] memory auth = forsProof;
         adrs.setTreeIndex(bytes4(uint32(i*t + uint32(bytesToBytes4(idx))))); 
         for (uint j = 0; j < a; j++ ) {
             adrs.setTreeHeight(bytes4(uint32(j+1)));
@@ -626,15 +618,15 @@ contract SphincsPlusNaysayer is MerkleTree{
             node[0] = node[1];
         }
         //console.logBytes32(node[0]);
-        //console.logBytes32(fors_root);
-        return node[0] != fors_root;
+        //console.logBytes32(forsRoot);
+        return node[0] != forsRoot;
     }
 
     //offset fors =  1+3*k+1
 
 
 
-    function naysayer_fors_hash(bytes32[] memory roots, bytes32[][] memory proofs, bytes32 hashed, bytes32[] memory hashedProof) public returns (bool){
+    function naysayerForsHash(bytes32[] memory roots, bytes32[][] memory proofs, bytes32 hashed, bytes32[] memory hashedProof) public returns (bool){
         for (uint i =0; i < k; i++){
             if (!verifyProof(sig, roots[i], proofs[i], 1+3*i+2)){
                 return false;
@@ -646,9 +638,7 @@ contract SphincsPlusNaysayer is MerkleTree{
 
         ADRS adrs = new ADRS();
     
-        //bytes32 R = SIG.r;
-        //forsSig memory SIG_FORS = SIG.forsSig;
-        //htSig memory SIG_HT = SIG.htSig;
+
 
 
         //We assume M is already diggest for testing hamming weight propouses
@@ -677,12 +667,12 @@ contract SphincsPlusNaysayer is MerkleTree{
         bytes memory  md = extractBits(abi.encodePacked(tmpMd), 0, k*a);
 
         // idxTree: first h - h/d bits after md
-        uint256 idxTree_bits = h - h / d;
-        bytes memory  idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTree_bits);
+        uint256 idxTreeBits = h - h / d;
+        bytes memory  idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTreeBits);
 
         // idxLeaf: first h/d bits after idxTree
-        uint256 idxLeaf_bits = h / d;
-        bytes memory idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeaf_bits);
+        uint256 idxLeafBits = h / d;
+        bytes memory idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeafBits);
 
         adrs.setType(FORSTREE);
         adrs.setLayerAddress(0);

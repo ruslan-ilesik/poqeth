@@ -41,7 +41,7 @@ def replace_w_value_in_file(file_path, new_w_value):
         file.writelines(lines)
 
 
-FILE_PATH = os.path.dirname(os.path.abspath(__file__))+"/../../../test/wots_naysayer/wots_naysayer.sol"
+FILE_PATH = os.path.dirname(os.path.abspath(__file__))+"/../../../test/wotsNaysayer/wotsNaysayer.sol"
 
 for w in tqdm.tqdm([4,8,16,256]):
     replace_w_value_in_file(FILE_PATH, w)
@@ -64,7 +64,7 @@ for w in tqdm.tqdm([4,8,16,256]):
             
 
             # Execute the console command
-            command = ["forge", "test", "--gas-report", "--via-ir", "-vvv", "--match-path", "test/wots_naysayer/wots_naysayer.sol"]
+            command = ["forge", "test", "--gas-report", "--via-ir", "-vvv", "--match-path", "test/wotsNaysayer/wotsNaysayer.sol"]
             result = subprocess.run(command, capture_output=True, text=True)
 
             output = result.stdout

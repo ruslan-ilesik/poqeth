@@ -114,45 +114,45 @@ contract Sphincs_plus{
 
 
     uint32 WOTSHASH = 0;
-    uint32 wotsPk = 1;
+    uint32 WOTSPK = 1;
     uint32 TREE = 2;
-    uint32 FORS_TREE = 3;
-    uint32 FORS_ROOTS = 4;
-    uint32 WOTS_PRF = 5;
-    uint32 FORS_PRF = 6;
+    uint32 FORSTREE = 3;
+    uint32 FORSROOT = 4;
+    uint32 WOTSPRF = 5;
+    uint32 FORSPRF = 6;
 
     // Struct to represent the public key
-    struct SPHINCS_PK {
+    struct SphincsPk {
         bytes32 seed;
         bytes32 root;
     }
 
-    struct xmssSig{
+    struct XmssSig{
         bytes32[] sig;
         bytes32[] auth;
     }
 
-    struct htSig{
-        xmssSig[] sig;
+    struct HtSig{
+        XmssSig[] sig;
     }
 
-    struct forsSig_INNER{
+    struct ForsSigInner{
         bytes32 sk;
         bytes32[] auth;
     }
 
-    struct forsSig{
-        forsSig_INNER[] sig;
+    struct ForsSig{
+        ForsSigInner[] sig;
     }
 
-    struct SPHINCS_SIG{
+    struct SphincsSig{
         bytes32 r;
-        forsSig forsSig;
-        htSig htSig;
+        ForsSig forsSig;
+        HtSig htSig;
     }
 
-    SPHINCS_PK pk;
-    function setPk(SPHINCS_PK memory p) public {
+    SphincsPk pk;
+    function setPk(SphincsPk memory p) public {
         pk = p;
     }
 
@@ -202,11 +202,11 @@ contract Sphincs_plus{
     }
 
 
-    function verify(bytes32 M, SPHINCS_SIG memory SIG)public returns (bool){
+    function verify(bytes32 M, SphincsSig memory SIG)public returns (bool){
         ADRS adrs = new ADRS();
         bytes32 R = SIG.r;
-        forsSig memory SIG_FORS = SIG.forsSig;
-        htSig memory SIG_HT = SIG.htSig;
+        ForsSig memory SIG_FORS = SIG.forsSig;
+        HtSig memory SIG_HT = SIG.htSig;
 
 
         //We assume M is already diggest for testing hamming weight propouses
@@ -235,53 +235,53 @@ contract Sphincs_plus{
         bytes memory  md = extractBits(abi.encodePacked(tmpMd), 0, k*a);
 
         // idxTree: first h - h/d bits after md
-        uint256 idxTree_bits = h - h / d;
-        bytes memory  idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTree_bits);
+        uint256 idxTreeBits = h - h / d;
+        bytes memory  idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTreeBits);
 
         // idxLeaf: first h/d bits after idxTree
-        uint256 idxLeaf_bits = h / d;
-        bytes memory idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeaf_bits);
+        uint256 idxLeafBits = h / d;
+        bytes memory idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeafBits);
 
-        adrs.setType(FORS_TREE);
+        adrs.setType(FORSTREE);
         adrs.setLayerAddress(0);
         adrs.setTreeAddress(bytesToBytes4(idxTree));
         adrs.setKeyPairAddress(bytesToBytes4(idxLeaf));
 
 
         //this is checked, returns same
-        bytes32 PK_FORS = fors_pkFromSig(SIG_FORS,md,pk.seed,adrs);
+        bytes32 PK_FORS = forsPkFromSig(SIG_FORS,md,pk.seed,adrs);
         //console.logBytes32(PK_FORS);
 
         adrs.setType(TREE);
         return ht_verify(PK_FORS, SIG_HT, pk.seed, bytesToBytes8(idxTree), bytesToBytes4(idxLeaf), pk.root);
     }
 
-    function ht_verify(bytes32 M, htSig memory SIG_HT, bytes32 PKseed,bytes8 idxTree, bytes4 idxLeaf,bytes32 PK_HT )public returns(bool){
+    function ht_verify(bytes32 M, HtSig memory SIG_HT, bytes32 PKseed,bytes8 idxTree, bytes4 idxLeaf,bytes32 PK_HT )public returns(bool){
         ADRS adrs = new ADRS();
-        xmssSig memory SIG_tmp = SIG_HT.sig[0];
+        XmssSig memory SIG_tmp = SIG_HT.sig[0];
         adrs.setLayerAddress(0);
         adrs.setTreeAddress(idxTree);
         bytes32 node = xmssPkFromSig(uint32(idxLeaf), SIG_tmp, M, PKseed, adrs);
         //console.logBytes32(node);
-        uint256 idxTree_bits = h - h / d;
-        uint256 idxLeaf_bits = h / d;
+        uint256 idxTreeBits = h - h / d;
+        uint256 idxLeafBits = h / d;
         bytes memory idxLeaf2 = abi.encodePacked(idxLeaf);
         bytes memory idxTree2 = abi.encodePacked(idxTree);
         //console.log("AAAAAAAAAAAAAAA");
         for (uint j = 1; j < d; j++) {
             if (j == d-1){
-                idxTree_bits = 0;
+                idxTreeBits = 0;
                 idxLeaf2 = new bytes(4);
                 idxTree2 = new bytes(4);
             }
             else{
                 // Extract idxLeaf as the least significant (h / d) bits of idxTree
-                idxLeaf2 = extractBits(idxTree2, idxTree_bits - (h / d), h / d);
+                idxLeaf2 = extractBits(idxTree2, idxTreeBits - (h / d), h / d);
 
                 // Update idxTree to the most significant (h - (j + 1) * (h / d)) bits
-                idxTree_bits -= h / d;
+                idxTreeBits -= h / d;
                 
-                idxTree2 = extractBits(idxTree2, 0, idxTree_bits);
+                idxTree2 = extractBits(idxTree2, 0, idxTreeBits);
             }
 
             adrs.setLayerAddress(bytes4(uint32(j)));
@@ -296,7 +296,7 @@ contract Sphincs_plus{
         return PK_HT == node;
     }
 
-    function xmssPkFromSig(uint32 idx, Sphincs_plus.xmssSig memory SIG_XMSS, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
+    function xmssPkFromSig(uint32 idx, Sphincs_plus.XmssSig memory SIG_XMSS, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
         adrs.setType(WOTSHASH);
         adrs.setKeyPairAddress(bytes4(idx));
         bytes32[] memory sig = SIG_XMSS.sig;
@@ -342,7 +342,7 @@ contract Sphincs_plus{
             tmp[i] = chain(sig[i], uint(msg2[i-len1]), w - 1 - uint(msg2[i-len1]),PKseed, adrs);
           }
         }
-        wotspkADRS.setType(wotsPk);
+        wotspkADRS.setType(WOTSPK);
         wotspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
         bytes32 pk = keccak256(abi.encodePacked(PKseed,wotspkADRS.toBytes(),tmp));
         return pk;
@@ -378,7 +378,7 @@ contract Sphincs_plus{
         return bytes8(uint64(out) << (8 * (8 - b.length)));
     }
 
-    function fors_pkFromSig(forsSig memory SIG_FORS, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
+    function forsPkFromSig(ForsSig memory SIG_FORS, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
         bytes32[2] memory  node;
         bytes32[] memory root = new bytes32[](k);
         for(uint i = 0; i < k; i++){
@@ -407,7 +407,7 @@ contract Sphincs_plus{
 
         ADRS forspkADRS = new ADRS();
         forspkADRS.fillFrom(adrs);
-        forspkADRS.setType(FORS_ROOTS);
+        forspkADRS.setType(FORSROOT);
         forspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
         bytes32 pk = keccak256(abi.encodePacked(PKseed,forspkADRS.toBytes(),root));
         return pk;
