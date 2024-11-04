@@ -205,8 +205,8 @@ contract Sphincs_plus{
     function verify(bytes32 M, SphincsSig memory SIG)public returns (bool){
         ADRS adrs = new ADRS();
         bytes32 R = SIG.r;
-        ForsSig memory SIG_FORS = SIG.forsSig;
-        HtSig memory SIG_HT = SIG.htSig;
+        ForsSig memory sigFors = SIG.forsSig;
+        HtSig memory sigHt = SIG.htSig;
 
 
         //We assume M is already diggest for testing hamming weight propouses
@@ -249,19 +249,19 @@ contract Sphincs_plus{
 
 
         //this is checked, returns same
-        bytes32 PK_FORS = forsPkFromSig(SIG_FORS,md,pk.seed,adrs);
-        //console.logBytes32(PK_FORS);
+        bytes32 pkFors = forsPkFromSig(sigFors,md,pk.seed,adrs);
+        //console.logBytes32(pkFors);
 
         adrs.setType(TREE);
-        return ht_verify(PK_FORS, SIG_HT, pk.seed, bytesToBytes8(idxTree), bytesToBytes4(idxLeaf), pk.root);
+        return ht_verify(pkFors, sigHt, pk.seed, bytesToBytes8(idxTree), bytesToBytes4(idxLeaf), pk.root);
     }
 
-    function ht_verify(bytes32 M, HtSig memory SIG_HT, bytes32 PKseed,bytes8 idxTree, bytes4 idxLeaf,bytes32 PK_HT )public returns(bool){
+    function ht_verify(bytes32 M, HtSig memory sigHt, bytes32 PKseed,bytes8 idxTree, bytes4 idxLeaf,bytes32 PK_HT )public returns(bool){
         ADRS adrs = new ADRS();
-        XmssSig memory SIG_tmp = SIG_HT.sig[0];
+        XmssSig memory SigTmp = sigHt.sig[0];
         adrs.setLayerAddress(0);
         adrs.setTreeAddress(idxTree);
-        bytes32 node = xmssPkFromSig(uint32(idxLeaf), SIG_tmp, M, PKseed, adrs);
+        bytes32 node = xmssPkFromSig(uint32(idxLeaf), SigTmp, M, PKseed, adrs);
         //console.logBytes32(node);
         uint256 idxTreeBits = h - h / d;
         uint256 idxLeafBits = h / d;
@@ -286,8 +286,8 @@ contract Sphincs_plus{
 
             adrs.setLayerAddress(bytes4(uint32(j)));
             adrs.setTreeAddress(bytesToBytes4(idxTree2));
-            SIG_tmp = SIG_HT.sig[j];
-            node = xmssPkFromSig(uint32(bytesToBytes4(idxLeaf2)), SIG_tmp, node, PKseed, adrs);
+            SigTmp = sigHt.sig[j];
+            node = xmssPkFromSig(uint32(bytesToBytes4(idxLeaf2)), SigTmp, node, PKseed, adrs);
             //console.logBytes32(node);
         }
        // console.log();
@@ -296,11 +296,11 @@ contract Sphincs_plus{
         return PK_HT == node;
     }
 
-    function xmssPkFromSig(uint32 idx, Sphincs_plus.XmssSig memory SIG_XMSS, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
+    function xmssPkFromSig(uint32 idx, Sphincs_plus.XmssSig memory sigXmss, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
         adrs.setType(WOTSHASH);
         adrs.setKeyPairAddress(bytes4(idx));
-        bytes32[] memory sig = SIG_XMSS.sig;
-        bytes32[] memory AUTH = SIG_XMSS.auth;
+        bytes32[] memory sig = sigXmss.sig;
+        bytes32[] memory AUTH = sigXmss.auth;
         bytes32[2] memory node;
         node[0] = wotsPkFromSig(sig, M, PKseed, adrs);
         adrs.setType(TREE);
@@ -378,16 +378,16 @@ contract Sphincs_plus{
         return bytes8(uint64(out) << (8 * (8 - b.length)));
     }
 
-    function forsPkFromSig(ForsSig memory SIG_FORS, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
+    function forsPkFromSig(ForsSig memory sigFors, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
         bytes32[2] memory  node;
         bytes32[] memory root = new bytes32[](k);
         for(uint i = 0; i < k; i++){
             bytes memory idx = extractBits(M, i*a , (i+1)*a - i*a - 1);
-            bytes32 sk = SIG_FORS.sig[i].sk;
+            bytes32 sk = sigFors.sig[i].sk;
             adrs.setTreeHeight(0);
             adrs.setTreeIndex(bytes4(uint32(i*t + uint32(bytesToBytes4(idx)))));
             node[0] = keccak256(abi.encodePacked(PKseed, adrs.toBytes(), sk));
-            bytes32[] memory auth = SIG_FORS.sig[i].auth;
+            bytes32[] memory auth = sigFors.sig[i].auth;
 
             adrs.setTreeIndex(bytes4(uint32(i*t + uint32(bytesToBytes4(idx))))); 
             for (uint j = 0; j < a; j++ ) {
