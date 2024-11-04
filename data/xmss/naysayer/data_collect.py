@@ -54,7 +54,7 @@ if __name__ == '__main__':
     current_dir = os.path.dirname(os.path.abspath(__file__))
     
     # Define the file path for xmss.sol
-    file_path = os.path.join(current_dir, '../../../test/xmss_naysayer/xmss_naysayer.sol')
+    file_path = os.path.join(current_dir, '../../../test/xmssNaysayer/xmssNaysayer.sol')
     global_loop = tqdm([4,16],desc='param w',leave=False)
     for w in global_loop:
         for h in tqdm(range(2,21,2),desc='param h',leave=False):
@@ -82,7 +82,7 @@ if __name__ == '__main__':
                     replace_values_in_file(file_path, replacements)
                     
                     # Execute the console command
-                    command = ["forge", "test", "--gas-report", "--via-ir", "-vvv", "--match-path", "test/xmss_naysayer/xmss_naysayer.sol"]
+                    command = ["forge", "test", "--gas-report", "--via-ir", "-vvv", "--match-path", "test/xmssNaysayer/xmssNaysayer.sol"]
                     result = subprocess.run(command, capture_output=True, text=True)
 
                     output = result.stdout

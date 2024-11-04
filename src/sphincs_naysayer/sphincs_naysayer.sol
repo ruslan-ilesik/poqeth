@@ -123,37 +123,37 @@ contract SphincsPlusNaysayer is MerkleTree{
     uint32 FORSPRF = 6;
 
     // Struct to represent the public key
-    struct SPHINCS_PK {
+    struct SphincsPk {
         bytes32 seed;
         bytes32 root;
     }
 
-    struct xmssSig{
+    struct XmssSig{
         bytes32[] sig;
         bytes32[] auth;
     }
 
-    struct HT_SIG{
-        xmssSig[] sig;
+    struct HtSig{
+        XmssSig[] sig;
     }
 
-    struct FORS_SIG_INNER{
+    struct ForsSigInner{
         bytes32 sk;
         bytes32[] auth;
     }
 
-    struct FORS_SIG{
-        FORS_SIG_INNER[] sig;
+    struct ForsSig{
+        ForsSigInner[] sig;
     }
 
-    struct SPHINCS_SIG{
+    struct SphincsSig{
         bytes32 r;
-        FORS_SIG fors_sig;
-        HT_SIG ht_sig;
+        ForsSig fors_sig;
+        HtSig ht_sig;
     }
 
-    SPHINCS_PK pk;
-    function setPk(SPHINCS_PK memory p) public {
+    SphincsPk pk;
+    function setPk(SphincsPk memory p) public {
         pk = p;
     }
 
@@ -299,7 +299,7 @@ contract SphincsPlusNaysayer is MerkleTree{
    
     function wots_naysayer(
         uint tree_index,
-        uint wots_sig_ind,
+        uint wotsSigInd,
         bytes32 M2,
         bytes32[] memory mProof,
         bytes32 wots_pk_elem,
@@ -321,12 +321,12 @@ contract SphincsPlusNaysayer is MerkleTree{
                 return false;
             }
 
-            uint wots_pk_elem_ind = xmss_f_ind + xmss_len * tree_index + 1 + h / d + len + wots_sig_ind;
+            uint wots_pk_elem_ind = xmss_f_ind + xmss_len * tree_index + 1 + h / d + len + wotsSigInd;
             if (!verifyProof(sig, wots_pk_elem, wots_pk_proof, wots_pk_elem_ind)) {
                 return false;
             }
 
-            uint wots_sig_elem_ind = xmss_f_ind + xmss_len * tree_index + 1 + h / d + wots_sig_ind;
+            uint wots_sig_elem_ind = xmss_f_ind + xmss_len * tree_index + 1 + h / d + wotsSigInd;
             if (!verifyProof(sig, wots_sig_elem, wots_sig_proof, wots_sig_elem_ind)) {
                 return false;
             }
@@ -403,15 +403,15 @@ contract SphincsPlusNaysayer is MerkleTree{
             uint len2Bytes = ceil((len2 * log2(w)), 8);
             bytes32[] memory msg2 = baseW(toByte(csum, len2Bytes), len2);
 
-            adrs.setChainAddress(bytes4(uint32(wots_sig_ind)));
+            adrs.setChainAddress(bytes4(uint32(wotsSigInd)));
 
            
-            if (wots_sig_ind < len1) {
-                uint tempp = uint(msg[wots_sig_ind]);
+            if (wotsSigInd < len1) {
+                uint tempp = uint(msg[wotsSigInd]);
                 uint tmp2 = w - 1 - tempp;
                 node = chain(wots_sig_elem, tempp, tmp2, pk.seed, adrs);
             } else {
-                uint tempp = uint(msg2[wots_sig_ind - len1]);
+                uint tempp = uint(msg2[wotsSigInd - len1]);
                 uint tmp2 = w - 1 - tempp;
                 node = chain(wots_sig_elem, tempp, tmp2, pk.seed, adrs);
             }
@@ -424,7 +424,7 @@ contract SphincsPlusNaysayer is MerkleTree{
 
 
 
-    function xmss_naysayer(
+    function xmssNaysayer(
         uint tree_ind, 
         uint top_node_ind, 
         bytes32 top_node, 

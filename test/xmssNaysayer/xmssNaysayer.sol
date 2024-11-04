@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 
 import {Test, console} from "forge-std/Test.sol";
-import {XMSSNaysayer,ADRS} from "../../src/xmss_naysayer/xmss_naysayer.sol";
+import {XMSSNaysayer,ADRS} from "../../src/xmssNaysayer/xmssNaysayer.sol";
 import {MerkleTree} from "../../src/merkle_tree.sol";
 import "forge-std/console.sol";
 

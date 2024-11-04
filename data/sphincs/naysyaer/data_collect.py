@@ -53,7 +53,7 @@ def modify_solidity_file(file_path, h, d, a, k, m):
 with open(csv_file_path, mode='w', newline='') as csv_file:
     csv_writer = csv.writer(csv_file)
     # Write the header row
-    csv_writer.writerow(['h', 'd', 'a', 'k', 'setPk_max', 'naysayer_fors','naysayer_fors_hash','WOTSHASH_naysayer','wots_naysayer','xmss_naysayer','setSign'])
+    csv_writer.writerow(['h', 'd', 'a', 'k', 'setPk_max', 'naysayer_fors','naysayer_fors_hash','WOTSHASH_naysayer','wots_naysayer','xmssNaysayer','setSign'])
 
     # Set up progress bars
     h_progress = tqdm(total=len(h_range), desc="Processing h", position=0, leave=True)
@@ -84,7 +84,7 @@ with open(csv_file_path, mode='w', newline='') as csv_file:
                         naysayer_fors_hash = re.search(r'naysayer_fors_hash\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
                         WOTSHASH_naysayer = re.search(r'WOTSHASH_naysayer\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
                         wots_naysayer = re.search(r'wots_naysayer\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
-                        xmss_naysayer = re.search(r'xmss_naysayer\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
+                        xmssNaysayer = re.search(r'xmssNaysayer\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
                         setSign = re.search(r'setSign\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
                         
                                                 # Extract values from the command output
@@ -93,16 +93,16 @@ with open(csv_file_path, mode='w', newline='') as csv_file:
                         naysayer_fors_hash_value = naysayer_fors_hash.group(1) if naysayer_fors_hash else 'not found'
                         WOTSHASH_naysayer_value = WOTSHASH_naysayer.group(1) if WOTSHASH_naysayer else 'not found'
                         wots_naysayer_value = wots_naysayer.group(1) if wots_naysayer else 'not found'
-                        xmss_naysayer_value = xmss_naysayer.group(1) if xmss_naysayer else 'not found'
+                        xmssNaysayer_value = xmssNaysayer.group(1) if xmssNaysayer else 'not found'
                         setSign_value = setSign.group(1) if setSign else 'not found'
 
                         # Write the result to the CSV file
-                        csv_writer.writerow([h, d, a, k, setPk_max_value, naysayer_fors_value, naysayer_fors_hash_value, WOTSHASH_naysayer_value, wots_naysayer_value, xmss_naysayer_value, setSign_value])
+                        csv_writer.writerow([h, d, a, k, setPk_max_value, naysayer_fors_value, naysayer_fors_hash_value, WOTSHASH_naysayer_value, wots_naysayer_value, xmssNaysayer_value, setSign_value])
 
                         # Print the result to the terminal
                         h_progress .write(f"h: {h}, d: {d}, a: {a}, k: {k}")
                         h_progress .write(f"setPk_max: {setPk_max_value}, naysayer_fors: {naysayer_fors_value}, naysayer_fors_hash: {naysayer_fors_hash_value}, WOTSHASH_naysayer: {WOTSHASH_naysayer_value}")
-                        h_progress .write(f"wots_naysayer: {wots_naysayer_value}, xmss_naysayer: {xmss_naysayer_value}, setSign: {setSign_value}")
+                        h_progress .write(f"wots_naysayer: {wots_naysayer_value}, xmssNaysayer: {xmssNaysayer_value}, setSign: {setSign_value}")
                         h_progress.write("_________________________________________________________")
                 
                 a_progress.update(1)
