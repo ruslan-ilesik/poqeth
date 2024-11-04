@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/console.sol";
 import "../merkle_tree.sol";
 
-contract WOTSPlusnaysayer is MerkleTree {
+contract WotsPlusNaysayer is MerkleTree {
 
 
     uint256 k;

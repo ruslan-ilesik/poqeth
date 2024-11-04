@@ -2,7 +2,7 @@ pragma solidity ^0.8.26;
 
 import {Test, console} from "forge-std/Test.sol";
 import "forge-std/console.sol";
-import {SphincsPlusNaysayer, ADRS,MerkleTree} from "../../src/sphincs_naysayer/sphincs_naysayer.sol";
+import {SphincsPlusNaysayer, ADRS,MerkleTree} from "../../src/sphincsPlusNaysayer/sphincsPlusNaysayer.sol";
 
 
 contract TestSphincsPlusNaysayer is Test {

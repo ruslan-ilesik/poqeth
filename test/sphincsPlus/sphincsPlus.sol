@@ -2,7 +2,7 @@ pragma solidity ^0.8.26;
 
 import {Test, console} from "forge-std/Test.sol";
 import "forge-std/console.sol";
-import {SphincsPlus, ADRS} from "../../src/sphincs/sphincs.sol";
+import {SphincsPlus, ADRS} from "../../src/sphincsPlus/sphincsPlus.sol";
 
 
 contract TestSphincsPlus is Test {

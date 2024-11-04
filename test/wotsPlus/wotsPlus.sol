@@ -1,30 +1,29 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+// m = 256 (8 bytes), w = 16, l = (formula in pdf)
+
 
 import {Test, console} from "forge-std/Test.sol";
+import {WotsPlus} from "../../src/wotsPlus/wotsPlus.sol";
 import "forge-std/console.sol";
-import {WOTSPlusnaysayer,MerkleTree} from "../../src/wotsNaysayer/wotsNaysayer.sol";
 
-contract TestWotsPlusnaysayer is Test {
-        MerkleTree mt;
-        WOTSPlusnaysayer wn;
+contract TestWotsPlusCollect is Test {
+    WotsPlus wots;
+    bytes32[] M;
+    bytes32[] sigma;
+    bytes32[] sk;
+    bytes32[] pk;
+    bytes32[] r;
+    uint256 k;
+    uint256 m = 32; //bytes, can not be changed!
+    uint16 w = 4; 
+    // bits, lets assume it will divisible by 8
+    uint256 l1 ;
+    uint256 l2;
 
-        bytes32[] M;
-        bytes32[] sigmacpy;
-        bytes32[] sk;
-        bytes32[] pk;
-        bytes32[] r;
-        uint256 k;
-        uint256 m = 32; //bytes, can not be changed!
-        uint16 w = 4;
-        uint256 l1 ;
-        uint256 l2;
 
-        function setUp() public{
-        mt = new MerkleTree();
-        wn = new WOTSPlusnaysayer();
-
+    function setUp() public{
         string memory message = "Hello";
        
         l1 = (m*8) / log2(w) + ((m*8) % log2(w) == 0 ? 0 : 1);
@@ -32,6 +31,7 @@ contract TestWotsPlusnaysayer is Test {
         uint256 l = l1+l2;
         uint256 n = 512;
 
+        wots = new WotsPlus();
         (sk,pk,r,k) = keyGen(n,l,w);
         
 
@@ -43,74 +43,21 @@ contract TestWotsPlusnaysayer is Test {
             M[i] = bytes32(nhm % w);
             nhm /= w;
         }
-        wn.setParam(w);
-        sigmacpy = sign(w,k,l1,l2,M,sk,r);
-        wn.setPk(k);
+        sigma = sign(w,k,l1,l2,M,sk,r);
+    }
 
-        }
+    function testSetKey() public{
+         wots.setPk(keccak256(abi.encodePacked(r,k,pk)));
+         wots.setW(w);
+    }
 
-        function testProofMistake() public{
-            bytes1[] memory M2 = new bytes1[](M.length);
-            for (uint i =0; i < M.length; i++){
-                M2[i] = bytes1(M[i]);
-            }
-            M2[2] = M2[2]^ bytes1(uint8(1));
-            bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
-            sigma = concatenateBytes32Arrays(sigma, pk);
-            sigma = concatenateBytes32Arrays(sigma, keccak256(abi.encodePacked(r)));
-            wn.setSign(mt.buildRoot(sigma));
-            bytes32[][] memory tree = mt.buildTree(sigma);
-            bytes32[] memory proof = mt.getProof(tree,2);
-            require(wn.naysayer(sigma[2], proof, 2,M2,mt.getProof(tree, sigmacpy.length),pk[2],mt.getProof(tree, sigmacpy.length+1+2),r,mt.getProof(tree, sigmacpy.length*2+1)), "fail good verefication");
-            
-        }
+    function testWots() public {
+        wots.setW(w);
+        wots.setPk(keccak256(abi.encodePacked(r,k,pk)));
+        assertTrue(wots.verify(M, sigma,pk,r,k));
+    }
 
-        
-
-        function testRightSingNoMistake() public {
-            if (w!=4){
-                return;
-            }
-            bytes1[] memory M2 = new bytes1[](M.length);
-            for (uint i =0; i < M.length; i++){
-                M2[i] = bytes1(M[i]);
-            }
-            bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
-            sigma = concatenateBytes32Arrays(sigma, pk);
-            sigma = concatenateBytes32Arrays(sigma, keccak256(abi.encodePacked(r)));
-            wn.setSign(mt.buildRoot(sigma));
-            bytes32[][] memory tree = mt.buildTree(sigma);
-            bytes32[] memory proof = mt.getProof(tree,2);
-            require(wn.naysayer(sigma[2], proof, 2,M2,mt.getProof(tree, sigmacpy.length),pk[2],mt.getProof(tree, sigmacpy.length+1+2),r,mt.getProof(tree, sigmacpy.length*2+1)) == false, "fail good sig and no miustake verefication");
-        }
-
-        function testFalseSignature() public{
-            if (w!=4){
-                return;
-            }
-            bytes32[] memory failedSigma = new bytes32[](sigmacpy.length);
-            for (uint i =0; i < sigmacpy.length; i++){
-                failedSigma[i] = sigmacpy[i];
-            }
-
-            failedSigma[2] = failedSigma[2] ^ bytes32(uint256(1));
-        
-            bytes1[] memory M2 = new bytes1[](M.length);
-            for (uint i =0; i < M.length; i++){
-                M2[i] = bytes1(M[i]);
-            }
-            bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
-            sigma = concatenateBytes32Arrays(sigma, pk);
-            sigma = concatenateBytes32Arrays(sigma, keccak256(abi.encodePacked(r)));
-            wn.setSign(mt.buildRoot(failedSigma));
-            
-            bytes32[][] memory tree = mt.buildTree(sigma);
-            bytes32[] memory proof = mt.getProof(tree,2);
-            require(wn.naysayer(sigma[2], proof, 2,M2,mt.getProof(tree, sigmacpy.length),pk[2],mt.getProof(tree, sigmacpy.length+1+2),r,mt.getProof(tree, sigmacpy.length*2+1)) == false, "failed to fail failing verefication");
-        }
-
-
-         function c(bytes32 x, bytes32[] memory r, uint256 k, uint256 i) public pure returns (bytes32) {
+    function c(bytes32 x, bytes32[] memory r, uint256 k, uint256 i) public pure returns (bytes32) {
         bytes32 result = x;
 
         for (uint256 j = 0; j < i; j++) {
@@ -139,7 +86,7 @@ contract TestWotsPlusnaysayer is Test {
         return (sk,pk,r,k);
     }
 
-    function sign(uint256 w, uint256 k, uint256 l1, uint256 l2, bytes32[] memory M, bytes32[] memory sk, bytes32[] memory r) public view returns (bytes32[] memory sigma) {
+    function sign(uint256 w, uint256 k, uint256 l1, uint256 l2, bytes32[] memory M, bytes32[] memory sk, bytes32[] memory r) public pure returns (bytes32[] memory sigma) {
         uint256 checksum = 0;
         for (uint256 i = 0; i < l1; i++) {
             checksum += (w - 1 - uint256(M[i]));
@@ -224,29 +171,6 @@ contract TestWotsPlusnaysayer is Test {
         counter++;
         return uint(keccak256(abi.encodePacked(block.timestamp,block.prevrandao,  
         msg.sender,counter)));
-    }
-
-    // Function to concatenate bytes32 arrays
-    function concatenateBytes32Arrays(bytes32[] memory arr1, bytes32[] memory arr2) private pure returns (bytes32[] memory) {
-        bytes32[] memory result = new bytes32[](arr1.length + arr2.length);
-        uint256 i = 0;
-        for (; i < arr1.length; i++) {
-            result[i] = arr1[i];
-        }
-        for (uint256 j = 0; j < arr2.length; j++) {
-            result[i + j] = arr2[j];
-        }
-        return result;
-    }
-
-    function concatenateBytes32Arrays (bytes32[] memory arr1, bytes32 v2) private pure returns (bytes32[] memory){
-         bytes32[] memory result = new bytes32[](arr1.length + 1);
-        uint256 i = 0;
-        for (; i < arr1.length; i++) {
-            result[i] = arr1[i];
-        }
-        result[arr1.length] = v2;
-        return result;
     }
 
     //CODE FROM: https://ethereum.stackexchange.com/questions/8086/logarithm-math-operation-in-solidity

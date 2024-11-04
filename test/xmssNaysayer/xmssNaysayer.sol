@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 
 import {Test, console} from "forge-std/Test.sol";
-import {XMSSNaysayer,ADRS} from "../../src/xmssNaysayer/xmssNaysayer.sol";
+import {XmssNaysayer,ADRS} from "../../src/xmssNaysayer/xmssNaysayer.sol";
 import {MerkleTree} from "../../src/merkle_tree.sol";
 import "forge-std/console.sol";
 
@@ -14,8 +14,8 @@ import "forge-std/console.sol";
 
 //4709188 h=20
 //4725636 h=21
-contract TestXMSSNaysayer is Test {
-    XMSSNaysayer xmss;
+contract TestXmssNaysayer is Test {
+    XmssNaysayer xmss;
     MerkleTree mt;
     uint h = 2;
     uint w = 4;
@@ -42,8 +42,8 @@ contract TestXMSSNaysayer is Test {
 
     uint idx = 0;
  
-    XMSSNaysayer.PK xmssPk;
-    XMSSNaysayer.SIG xmssSig;
+    XmssNaysayer.PK xmssPk;
+    XmssNaysayer.SIG xmssSig;
 
     uint256 len1;
     uint256 len2;
@@ -52,7 +52,7 @@ contract TestXMSSNaysayer is Test {
 
     function setUp() public{
         wotsPkHash = new bytes32[](1);
-        xmss = new XMSSNaysayer();
+        xmss = new XmssNaysayer();
         mt = new MerkleTree();
         l1 = (m*8) / log2(w) + ((m*8) % log2(w) == 0 ? 0 : 1);
         l2 = log2(l1*(w-1))/log2(w);
@@ -210,7 +210,7 @@ contract TestXMSSNaysayer is Test {
         ADRS adrs = new ADRS();
         //also defines auth path as we anyway fake all nodes
         root = treehash(0,adrs);
-        xmssPk = XMSSNaysayer.PK(root,seed);
+        xmssPk = XmssNaysayer.PK(root,seed);
     }
 
     function wotsSign(ADRS adrs)  public returns (bytes32[] memory sig){

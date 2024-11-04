@@ -110,7 +110,7 @@ contract ADRS {
 }
 
 
-contract XMSSNaysayer is MerkleTree{
+contract XmssNaysayer is MerkleTree{
     struct PK {
         bytes32 root;
         bytes32 seed;

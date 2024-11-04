@@ -84,7 +84,7 @@ contract ADRS {
     }
 }
 
-contract XMSS{
+contract Xmss{
     uint expectedSigId = 0;
 
     struct PK{

@@ -3,12 +3,12 @@ pragma solidity ^0.8.13;
 
 
 import {Test, console} from "forge-std/Test.sol";
-import {XMSS,ADRS} from "../../src/xmss/xmss.sol";
+import {Xmss,ADRS} from "../../src/xmss/xmss.sol";
 import "forge-std/console.sol";
 
 
-contract TestXMSSS is Test {
-    XMSS xmss;
+contract TestXmss is Test {
+    Xmss xmss;
     uint h = 2;
     uint w = 4;
     bytes32 Mp = 0xfffffffffffffffffffffffff800000000000000000000000000000000000000;
@@ -28,13 +28,13 @@ contract TestXMSSS is Test {
     bytes32 root ;
     uint idx = 0;
  
-    XMSS.PK xmssPk;
-    XMSS.SIG xmssSig;
+    Xmss.PK xmssPk;
+    Xmss.SIG xmssSig;
 
 
 
     function setUp() public{
-        xmss = new XMSS();
+        xmss = new Xmss();
         l1 = (m*8) / log2(w) + ((m*8) % log2(w) == 0 ? 0 : 1);
         l2 = log2(l1*(w-1))/log2(w);
         l = l1+l2;
@@ -57,7 +57,7 @@ contract TestXMSSS is Test {
         ADRS adrs = new ADRS();
         //also defines auth path as we anyway fake all nodes
         root = treehash(0,adrs);
-        xmssPk = XMSS.PK(root,seed);
+        xmssPk = Xmss.PK(root,seed);
     }
 
     function wotsSign(ADRS adrs)  public returns (bytes32[] memory sig){

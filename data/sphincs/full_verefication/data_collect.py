@@ -8,7 +8,7 @@ from tqdm import tqdm
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Define the path to the Solidity file relative to the script's directory
-file_path = os.path.join(script_dir, '../../../test/sphincs/sphincs.sol')
+file_path = os.path.join(script_dir, '../../../test/sphincsPlus/sphincsPlus.sol')
 
 # Create the directory for storing the CSV file if it doesn't exist
 output_dir = os.path.join(script_dir, '')
@@ -81,7 +81,7 @@ with open(csv_file_path, mode='w', newline='') as csv_file:
                         modify_solidity_file(file_path, h, d, a, k, m_value)
                         
                         # Execute the console command
-                        command = ["forge", "test", "--gas-report", "--via-ir", "-vvv", "--match-path", "test/sphincs/sphincs.sol"]
+                        command = ["forge", "test", "--gas-report", "--via-ir", "-vvv", "--match-path", "test/sphincsPlus/sphincsPlus.sol"]
                         result = subprocess.run(command, capture_output=True, text=True)
 
                         output = result.stdout
