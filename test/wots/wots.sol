@@ -47,13 +47,13 @@ contract TestWotsPlusCollect is Test {
     }
 
     function test_set_key() public{
-         wots.set_pk(keccak256(abi.encodePacked(r,k,pk)));
+         wots.setPk(keccak256(abi.encodePacked(r,k,pk)));
          wots.set_w(w);
     }
 
     function testWots() public {
         wots.set_w(w);
-        wots.set_pk(keccak256(abi.encodePacked(r,k,pk)));
+        wots.setPk(keccak256(abi.encodePacked(r,k,pk)));
         assertTrue(wots.verify(M, sigma,pk,r,k));
     }
 

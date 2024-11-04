@@ -22,20 +22,20 @@ contract TestXMSSS is Test {
     uint n = 32; // constant as we just random 256 bit hashes
     //uint a = 8;
     uint t = 2**8;//2 ** 8;
-    bytes32 SK_PRF;
-    bytes32 SEED;
+    bytes32 skPrf;
+    bytes32 seed;
     uint256 l1 ;
     uint256 l2;
     uint256 l;
-    bytes32[] wots_sk;
-    bytes32[] wots_pk;
+    bytes32[] wotsSk;
+    bytes32[] wotsPk;
     bytes32[] r;
     bytes32 k;
     bytes32 root ;
     uint idx = 0;
  
-    XMSS.PK xmss_pk;
-    XMSS.SIG xmss_sig;
+    XMSS.PK xmssPk;
+    XMSS.SIG xmssSig;
 
 
 
@@ -44,45 +44,45 @@ contract TestXMSSS is Test {
         l1 = (m*8) / log2(w) + ((m*8) % log2(w) == 0 ? 0 : 1);
         l2 = log2(l1*(w-1))/log2(w);
         l = l1+l2;
-        XMSS_keyGen();
-        xmss_sig.idx_sig =uint32(idx);
-        xmss_sig.r = keccak256(abi.encodePacked(SK_PRF,idx));
+        xmssKeyGen();
+        xmssSig.idxSig =uint32(idx);
+        xmssSig.r = keccak256(abi.encodePacked(skPrf,idx));
         ADRS adrs = new ADRS();
         adrs.setType(0);   // Type = OTS hash address
         adrs.setOTSAddress(uint32(idx));
 
-        xmss_sig.sig_ots = WOTS_sign(adrs);
+        xmssSig.sigOts = wotsSign(adrs);
 
 
     }
 
-    function XMSS_keyGen()public {
-        wots_sk = wots_key_sk();
-        SK_PRF = random();
-        SEED = random();
+    function xmssKeyGen()public {
+        wotsSk = wotsKeySk();
+        skPrf= random();
+        seed = random();
         ADRS adrs = new ADRS();
         //also defines auth path as we anyway fake all nodes
         root = treehash(0,adrs);
-        xmss_pk = XMSS.PK(root,SEED);
+        xmssPk = XMSS.PK(root,seed);
     }
 
-    function WOTS_sign(ADRS adrs)  public returns (bytes32[] memory sig){
+    function wotsSign(ADRS adrs)  public returns (bytes32[] memory sig){
         uint256 csum = 0;
-        bytes32[] memory _msg = base_w(Mp, l1);
+        bytes32[] memory msg = baseW(Mp, l1);
         for (uint i = 0; i < l1; i++ ) {
-            csum = csum + w - 1 - uint256(_msg[i]);
+            csum = csum + w - 1 - uint256(msg[i]);
         }
         csum = csum << ( 8 - ( ( l2 * log2(w) ) % 8 ));
-        uint len_2_bytes = ceil( ( l2 * log2(w) ), 8 );
-        bytes32[] memory _msg2 = base_w(toByte(csum, len_2_bytes), l2);
+        uint len2Bytes = ceil( ( l2 * log2(w) ), 8 );
+        bytes32[] memory msg2 = baseW(toByte(csum, len2Bytes), l2);
         sig = new bytes32[](l);
         for (uint i = 0; i < l; i++ ) {
           adrs.setChainAddress(uint32(i));
           if (i < l1){
-            sig[i] = chain(wots_sk[i], 0, uint(_msg[i]), adrs);
+            sig[i] = chain(wotsSk[i], 0, uint(msg[i]), adrs);
           }
           else{
-            sig[i] = chain(wots_sk[i], 0, uint(_msg2[i-l1]), adrs);
+            sig[i] = chain(wotsSk[i], 0, uint(msg2[i-l1]), adrs);
           }
           
         }
@@ -97,14 +97,14 @@ contract TestXMSSS is Test {
         return b;
     }
 
-    function base_w(bytes memory X,uint out_len) public returns (bytes32[] memory){
+    function baseW(bytes memory X,uint outLen) public returns (bytes32[] memory){
         uint iin = 0;
         uint out = 0;
         uint8 total = 0;
         uint bits = 0;
         uint consumed;
-        bytes32[] memory basew = new bytes32[](out_len);
-        for (consumed = 0; consumed < out_len; consumed++ ) {
+        bytes32[] memory basew = new bytes32[](outLen);
+        for (consumed = 0; consumed < outLen; consumed++ ) {
            if ( bits == 0 ) {
                total = uint8(X[iin]);
                iin++;
@@ -117,14 +117,14 @@ contract TestXMSSS is Test {
        return basew;
     }
 
-    function base_w(bytes32 X,uint out_len) public returns (bytes32[] memory){
+    function baseW(bytes32 X,uint outLen) public returns (bytes32[] memory){
         uint iin = 0;
         uint out = 0;
         uint8 total = 0;
         uint bits = 0;
         uint consumed;
-        bytes32[] memory basew = new bytes32[](out_len);
-        for (consumed = 0; consumed < out_len; consumed++ ) {
+        bytes32[] memory basew = new bytes32[](outLen);
+        for (consumed = 0; consumed < outLen; consumed++ ) {
            if ( bits == 0 ) {
                total = uint8(X[iin]);
                iin++;
@@ -139,10 +139,10 @@ contract TestXMSSS is Test {
     }
 
     function treehash(uint s, ADRS adrs) public returns (bytes32) {
-        //require(s % (uint256(1) << h) == 0,"treehash cond fail");
+        //require(s % (uint256(1) << h) == 0,"treeHash cond fail");
         adrs.setType(0);   // Type = OTS hash address
         adrs.setOTSAddress(uint32(s));
-        bytes32[] memory pk = wots_key_pk(adrs);
+        bytes32[] memory pk = wotsKeyPk(adrs);
         adrs.setType(1);   // Type = L-tree address
         adrs.setLTreeAddress(uint32(s));
         bytes32 node = ltree(pk,adrs);
@@ -151,10 +151,10 @@ contract TestXMSSS is Test {
         adrs.setTreeHeight(0);
         adrs.setTreeIndex(uint32(s));
         //fake other trees with random values, we need only one message tree for verefication testing
-        xmss_sig.auth = new bytes32[](h);
+        xmssSig.auth = new bytes32[](h);
         for (uint i =0; i < (h); i++){
-            xmss_sig.auth[i] = random();
-            node = RAND_HASH(node,xmss_sig.auth[i], adrs);
+            xmssSig.auth[i] = random();
+            node = randHash(node,xmssSig.auth[i], adrs);
             adrs.setTreeHeight(uint32(adrs.getTreeHeight())+1);
         }
         //console.logBytes32(node);
@@ -164,14 +164,14 @@ contract TestXMSSS is Test {
         return (a + b - 1) / b;
     }
 
-    function RAND_HASH(bytes32 l, bytes32 r,ADRS adrs)public returns (bytes32){
+    function randHash(bytes32 l, bytes32 r,ADRS adrs)public returns (bytes32){
         adrs.setKeyAndMask(0);
         bytes32 KEY = PRF(adrs);
         adrs.setKeyAndMask(1);
-        bytes32 BM_0 = PRF(adrs);
+        bytes32 BM0 = PRF(adrs);
         adrs.setKeyAndMask(2);
-        bytes32 BM_1 = PRF(adrs);
-        return keccak256(abi.encodePacked(KEY, (l ^ BM_0), (r ^ BM_1)));
+        bytes32 BM1 = PRF(adrs);
+        return keccak256(abi.encodePacked(KEY, (l ^ BM0), (r ^ BM1)));
     }  
 
     function ltree(bytes32[] memory pk, ADRS addrs)public  returns (bytes32){
@@ -180,7 +180,7 @@ contract TestXMSSS is Test {
         while ( len > 1 ) {
             for ( uint i = 0; i < (len / 2); i++ ) {
                 addrs.setTreeIndex(uint32(i));
-                pk[i] = RAND_HASH(pk[2*i], pk[2*i + 1], addrs);
+                pk[i] = randHash(pk[2*i], pk[2*i + 1], addrs);
             }
             if ( len % 2 == 1 ) {
                 pk[(len / 2)] = pk[len - 1];
@@ -229,16 +229,16 @@ contract TestXMSSS is Test {
     }
 
 
-    function wots_key_pk(ADRS adrs)public returns(bytes32[] memory){
+    function wotsKeyPk(ADRS adrs)public returns(bytes32[] memory){
         bytes32[] memory pk = new bytes32[](l);
         for ( uint i = 0; i < l; i++ ) {
             adrs.setChainAddress(uint32(i));
-            pk[i] = chain(wots_sk[i], 0, w - 1, adrs);
+            pk[i] = chain(wotsSk[i], 0, w - 1, adrs);
         }
         return pk;
     }
 
-    function wots_key_sk() public returns (bytes32[] memory sk){
+    function wotsKeySk() public returns (bytes32[] memory sk){
         require(w>1,"w should be >1");
         sk = new bytes32[](l);
         for (uint256 i =0; i < l; i++){
@@ -248,8 +248,8 @@ contract TestXMSSS is Test {
     }
 
     function test_xmss() public{
-        xmss.set_pk(xmss_pk);
-        require(xmss.verify(xmss_sig, Mp, w,h),"verefication failed");
+        xmss.setPk(xmssPk);
+        require(xmss.verify(xmssSig, Mp, w,h),"verefication failed");
         // PLACE HOLDER START
         // PLACE HOLDER END
     }
@@ -301,6 +301,6 @@ contract TestXMSSS is Test {
     } 
 
     function PRF(ADRS adrs) public returns(bytes32){
-        return keccak256(abi.encodePacked(SEED,adrs.toBytes()));
+        return keccak256(abi.encodePacked(seed,adrs.toBytes()));
     }
 }

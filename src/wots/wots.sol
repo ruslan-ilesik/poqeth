@@ -11,7 +11,7 @@ contract WOTSPlus {
 
     constructor() {}
 
-    function set_pk(bytes32 h) public {
+    function setPk(bytes32 h) public {
         hashed = h;
     }
 

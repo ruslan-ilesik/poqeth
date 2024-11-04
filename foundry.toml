@@ -6,6 +6,7 @@ gas_limit = "18446744073709551615"
 memory_limit = 99999999999
 via_ir = true
 sparse_mode = true
+ignored_error_codes  = ["unreachable", "unused-return", "unused-param", "unused-var", "code-size", "shadowing", "func-mutability", "license", "pragma-solidity"]
 
 [profile.default.optimizer_details]
 constantOptimizer = true

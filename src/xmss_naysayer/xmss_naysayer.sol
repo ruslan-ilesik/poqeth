@@ -3,7 +3,6 @@ pragma solidity ^0.8.13;
 import "forge-std/console.sol";
 import "../merkle_tree.sol";
 
-
 contract ADRS {
     bytes4 public layerAddress;
     bytes8 public treeAddress;
@@ -27,21 +26,19 @@ contract ADRS {
         keyAndMask = bytes4(0);
     }
 
-    function toBytes()public returns (bytes memory){
-        return abi.encodePacked(layerAddress,treeAddress,adrsType,firstWord,secondWord,thirdWord,keyAndMask);
+    function toBytes() public view returns (bytes memory) {
+        return abi.encodePacked(layerAddress, treeAddress, adrsType, firstWord, secondWord, thirdWord, keyAndMask);
     }
 
-    
-    function fillFrom(ADRS adrs)public{
+    function fillFrom(ADRS adrs) public {
         layerAddress = adrs.getLayerAddress();
         treeAddress = adrs.getTreeAddress();
         adrsType = adrs.getType();
 
-        firstWord = adrs.getKeyPairAddress(); //first word
-        secondWord = adrs.getTreeHeight(); //second word
-        thirdWord = adrs.getTreeIndex(); //third word
+        firstWord = adrs.getKeyPairAddress();
+        secondWord = adrs.getTreeHeight();
+        thirdWord = adrs.getTreeIndex();
     }
-
 
     function setType(uint32 typeValue) public {
         adrsType = bytes4(typeValue);
@@ -51,20 +48,19 @@ contract ADRS {
         keyAndMask = bytes4(0);
     }
 
-    function getLayerAddress()public view returns (bytes4){
+    function getLayerAddress() public view returns (bytes4) {
         return layerAddress;
     }
 
-
-    function getType()public view returns (bytes4){
+    function getType() public view returns (bytes4) {
         return adrsType;
     }
 
-    function getTreeAddress()public view returns (bytes8){
+    function getTreeAddress() public view returns (bytes8) {
         return treeAddress;
     }
 
-    function getKeyPairAddress() public view returns(bytes4){
+    function getKeyPairAddress() public view returns (bytes4) {
         return firstWord;
     }
 
@@ -113,73 +109,77 @@ contract ADRS {
     }
 }
 
-contract XMSSSNaysayer is MerkleTree{
-    struct PK{
+
+contract XMSSNaysayer is MerkleTree{
+    struct PK {
         bytes32 root;
         bytes32 seed;
     }
 
-    struct SIG{
-        uint32 idx_sig;
+    struct SIG {
+        uint32 idxSig;
         bytes32 r;
-        bytes32[] sig_ots; 
+        bytes32[] sigOts; 
         bytes32[] auth;
     }
 
-    constructor(){}
+    constructor() {}
 
-    PK pk;
+    PK public pk;
 
-    function set_pk(PK memory _pk) public{
+    function setPk(PK memory _pk) public {
         pk = _pk;
     }
 
-    uint16 len_1;
-    uint16 len_2;
-    uint16 length_all;
-    uint8 w = 4;
-    uint8 h;
-    bytes32 sig;
-    uint32 idx_sig;
-    bytes32 r;
-    bytes32 M;
+    uint16 public len1;
+    uint16 public len2;
+    uint16 public lengthAll;
+    uint8 public w = 4;
+    uint8 public h;
+    bytes32 public sig;
+    uint32 public idxSig;
+    bytes32 public r;
+    bytes32 public M;
 
-    uint xmss_auth_length;
-    uint wots_sig_length;
-    uint wots_pk_length;
+    uint public xmssAuthLength;
+    uint public wotsSigLength;
+    uint public wotsPkLength;
 
-    //in both cases h is provided but in fact it is constant, we dont validate it as in real world use it would be constant in contract.
-    function set_sig_from_var(bytes32[] memory wots_pk_hash,bytes32[] memory auth,bytes32[] memory sig_ots,bytes32[] memory wots_pk,bytes32[] memory ht_additional_nodes, uint32 _idx_sig, bytes32 _r, uint8 _h,  bytes32 _M) public{
-        idx_sig = _idx_sig;
+    function setSigFromVar(
+        bytes32[] memory wotsPkHash,
+        bytes32[] memory auth,
+        bytes32[] memory sigOts,
+        bytes32[] memory wotsPk,
+        bytes32[] memory htAdditionalNodes,
+        uint32 _idxSig,
+        bytes32 _r,
+        uint8 _h,
+        bytes32 _M
+    ) public {
+        idxSig = _idxSig;
         r = _r;
         h = _h;
         M = _M;
-        xmss_auth_length = auth.length;
-        wots_sig_length = sig_ots.length;
-        wots_pk_length = wots_pk.length;
-        bytes32[] memory sig_full = concatenateBytes32Arrays([wots_pk_hash,auth,sig_ots,wots_pk,ht_additional_nodes]);
-        bytes32 root = buildRoot(sig_full);
+        xmssAuthLength = auth.length;
+        wotsSigLength = sigOts.length;
+        wotsPkLength = wotsPk.length;
+        bytes32[] memory sigFull = concatenateBytes32Arrays([wotsPkHash, auth, sigOts, wotsPk, htAdditionalNodes]);
+        bytes32 root = buildRoot(sigFull);
         sig = root;
-
     }
     
-
-    function set_args(uint8 _w, uint8 _h)public {
+    function setArgs(uint8 _w, uint8 _h) public {
         w = _w;
         h = _h;
     }
 
     function concatenateBytes32Arrays(bytes32[][5] memory arrays) public pure returns (bytes32[] memory) {
-        // Calculate the total length of the resulting bytes32 array
         uint256 totalLength = 0;
         for (uint256 i = 0; i < arrays.length; i++) {
             totalLength += arrays[i].length;
         }
 
-        // Create a new bytes32 array to hold the concatenated result
         bytes32[] memory result = new bytes32[](totalLength);
-
-        // Copy elements from input arrays to the result array
         uint256 currentIndex = 0;
         for (uint256 i = 0; i < arrays.length; i++) {
             bytes32[] memory currentArray = arrays[i];
@@ -192,212 +192,256 @@ contract XMSSSNaysayer is MerkleTree{
         return result;
     }
 
-    function set_sig(bytes32 _sig, uint32 _idx_sig, bytes32 _r, uint8 _h, bytes32 _M, uint xmss_auth_l, uint wots_sig_l, uint wots_pk_l )public {
+    function setSig(
+        bytes32 _sig,
+        uint32 _idxSig,
+        bytes32 _r,
+        uint8 _h,
+        bytes32 _M,
+        uint xmssAuthL,
+        uint wotsSigL,
+        uint wotsPkL
+    ) public {
         sig = _sig;
-        idx_sig = _idx_sig;
+        idxSig = _idxSig;
         r = _r;
         h = _h;
         M = _M;
-        xmss_auth_length = xmss_auth_l;
-        wots_sig_length = wots_sig_l;
-        wots_pk_length = wots_pk_l;
+        xmssAuthLength = xmssAuthL;
+        wotsSigLength = wotsSigL;
+        wotsPkLength = wotsPkL;
     }
-    
-    function naysayer_ht(uint top_node_ind, bytes32 top_node, bytes32[] memory top_node_proof,  bytes32 bottom_node, bytes32[] memory bottom_node_proof,bytes32 auth_node, bytes32[] memory auth_node_proof ) public returns (bool){
-        if (!verifyProof(sig, top_node, top_node_proof, 1+xmss_auth_length +wots_sig_length+wots_pk_length+top_node_ind) || !verifyProof(sig, bottom_node, bottom_node_proof, 1+xmss_auth_length +wots_sig_length+wots_pk_length+top_node_ind-1) || !verifyProof(sig, auth_node, auth_node_proof, 1+top_node_ind-1)){
+
+    function naysayerHT(
+        uint topNodeInd,
+        bytes32 topNode,
+        bytes32[] memory topNodeProof,
+        bytes32 bottomNode,
+        bytes32[] memory bottomNodeProof,
+        bytes32 authNode,
+        bytes32[] memory authNodeProof
+    ) public returns (bool) {
+        if (!verifyProof(sig, topNode, topNodeProof, 1 + xmssAuthLength + wotsSigLength + wotsPkLength + topNodeInd) ||
+            !verifyProof(sig, bottomNode, bottomNodeProof, 1 + xmssAuthLength + wotsSigLength + wotsPkLength + topNodeInd - 1) ||
+            !verifyProof(sig, authNode, authNodeProof, 1 + topNodeInd - 1)) {
             return false;
         }
+
         ADRS adrs = new ADRS();
         adrs.setType(2);   // Type = hash tree address
-        adrs.setTreeIndex(idx_sig);
-        adrs.setTreeHeight(uint32(top_node_ind-1));
-        for (uint k = 0; k < top_node_ind-1; k++ ) {
-            if ( ((idx_sig / (2**k)) % 2) == 0 ) {
+        adrs.setTreeIndex(idxSig);
+        adrs.setTreeHeight(uint32(topNodeInd - 1));
+        
+        for (uint k = 0; k < topNodeInd - 1; k++) {
+            if ((idxSig / (2 ** k)) % 2 == 0) {
                 adrs.setTreeIndex(uint32(adrs.getTreeIndex()) / 2);
-            } 
-            else {  
+            } else {
                 adrs.setTreeIndex((uint32(adrs.getTreeIndex()) - 1) / 2);
             }
         }
-        uint k = top_node_ind-1;
+        
+        uint k = topNodeInd - 1;
         bytes32 hashed;
-        if ( ((idx_sig / (2**k)) % 2) == 0 ) {
+        
+        if ((idxSig / (2 ** k)) % 2 == 0) {
             adrs.setTreeIndex(uint32(adrs.getTreeIndex()) / 2);
-            hashed = RAND_HASH(bottom_node, auth_node, adrs);
-            } 
-        else {  
+            hashed = randHash(bottomNode, authNode, adrs);
+        } else {
             adrs.setTreeIndex((uint32(adrs.getTreeIndex()) - 1) / 2);
-            hashed = RAND_HASH(auth_node,bottom_node, adrs);
-        }   
-        return top_node != hashed;
-    }
-
-    function naysayer_ltree(bytes32[] memory wots_pk, bytes32[] memory wots_pk_proof, bytes32 ltree_result, bytes32[] memory ltree_result_proof) public returns(bool){
-        bytes32 wots_hash = keccak256(abi.encodePacked(wots_pk));
-        if (!verifyProof(sig, wots_hash, wots_pk_proof, 0) || !verifyProof(sig, ltree_result, ltree_result_proof, 1+xmss_auth_length +wots_sig_length+wots_pk_length)){
-            return false;
-        }
-        uint8 n = 32; 
-        (len_1, len_2, length_all) = compute_lengths(n, w);
-        ADRS adrs = new ADRS();
-        adrs.setType(1);   // Type = L-tree address
-        adrs.setLTreeAddress(idx_sig);
-        bytes32 node = ltree(wots_pk, adrs);
-        //console.logBytes32(node);
-        return node != ltree_result;
-    }
-
-
-    function naysayer_wots(uint wots_sig_ind, bytes32 wots_sig_elem, bytes32[] memory wots_sig_proof, 
-                bytes32 wots_pk_elem, bytes32[] memory wots_pk_proof
-    ) public returns(bool){
-
-        if (!verifyProof(sig, wots_sig_elem, wots_sig_proof, 1+xmss_auth_length+wots_sig_ind) || !verifyProof(sig, wots_pk_elem, wots_pk_proof, 1+xmss_auth_length+wots_sig_length+wots_sig_ind)){
-            return false;
-        }
-        uint8 n = 32; 
-        uint len_1;
-        uint len_2;
-        uint length_all;
-        (len_1, len_2, length_all) = compute_lengths(n, w);
-
-        ADRS adrs = new ADRS();
-        adrs.setType(0);   // Type = OTS hash address
-        adrs.setOTSAddress(uint32(idx_sig));
-
-
-        uint csum = 0;
-        bytes1[] memory _msg = base_w(M,len_1);
-        for (uint i = 0; i < len_1; i++ ) {
-           csum = csum + w - 1 - uint8(_msg[i]);
-        }
-        csum = csum << ( 8 - ( ( len_2 * log2(w) ) % 8 ));
-        uint len_2_bytes = ceil( ( len_2 * log2(w) ), 8 );
-        bytes1[] memory _msg2 = base_w(toByte(csum, len_2_bytes),len_2);
-        uint i = wots_sig_ind;
-        adrs.setChainAddress(uint32(i));
-        bytes32 root;
-        if (i < len_1){
-            root= chain(wots_sig_elem, uint(uint8(_msg[i])), w - 1 - uint(uint8(_msg[i])), adrs);
-        }
-        else{
-            root = chain(wots_sig_elem, uint(uint8(_msg2[i-len_1])), w - 1 - uint(uint8(_msg2[i-len_1])), adrs);
+            hashed = randHash(authNode, bottomNode, adrs);
         }
         
-
-        return root != wots_pk_elem;
+        return topNode != hashed;
     }
 
-    function ltree(bytes32[] memory pk, ADRS addrs)public  returns (bytes32){
-        uint len = length_all;
+    function naysayerLTree(
+        bytes32[] memory wotsPk,
+        bytes32[] memory wotsPkProof,
+        bytes32 lTreeResult,
+        bytes32[] memory lTreeResultProof
+    ) public returns (bool) {
+        bytes32 wotsHash = keccak256(abi.encodePacked(wotsPk));
+        
+        if (!verifyProof(sig, wotsHash, wotsPkProof, 0) ||
+            !verifyProof(sig, lTreeResult, lTreeResultProof, 1 + xmssAuthLength + wotsSigLength + wotsPkLength)) {
+            return false;
+        }
+        
+        uint8 n = 32; 
+        (len1, len2, lengthAll) = computeLengths(n, w);
+        ADRS adrs = new ADRS();
+        adrs.setType(1);   // Type = L-tree address
+        adrs.setLTreeAddress(idxSig);
+        
+        bytes32 node = lTree(wotsPk, adrs);
+        return node != lTreeResult;
+    }
+
+    function naysayerWots(
+        uint wotsSigInd,
+        bytes32 wotsSigElem,
+        bytes32[] memory wotsSigProof,
+        bytes32 wotsPkElem,
+        bytes32[] memory wotsPkProof
+    ) public returns (bool) {
+        if (!verifyProof(sig, wotsSigElem, wotsSigProof, 1 + xmssAuthLength + wotsSigInd) ||
+            !verifyProof(sig, wotsPkElem, wotsPkProof, 1 + xmssAuthLength + wotsSigLength + wotsSigInd)) {
+            return false;
+        }
+
+        uint8 n = 32; 
+        uint len1;
+        uint len2;
+        uint lengthAll;
+        
+        (len1, len2, lengthAll) = computeLengths(n, w);
+        ADRS adrs = new ADRS();
+        adrs.setType(0);   // Type = OTS hash address
+        adrs.setOTSAddress(uint32(idxSig));
+
+        uint csum = 0;
+        bytes1[] memory msg1 = baseW(M, len1);
+        
+        for (uint i = 0; i < len1; i++) {
+            csum = csum + w - 1 - uint8(msg1[i]);
+        }
+        
+        csum = csum << (8 - ((len2 * log2(w)) % 8));
+        uint len2Bytes = ceil((len2 * log2(w)), 8);
+        bytes1[] memory msg2 = baseW(toByte(csum, len2Bytes), len2);
+        
+        uint i = wotsSigInd;
+        adrs.setChainAddress(uint32(i));
+        
+        bytes32 root;
+        
+        if (i < len1) {
+            root = chain(wotsSigElem, uint(uint8(msg1[i])), w - 1 - uint(uint8(msg1[i])), adrs);
+        } else {
+            root = chain(wotsSigElem, uint(uint8(msg2[i - len1])), w - 1 - uint(uint8(msg2[i - len1])), adrs);
+        }
+
+        return root != wotsPkElem;
+    }
+
+    function lTree(bytes32[] memory pk, ADRS addrs) public returns (bytes32) {
+        uint len = lengthAll;
         addrs.setTreeHeight(0);
-        while ( len > 1 ) {
-            for ( uint i = 0; i < (len / 2); i++ ) {
+        
+        while (len > 1) {
+            for (uint i = 0; i < (len / 2); i++) {
                 addrs.setTreeIndex(uint32(i));
-                pk[i] = RAND_HASH(pk[2*i], pk[2*i + 1], addrs);
+                pk[i] = randHash(pk[2 * i], pk[2 * i + 1], addrs);
             }
-            if ( len % 2 == 1 ) {
-                pk[(len / 2)] = pk[len - 1];
+            
+            if (len % 2 == 1) {
+                pk[len / 2] = pk[len - 1];
             }
+            
             len = ceil(len, 2);
             addrs.setTreeHeight(uint32(addrs.getTreeHeight()) + 1);
         }
+        
         return pk[0];
-    } 
+    }
 
 
+   function randHash(bytes32 left, bytes32 right, ADRS adrs) public returns (bytes32) {
+    adrs.setKeyAndMask(0);
+    bytes32 key = PRF(adrs);
+    adrs.setKeyAndMask(1);
+    bytes32 bm0 = PRF(adrs);
+    adrs.setKeyAndMask(2);
+    bytes32 bm1 = PRF(adrs);
+    return keccak256(abi.encodePacked(key, (left ^ bm0), (right ^ bm1)));
+}
 
-    function RAND_HASH(bytes32 l, bytes32 r,ADRS adrs)public returns (bytes32){
-        adrs.setKeyAndMask(0);
-        bytes32 KEY = PRF(adrs);
-        adrs.setKeyAndMask(1);
-        bytes32 BM_0 = PRF(adrs);
-        adrs.setKeyAndMask(2);
-        bytes32 BM_1 = PRF(adrs);
-        return keccak256(abi.encodePacked(KEY, (l ^ BM_0), (r ^ BM_1)));
-    }  
     function ceil(uint a, uint b) internal pure returns (uint) {
         return (a + b - 1) / b;
     }
 
-    function base_w(bytes32 X,uint out_len) public returns (bytes1[] memory){
-        uint iin = 0;
-        uint out = 0;
+    function baseW(bytes32 x, uint outLen) public view returns (bytes1[] memory) {
+        uint inputIndex = 0;
+        uint outputIndex = 0;
         uint8 total = 0;
         uint bits = 0;
         uint consumed;
-        bytes1[] memory basew = new bytes1[](out_len);
-        for (consumed = 0; consumed < out_len; consumed++ ) {
-           if ( bits == 0 ) {
-               total = uint8(X[iin]);
-               iin++;
-               bits += 8;
-           }
-           bits -= log2(w);
-           basew[out] = bytes1(uint8((total >> bits) & (w - 1)));
-           out++;
-       }
-       return basew;
+        bytes1[] memory baseWArray = new bytes1[](outLen);
 
+        for (consumed = 0; consumed < outLen; consumed++) {
+            if (bits == 0) {
+                total = uint8(x[inputIndex]);
+                inputIndex++;
+                bits += 8;
+            }
+            bits -= log2(w);
+            baseWArray[outputIndex] = bytes1(uint8((total >> bits) & (w - 1)));
+            outputIndex++;
+        }
+
+        return baseWArray;
     }
-       
-    function PRF(ADRS adrs) public returns(bytes32){
-        return keccak256(abi.encodePacked(pk.seed,adrs.toBytes()));
+
+    function PRF(ADRS adrs) public view returns (bytes32) {
+        return keccak256(abi.encodePacked(pk.seed, adrs.toBytes()));
     }
-    function chain(bytes32 X, uint i, uint s, ADRS adrs) public returns (bytes32) {
+
+    function chain(bytes32 x, uint i, uint s, ADRS adrs) public returns (bytes32) {
         if ((i + s) > (w - 1)) {
             return 0;
         }
 
-        bytes32 tmp = X;
+        bytes32 tmp = x;
 
         for (uint k = 0; k < s; k++) {
             adrs.setHashAddress(uint32(i + k));
             adrs.setKeyAndMask(0);
-            bytes32 KEY = PRF(adrs);
+            bytes32 key = PRF(adrs);
             adrs.setKeyAndMask(1);
-            bytes32 BM = PRF(adrs);
-            tmp = keccak256(abi.encodePacked(KEY, tmp ^ BM));
+            bytes32 bm = PRF(adrs);
+            tmp = keccak256(abi.encodePacked(key, tmp ^ bm));
         }
 
         return tmp;
     }
 
-    function compute_lengths(uint8 n, uint8 w) public pure returns (uint16 len_1, uint16 len_2, uint16 len_all) {
+    function computeLengths(uint8 n, uint8 w) public pure returns (uint16 len1, uint16 len2, uint16 lenAll) {
         uint16 m = 32; // constant
-        len_1 = (m*8) / uint16(log2(w)) + ((m*8) % uint16(log2(w)) == 0 ? 0 : 1);
-        len_2 = uint16(log2(len_1*(w-1))/log2(w));
-        len_all = len_1 + len_2;
+        len1 = (m * 8) / uint16(log2(w)) + ((m * 8) % uint16(log2(w)) == 0 ? 0 : 1);
+        len2 = uint16(log2(len1 * (w - 1)) / log2(w));
+        lenAll = len1 + len2;
     }
 
-
-    function base_w(bytes memory X,uint out_len) public returns (bytes1[] memory){
-        uint iin = 0;
-        uint out = 0;
+    function baseW(bytes memory x, uint outLen) public view returns (bytes1[] memory) {
+        uint inputIndex = 0;
+        uint outputIndex = 0;
         uint8 total = 0;
         uint bits = 0;
         uint consumed;
-        bytes1[] memory basew = new bytes1[](out_len);
-        for (consumed = 0; consumed < out_len; consumed++ ) {
-           if ( bits == 0 ) {
-               total = uint8(X[iin]);
-               iin++;
-               bits += 8;
-           }
-           bits -= log2(w);
-           basew[out] = bytes1(uint8((total >> bits) & (w - 1)));
-           out++;
-       }
-       return basew;
+        bytes1[] memory baseWArray = new bytes1[](outLen);
+
+        for (consumed = 0; consumed < outLen; consumed++) {
+            if (bits == 0) {
+                total = uint8(x[inputIndex]);
+                inputIndex++;
+                bits += 8;
+            }
+            bits -= log2(w);
+            baseWArray[outputIndex] = bytes1(uint8((total >> bits) & (w - 1)));
+            outputIndex++;
+        }
+
+        return baseWArray;
     }
 
     function toByte(uint256 x, uint y) public pure returns (bytes memory) {
-        bytes memory b = new bytes(y);
+        bytes memory byteArray = new bytes(y);
         for (uint i = 0; i < y; i++) {
-            b[i] = bytes1(uint8(x >> (8 * (y - 1 - i))));
+            byteArray[i] = bytes1(uint8(x >> (8 * (y - 1 - i))));
         }
-        return b;
+        return byteArray;
     }
+
 
     //CODE FROM: https://ethereum.stackexchange.com/questions/8086/logarithm-math-operation-in-solidity
     function log2(uint x) public pure returns (uint y){

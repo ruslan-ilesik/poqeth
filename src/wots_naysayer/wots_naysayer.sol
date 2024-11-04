@@ -13,7 +13,7 @@ contract WOTSPlusnaysayer is MerkleTree {
     bytes32 sign;
     //bytes1[] M;
 
-    function set_pk( uint256 _k) public {
+    function setPk( uint256 _k) public {
         k = _k;
     }
 
@@ -21,7 +21,7 @@ contract WOTSPlusnaysayer is MerkleTree {
         w = _w;
     }
 
-    function set_sign(bytes32 _sign) public{
+    function setSign(bytes32 _sign) public{
         sign = _sign;
         //M = _M;
     }

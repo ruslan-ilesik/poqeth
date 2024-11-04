@@ -127,13 +127,13 @@ contract Sphincs_plus{
         bytes32 root;
     }
 
-    struct XMSS_SIG{
+    struct xmssSig{
         bytes32[] sig;
         bytes32[] auth;
     }
 
     struct HT_SIG{
-        XMSS_SIG[] sig;
+        xmssSig[] sig;
     }
 
     struct FORS_SIG_INNER{
@@ -152,7 +152,7 @@ contract Sphincs_plus{
     }
 
     SPHINCS_PK pk;
-    function set_pk(SPHINCS_PK memory p) public {
+    function setPk(SPHINCS_PK memory p) public {
         pk = p;
     }
 
@@ -179,7 +179,7 @@ contract Sphincs_plus{
 
     }
 
-    function chain(bytes32 X, uint i, uint s, bytes32 SEED, ADRS adrs) public returns (bytes32) {
+    function chain(bytes32 X, uint i, uint s, bytes32 seed, ADRS adrs) public returns (bytes32) {
         // Return X if s is 0, as no transformation is needed
         if (s == 0) {
             return X;
@@ -195,7 +195,7 @@ contract Sphincs_plus{
         // Iterate s times to perform the chaining
         for (uint j = 0; j < s; j++) {
             adrs.setHashAddress(bytes4(uint32(i + j)));
-            tmp = keccak256(abi.encodePacked(SEED, adrs.toBytes(), tmp));
+            tmp = keccak256(abi.encodePacked(seed, adrs.toBytes(), tmp));
         }
 
         return tmp;
@@ -258,10 +258,10 @@ contract Sphincs_plus{
 
     function ht_verify(bytes32 M, HT_SIG memory SIG_HT, bytes32 PKseed,bytes8 idx_tree, bytes4 idx_leaf,bytes32 PK_HT )public returns(bool){
         ADRS adrs = new ADRS();
-        XMSS_SIG memory SIG_tmp = SIG_HT.sig[0];
+        xmssSig memory SIG_tmp = SIG_HT.sig[0];
         adrs.setLayerAddress(0);
         adrs.setTreeAddress(idx_tree);
-        bytes32 node = xmss_pkFromSig(uint32(idx_leaf), SIG_tmp, M, PKseed, adrs);
+        bytes32 node = xmssPkFromSig(uint32(idx_leaf), SIG_tmp, M, PKseed, adrs);
         //console.logBytes32(node);
         uint256 idx_tree_bits = h - h / d;
         uint256 idx_leaf_bits = h / d;
@@ -287,7 +287,7 @@ contract Sphincs_plus{
             adrs.setLayerAddress(bytes4(uint32(j)));
             adrs.setTreeAddress(bytesToBytes4(idx_tree2));
             SIG_tmp = SIG_HT.sig[j];
-            node = xmss_pkFromSig(uint32(bytesToBytes4(idx_leaf2)), SIG_tmp, node, PKseed, adrs);
+            node = xmssPkFromSig(uint32(bytesToBytes4(idx_leaf2)), SIG_tmp, node, PKseed, adrs);
             //console.logBytes32(node);
         }
        // console.log();
@@ -296,13 +296,13 @@ contract Sphincs_plus{
         return PK_HT == node;
     }
 
-    function xmss_pkFromSig(uint32 idx, Sphincs_plus.XMSS_SIG memory SIG_XMSS, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
+    function xmssPkFromSig(uint32 idx, Sphincs_plus.xmssSig memory SIG_XMSS, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
         adrs.setType(WOTS_HASH);
         adrs.setKeyPairAddress(bytes4(idx));
         bytes32[] memory sig = SIG_XMSS.sig;
         bytes32[] memory AUTH = SIG_XMSS.auth;
         bytes32[2] memory node;
-        node[0] = wots_pkFromSig(sig, M, PKseed, adrs);
+        node[0] = wotsPkFromSig(sig, M, PKseed, adrs);
         adrs.setType(TREE);
         adrs.setTreeIndex(bytes4(idx));
         for (uint k = 0; k < h / d; k++ ) {
@@ -321,25 +321,25 @@ contract Sphincs_plus{
     }
 
 
-    function wots_pkFromSig(bytes32[] memory sig, bytes32 M, bytes32 PKseed, ADRS adrs) public returns(bytes32){
+    function wotsPkFromSig(bytes32[] memory sig, bytes32 M, bytes32 PKseed, ADRS adrs) public returns(bytes32){
         uint csum = 0;
         ADRS wotspkADRS = new ADRS();
         wotspkADRS.fillFrom(adrs);
-        bytes32[] memory _msg = base_w(M,len1);
+        bytes32[] memory msg = baseW(M,len1);
         for (uint i = 0; i < len1; i++ ) {
-           csum = csum + w - 1 - uint(_msg[i]);
+           csum = csum + w - 1 - uint(msg[i]);
         }
         csum = csum << ( 8 - ( ( len2 * log2(w) ) % 8 ));
-        uint len_2_bytes = ceil( ( len2 * log2(w) ), 8 );
-        bytes32[] memory _msg2 = base_w(toByte(csum, len_2_bytes),len2);
+        uint len2Bytes = ceil( ( len2 * log2(w) ), 8 );
+        bytes32[] memory msg2 = baseW(toByte(csum, len2Bytes),len2);
         bytes32[] memory tmp = new bytes32[](len);
         for (uint i = 0; i < len; i++ ) {
           adrs.setChainAddress(bytes4(uint32(i)));
           if (i < len1){
-            tmp[i] = chain(sig[i], uint(_msg[i]), w - 1 - uint(_msg[i]),PKseed, adrs);
+            tmp[i] = chain(sig[i], uint(msg[i]), w - 1 - uint(msg[i]),PKseed, adrs);
           }
           else{
-            tmp[i] = chain(sig[i], uint(_msg2[i-len1]), w - 1 - uint(_msg2[i-len1]),PKseed, adrs);
+            tmp[i] = chain(sig[i], uint(msg2[i-len1]), w - 1 - uint(msg2[i-len1]),PKseed, adrs);
           }
         }
         wotspkADRS.setType(WOTS_PK);
@@ -454,14 +454,14 @@ contract Sphincs_plus{
         return b;
     }
 
-    function base_w(bytes memory X,uint out_len) public returns (bytes32[] memory){
+    function baseW(bytes memory X,uint outLen) public returns (bytes32[] memory){
         uint iin = 0;
         uint out = 0;
         uint8 total = 0;
         uint bits = 0;
         uint consumed;
-        bytes32[] memory basew = new bytes32[](out_len);
-        for (consumed = 0; consumed < out_len; consumed++ ) {
+        bytes32[] memory basew = new bytes32[](outLen);
+        for (consumed = 0; consumed < outLen; consumed++ ) {
            if ( bits == 0 ) {
                total = uint8(X[iin]);
                iin++;
@@ -474,14 +474,14 @@ contract Sphincs_plus{
        return basew;
     }
 
-    function base_w(bytes32 X,uint out_len) public returns (bytes32[] memory){
+    function baseW(bytes32 X,uint outLen) public returns (bytes32[] memory){
         uint iin = 0;
         uint out = 0;
         uint8 total = 0;
         uint bits = 0;
         uint consumed;
-        bytes32[] memory basew = new bytes32[](out_len);    
-        for (consumed = 0; consumed < out_len; consumed++ ) {
+        bytes32[] memory basew = new bytes32[](outLen);    
+        for (consumed = 0; consumed < outLen; consumed++ ) {
            if ( bits == 0 ) {
                total = uint8(X[iin]);
                iin++;

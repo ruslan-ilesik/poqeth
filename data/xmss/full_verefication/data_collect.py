@@ -17,23 +17,23 @@ def replace_values_in_file(file_path, replacements):
         file.writelines(lines)
 
 def extract_max_values(output):
-    set_pk_max = None
+    setPk_max = None
     verify_max = None
 
     # Regular expressions to match the lines
-    set_pk_pattern = r'set_pk\s*\|\s*\d+\s*\|\s*\d+\s*\|\s*\d+\s*\|\s*(\d+)\s*\|'
+    setPk_pattern = r'setPk\s*\|\s*\d+\s*\|\s*\d+\s*\|\s*\d+\s*\|\s*(\d+)\s*\|'
     verify_pattern = r'verify\s*\|\s*\d+\s*\|\s*\d+\s*\|\s*\d+\s*\|\s*(\d+)\s*\|'
 
-    set_pk_match = re.search(set_pk_pattern, output)
+    setPk_match = re.search(setPk_pattern, output)
     verify_match = re.search(verify_pattern, output)
 
-    if set_pk_match:
-        set_pk_max = set_pk_match.group(1)
+    if setPk_match:
+        setPk_max = setPk_match.group(1)
 
     if verify_match:
         verify_max = verify_match.group(1)
 
-    return set_pk_max, verify_max
+    return setPk_max, verify_max
 
 if __name__ == '__main__':
     # Get the current directory of the script
@@ -46,7 +46,7 @@ if __name__ == '__main__':
             with open(os.path.join(current_dir,f'./w_{w}_h_{h}.csv'), 'w', newline='') as csvfile:
                 csvwriter = csv.writer(csvfile)
                 # Write the header
-                csvwriter.writerow(['w','h','i', 'hex_value', 'set_pk', 'verify'])
+                csvwriter.writerow(['w','h','i', 'hex_value', 'setPk', 'verify'])
                 for i in tqdm(range(100,157),desc='weight',leave=False):
                     # Create a binary string with i ones followed by (256-i) zeros
                     binary_string = '1' * i + '0' * (256 - i)
@@ -72,8 +72,8 @@ if __name__ == '__main__':
 
                     output = result.stdout
 
-                    set_pk_max, verify_max = extract_max_values(output)
+                    setPk_max, verify_max = extract_max_values(output)
 
                     # Write the results to the CSV file
-                    csvwriter.writerow([w,h,i, hex_value, set_pk_max, verify_max])
+                    csvwriter.writerow([w,h,i, hex_value, setPk_max, verify_max])
         

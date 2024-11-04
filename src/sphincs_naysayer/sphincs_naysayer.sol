@@ -128,13 +128,13 @@ contract Sphincs_plus_naysayer is MerkleTree{
         bytes32 root;
     }
 
-    struct XMSS_SIG{
+    struct xmssSig{
         bytes32[] sig;
         bytes32[] auth;
     }
 
     struct HT_SIG{
-        XMSS_SIG[] sig;
+        xmssSig[] sig;
     }
 
     struct FORS_SIG_INNER{
@@ -153,7 +153,7 @@ contract Sphincs_plus_naysayer is MerkleTree{
     }
 
     SPHINCS_PK pk;
-    function set_pk(SPHINCS_PK memory p) public {
+    function setPk(SPHINCS_PK memory p) public {
         pk = p;
     }
 
@@ -184,7 +184,7 @@ contract Sphincs_plus_naysayer is MerkleTree{
     bytes32 sig;
     bytes32 M;
 
-    function set_sign(bytes32 _sig, bytes32 _M) public {
+    function setSign(bytes32 _sig, bytes32 _M) public {
         sig = _sig;
         M = _M;
     }
@@ -394,24 +394,24 @@ contract Sphincs_plus_naysayer is MerkleTree{
             ADRS wotspkADRS = new ADRS();
             wotspkADRS.fillFrom(adrs);
 
-            bytes32[] memory _msg = base_w(M2, len1);
+            bytes32[] memory msg = baseW(M2, len1);
             for (uint i = 0; i < len1; i++) {
-                csum += w - 1 - uint(_msg[i]);
+                csum += w - 1 - uint(msg[i]);
             }
 
             csum <<= (8 - ((len2 * log2(w)) % 8));
-            uint len_2_bytes = ceil((len2 * log2(w)), 8);
-            bytes32[] memory _msg2 = base_w(toByte(csum, len_2_bytes), len2);
+            uint len2Bytes = ceil((len2 * log2(w)), 8);
+            bytes32[] memory msg2 = baseW(toByte(csum, len2Bytes), len2);
 
             adrs.setChainAddress(bytes4(uint32(wots_sig_ind)));
 
            
             if (wots_sig_ind < len1) {
-                uint tempp = uint(_msg[wots_sig_ind]);
+                uint tempp = uint(msg[wots_sig_ind]);
                 uint tmp2 = w - 1 - tempp;
                 node = chain(wots_sig_elem, tempp, tmp2, pk.seed, adrs);
             } else {
-                uint tempp = uint(_msg2[wots_sig_ind - len1]);
+                uint tempp = uint(msg2[wots_sig_ind - len1]);
                 uint tmp2 = w - 1 - tempp;
                 node = chain(wots_sig_elem, tempp, tmp2, pk.seed, adrs);
             }
@@ -729,14 +729,14 @@ contract Sphincs_plus_naysayer is MerkleTree{
         return bytes8(uint64(out) << (8 * (8 - b.length)));
     }
 
-     function base_w(bytes memory X,uint out_len) public returns (bytes32[] memory){
+     function baseW(bytes memory X,uint outLen) public returns (bytes32[] memory){
         uint iin = 0;
         uint out = 0;
         uint8 total = 0;
         uint bits = 0;
         uint consumed;
-        bytes32[] memory basew = new bytes32[](out_len);
-        for (consumed = 0; consumed < out_len; consumed++ ) {
+        bytes32[] memory basew = new bytes32[](outLen);
+        for (consumed = 0; consumed < outLen; consumed++ ) {
            if ( bits == 0 ) {
                total = uint8(X[iin]);
                iin++;
@@ -749,14 +749,14 @@ contract Sphincs_plus_naysayer is MerkleTree{
        return basew;
     }
 
-    function base_w(bytes32 X,uint out_len) public returns (bytes32[] memory){
+    function baseW(bytes32 X,uint outLen) public returns (bytes32[] memory){
         uint iin = 0;
         uint out = 0;
         uint8 total = 0;
         uint bits = 0;
         uint consumed;
-        bytes32[] memory basew = new bytes32[](out_len);
-        for (consumed = 0; consumed < out_len; consumed++ ) {
+        bytes32[] memory basew = new bytes32[](outLen);
+        for (consumed = 0; consumed < outLen; consumed++ ) {
            if ( bits == 0 ) {
                total = uint8(X[iin]);
                iin++;
@@ -818,16 +818,16 @@ contract Sphincs_plus_naysayer is MerkleTree{
     }
 
     
-    function chain(bytes32 X, uint i, uint s,bytes32 SEED, ADRS adrs) public returns (bytes32) {
+    function chain(bytes32 X, uint i, uint s,bytes32 seed, ADRS adrs) public returns (bytes32) {
         if ( s == 0 ) {
             return X;
         }
         if ( (i + s) > (w - 1) ) {
             return 0;
         }
-        bytes32 tmp = chain(X, i, s - 1, SEED, adrs);
+        bytes32 tmp = chain(X, i, s - 1, seed, adrs);
         adrs.setHashAddress(bytes4(uint32(i + s - 1)));
-        tmp = keccak256(abi.encodePacked(SEED, adrs.toBytes(), tmp));
+        tmp = keccak256(abi.encodePacked(seed, adrs.toBytes(), tmp));
         return tmp;
     }
 

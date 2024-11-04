@@ -64,7 +64,7 @@ contract TestSphincsPlus is Test {
 
     function test_sphincs()public{
         sph.set_params(n, w, h, d, k, a, t);
-        sph.set_pk(sphincs_pk);
+        sph.setPk(sphincs_pk);
         require(sph.verify(M, sphincs_sig),"verefication failed");
     }
 
@@ -120,15 +120,15 @@ contract TestSphincsPlus is Test {
     }
 
     function ht_sign(bytes32 M, bytes32 SKseed, bytes32 PKseed, uint64 idx_tree, uint32 idx_leaf)public returns(Sphincs_plus.HT_SIG memory){
-        Sphincs_plus.HT_SIG memory SIG_HT = Sphincs_plus.HT_SIG(new Sphincs_plus.XMSS_SIG[](d));
+        Sphincs_plus.HT_SIG memory SIG_HT = Sphincs_plus.HT_SIG(new Sphincs_plus.xmssSig[](d));
         ADRS adrs = new ADRS();
         adrs.setLayerAddress(0);
         adrs.setTreeAddress(bytes8(idx_tree));
         uint256 idx_tree_bits = h - h / d;
         uint256 idx_leaf_bits = h / d;
-        Sphincs_plus.XMSS_SIG memory SIG_tmp = xmss_sign(M,SKseed,idx_leaf,PKseed,adrs);
+        Sphincs_plus.xmssSig memory SIG_tmp = xmssSign(M,SKseed,idx_leaf,PKseed,adrs);
         SIG_HT.sig[0] = SIG_tmp;
-        bytes32 root = xmss_pkFromSig(idx_leaf, SIG_tmp, M, PKseed, adrs);
+        bytes32 root = xmssPkFromSig(idx_leaf, SIG_tmp, M, PKseed, adrs);
         //console.logBytes32(root);
         bytes memory idx_leaf2 = abi.encodePacked(idx_leaf);
         bytes memory idx_tree2 = abi.encodePacked(idx_tree);
@@ -149,9 +149,9 @@ contract TestSphincsPlus is Test {
             }
             adrs.setLayerAddress(bytes4(uint32(j)));
             adrs.setTreeAddress(bytesToBytes4(idx_tree2));
-            SIG_tmp = xmss_sign(root, SKseed, uint32(bytesToBytes4(idx_tree2)), PKseed, adrs);
+            SIG_tmp = xmssSign(root, SKseed, uint32(bytesToBytes4(idx_tree2)), PKseed, adrs);
             SIG_HT.sig[j] = SIG_tmp;
-            root = xmss_pkFromSig(uint32(bytesToBytes4(idx_leaf2)), SIG_tmp, root, PKseed, adrs);
+            root = xmssPkFromSig(uint32(bytesToBytes4(idx_leaf2)), SIG_tmp, root, PKseed, adrs);
             //console.logBytes32(root);
 
             //as key gen doies not work properly
@@ -160,13 +160,13 @@ contract TestSphincsPlus is Test {
         return SIG_HT;
     }
 
-    function xmss_pkFromSig(uint32 idx, Sphincs_plus.XMSS_SIG memory SIG_XMSS, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
+    function xmssPkFromSig(uint32 idx, Sphincs_plus.xmssSig memory SIG_XMSS, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
     adrs.setType(WOTS_HASH);
     adrs.setKeyPairAddress(bytes4(idx));
     bytes32[] memory sig = SIG_XMSS.sig;
     bytes32[] memory AUTH = SIG_XMSS.auth;
     bytes32[2] memory node;
-    node[0] = wots_pkFromSig(sig, M, PKseed, adrs);
+    node[0] = wotsPkFromSig(sig, M, PKseed, adrs);
     adrs.setType(TREE);
     adrs.setTreeIndex(bytes4(idx));
     for (uint k = 0; k < h / d; k++ ) {
@@ -184,25 +184,25 @@ contract TestSphincsPlus is Test {
     return node[0];
     }
 
-    function wots_pkFromSig(bytes32[] memory sig, bytes32 M, bytes32 PKseed, ADRS adrs) public returns(bytes32){
+    function wotsPkFromSig(bytes32[] memory sig, bytes32 M, bytes32 PKseed, ADRS adrs) public returns(bytes32){
         uint csum = 0;
         ADRS wotspkADRS = new ADRS();
         wotspkADRS.fillFrom(adrs);
-        bytes32[] memory _msg = base_w(M,len1);
+        bytes32[] memory msg = baseW(M,len1);
         for (uint i = 0; i < len1; i++ ) {
-           csum = csum + w - 1 - uint(_msg[i]);
+           csum = csum + w - 1 - uint(msg[i]);
         }
         csum = csum << ( 8 - ( ( len2 * log2(w) ) % 8 ));
-        uint len_2_bytes = ceil( ( len2 * log2(w) ), 8 );
-        bytes32[] memory _msg2 = base_w(toByte(csum, len_2_bytes),len2);
+        uint len2Bytes = ceil( ( len2 * log2(w) ), 8 );
+        bytes32[] memory msg2 = baseW(toByte(csum, len2Bytes),len2);
         bytes32[] memory tmp = new bytes32[](len);
         for (uint i = 0; i < len; i++ ) {
           adrs.setChainAddress(bytes4(uint32(i)));
           if (i < len1){
-            tmp[i] = chain(sig[i], uint(_msg[i]), w - 1 - uint(_msg[i]),PKseed, adrs);
+            tmp[i] = chain(sig[i], uint(msg[i]), w - 1 - uint(msg[i]),PKseed, adrs);
           }
           else{
-            tmp[i] = chain(sig[i], uint(_msg2[i-len1]), w - 1 - uint(_msg2[i-len1]),PKseed, adrs);
+            tmp[i] = chain(sig[i], uint(msg2[i-len1]), w - 1 - uint(msg2[i-len1]),PKseed, adrs);
           }
         }
         wotspkADRS.setType(WOTS_PK);
@@ -211,7 +211,7 @@ contract TestSphincsPlus is Test {
         return pk;
     }
 
-    function xmss_sign(bytes32 M, bytes32 SKseed, uint32 idx, bytes32 PKseed, ADRS adrs)public returns(Sphincs_plus.XMSS_SIG memory){
+    function xmssSign(bytes32 M, bytes32 SKseed, uint32 idx, bytes32 PKseed, ADRS adrs)public returns(Sphincs_plus.xmssSig memory){
         bytes32[] memory AUTH = new bytes32[](h/d);
         for (uint j = 0; j < h/d; j++ ) {
     uint k = 60;
@@ -219,23 +219,23 @@ contract TestSphincsPlus is Test {
         }
         adrs.setType(WOTS_HASH);
         adrs.setKeyPairAddress(bytes4(idx));
-        bytes32[] memory sig = wots_sign(M,SKseed,PKseed,adrs);
-        Sphincs_plus.XMSS_SIG memory xmss_sig = Sphincs_plus.XMSS_SIG(sig,AUTH);
-        return xmss_sig;
+        bytes32[] memory sig = wotsSign(M,SKseed,PKseed,adrs);
+        Sphincs_plus.xmssSig memory xmssSig = Sphincs_plus.xmssSig(sig,AUTH);
+        return xmssSig;
     } 
 
-    function wots_sign(bytes32 M, bytes32 SKseed, bytes32 PKseed, ADRS adrs)public returns(bytes32[] memory){
+    function wotsSign(bytes32 M, bytes32 SKseed, bytes32 PKseed, ADRS adrs)public returns(bytes32[] memory){
         uint csum = 0;
-        bytes32[] memory _msg = base_w(M, len1);
+        bytes32[] memory msg = baseW(M, len1);
         for (uint i = 0; i < len1; i++ ) {
-            csum = csum + w - 1 - uint256(_msg[i]);
+            csum = csum + w - 1 - uint256(msg[i]);
         }
         
         if( (log2(w) % 8) != 0) {
             csum = csum << ( 8 - ( ( len2 * log2(w) ) % 8 ));
         }
-        uint len_2_bytes = ceil( ( len2 * log2(w) ), 8 );
-        bytes32[] memory _msg2 = base_w(toByte(csum, len_2_bytes), len2);
+        uint len2Bytes = ceil( ( len2 * log2(w) ), 8 );
+        bytes32[] memory msg2 = baseW(toByte(csum, len2Bytes), len2);
         ADRS skADRS = new ADRS();
         skADRS.fillFrom(adrs);
         skADRS.setType(WOTS_PRF);
@@ -249,10 +249,10 @@ contract TestSphincsPlus is Test {
             adrs.setChainAddress(bytes4(uint32(i)));
             adrs.setHashAddress(0);
             if (i < len1){
-                sig[i] = chain(sk, 0, uint(_msg[i]),PKseed, adrs);
+                sig[i] = chain(sk, 0, uint(msg[i]),PKseed, adrs);
             }
             else{
-                sig[i] = chain(sk, 0, uint(_msg2[i-len1]),PKseed, adrs);
+                sig[i] = chain(sk, 0, uint(msg2[i-len1]),PKseed, adrs);
             }
         }
         return sig;
@@ -310,7 +310,7 @@ contract TestSphincsPlus is Test {
     }
 
     function fors_treehash(bytes32 SKseed, uint s, uint z, bytes32 PKseed, ADRS adrs)public returns (bytes32){
-        require( s % (1 << z) == 0, "fors_treehash condition failed");
+        require( s % (1 << z) == 0, "fors_treeHash condition failed");
 
         //2^z not needed as we fake path
         bytes32 sk = fors_SKgen(SKseed,adrs,s);
@@ -353,10 +353,10 @@ contract TestSphincsPlus is Test {
         ADRS adrs = new ADRS();
         adrs.setLayerAddress(bytes4(uint32(d-1)));
         adrs.setTreeAddress(0);
-        return  xmss_PKgen(adrs);
+        return  xmssPkgen(adrs);
     }
 
-    function xmss_PKgen(ADRS adrs) public returns(bytes32){
+    function xmssPkgen(ADRS adrs) public returns(bytes32){
         return treehash(0,h/d,adrs);
     }
 
@@ -407,21 +407,21 @@ contract TestSphincsPlus is Test {
     }
 
 
-    function chain(bytes32 X, uint i, uint s,bytes32 SEED, ADRS adrs) public returns (bytes32) {
+    function chain(bytes32 X, uint i, uint s,bytes32 seed, ADRS adrs) public returns (bytes32) {
         if ( s == 0 ) {
             return X;
         }
         if ( (i + s) > (w - 1) ) {
             return 0;
         }
-        bytes32 tmp = chain(X, i, s - 1, SEED, adrs);
+        bytes32 tmp = chain(X, i, s - 1, seed, adrs);
         adrs.setHashAddress(bytes4(uint32(i + s - 1)));
-        tmp = keccak256(abi.encodePacked(SEED, adrs.toBytes(), tmp));
+        tmp = keccak256(abi.encodePacked(seed, adrs.toBytes(), tmp));
         return tmp;
     }
 
-    function PRF(bytes32 SEED, ADRS adrs) public returns(bytes32){
-        return keccak256(abi.encodePacked(SEED,adrs.toBytes()));
+    function PRF(bytes32 seed, ADRS adrs) public returns(bytes32){
+        return keccak256(abi.encodePacked(seed,adrs.toBytes()));
     }
 
     //CODE FROM: https://ethereum.stackexchange.com/questions/8086/logarithm-math-operation-in-solidity
@@ -456,14 +456,14 @@ contract TestSphincsPlus is Test {
             }  
     }
 
-    function base_w(bytes memory X,uint out_len) public returns (bytes32[] memory){
+    function baseW(bytes memory X,uint outLen) public returns (bytes32[] memory){
         uint iin = 0;
         uint out = 0;
         uint8 total = 0;
         uint bits = 0;
         uint consumed;
-        bytes32[] memory basew = new bytes32[](out_len);
-        for (consumed = 0; consumed < out_len; consumed++ ) {
+        bytes32[] memory basew = new bytes32[](outLen);
+        for (consumed = 0; consumed < outLen; consumed++ ) {
            if ( bits == 0 ) {
                total = uint8(X[iin]);
                iin++;
@@ -476,14 +476,14 @@ contract TestSphincsPlus is Test {
        return basew;
     }
 
-    function base_w(bytes32 X,uint out_len) public returns (bytes32[] memory){
+    function baseW(bytes32 X,uint outLen) public returns (bytes32[] memory){
         uint iin = 0;
         uint out = 0;
         uint8 total = 0;
         uint bits = 0;
         uint consumed;
-        bytes32[] memory basew = new bytes32[](out_len);
-        for (consumed = 0; consumed < out_len; consumed++ ) {
+        bytes32[] memory basew = new bytes32[](outLen);
+        for (consumed = 0; consumed < outLen; consumed++ ) {
            if ( bits == 0 ) {
                total = uint8(X[iin]);
                iin++;

@@ -59,7 +59,7 @@ def modify_solidity_file(file_path, h, d, a, k, m):
 with open(csv_file_path, mode='w', newline='') as csv_file:
     csv_writer = csv.writer(csv_file)
     # Write the header row
-    csv_writer.writerow(['h', 'd', 'a', 'k', 'set_pk_max', 'verify_value'])
+    csv_writer.writerow(['h', 'd', 'a', 'k', 'setPk_max', 'verify_value'])
 
     # Set up progress bars
     h_progress = tqdm(total=len(h_range), desc="Processing h", position=0, leave=True)
@@ -86,18 +86,18 @@ with open(csv_file_path, mode='w', newline='') as csv_file:
 
                         output = result.stdout
 
-                        set_pk_max = re.search(r'set_pk\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
+                        setPk_max = re.search(r'setPk\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+\d+\s+\|\s+(\d+)', output)
                         verify_value = re.search(r'verify\s+\|\s+(\d+)', output)
                         
                         # Extract values from the command output
-                        set_pk_max_value = set_pk_max.group(1) if set_pk_max else 'not found'
+                        setPk_max_value = setPk_max.group(1) if setPk_max else 'not found'
                         verify_value_value = verify_value.group(1) if verify_value else 'not found'
 
                         # Write the result to the CSV file
-                        csv_writer.writerow([h, d, a, k, set_pk_max_value, verify_value_value])
+                        csv_writer.writerow([h, d, a, k, setPk_max_value, verify_value_value])
 
                         # Print the result above the progress bars
-                        tqdm.write(f"h: {h}, d: {d}, a: {a}, k: {k}\nset_pk: {set_pk_max_value}, verify: {verify_value_value}")
+                        tqdm.write(f"h: {h}, d: {d}, a: {a}, k: {k}\nsetPk: {setPk_max_value}, verify: {verify_value_value}")
                 
                 a_progress.update(1)
                 k_progress.n = 0

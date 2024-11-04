@@ -45,7 +45,7 @@ contract TestWotsPlusnaysayer is Test {
         }
         wn.set_param(w);
         sigmacpy = sign(w,k,l1,l2,M,sk,r);
-        wn.set_pk(k);
+        wn.setPk(k);
 
         }
 
@@ -58,7 +58,7 @@ contract TestWotsPlusnaysayer is Test {
             bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
             sigma = concatenateBytes32Arrays(sigma, pk);
             sigma = concatenateBytes32Arrays(sigma, keccak256(abi.encodePacked(r)));
-            wn.set_sign(mt.buildRoot(sigma));
+            wn.setSign(mt.buildRoot(sigma));
             bytes32[][] memory tree = mt.buildTree(sigma);
             bytes32[] memory proof = mt.getProof(tree,2);
             require(wn.naysayer(sigma[2], proof, 2,M2,mt.getProof(tree, sigmacpy.length),pk[2],mt.getProof(tree, sigmacpy.length+1+2),r,mt.getProof(tree, sigmacpy.length*2+1)), "fail good verefication");
@@ -78,7 +78,7 @@ contract TestWotsPlusnaysayer is Test {
             bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
             sigma = concatenateBytes32Arrays(sigma, pk);
             sigma = concatenateBytes32Arrays(sigma, keccak256(abi.encodePacked(r)));
-            wn.set_sign(mt.buildRoot(sigma));
+            wn.setSign(mt.buildRoot(sigma));
             bytes32[][] memory tree = mt.buildTree(sigma);
             bytes32[] memory proof = mt.getProof(tree,2);
             require(wn.naysayer(sigma[2], proof, 2,M2,mt.getProof(tree, sigmacpy.length),pk[2],mt.getProof(tree, sigmacpy.length+1+2),r,mt.getProof(tree, sigmacpy.length*2+1)) == false, "fail good sig and no miustake verefication");
@@ -102,7 +102,7 @@ contract TestWotsPlusnaysayer is Test {
             bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
             sigma = concatenateBytes32Arrays(sigma, pk);
             sigma = concatenateBytes32Arrays(sigma, keccak256(abi.encodePacked(r)));
-            wn.set_sign(mt.buildRoot(failed_sigma));
+            wn.setSign(mt.buildRoot(failed_sigma));
             
             bytes32[][] memory tree = mt.buildTree(sigma);
             bytes32[] memory proof = mt.getProof(tree,2);

@@ -12,7 +12,7 @@ df = df[df['verify_value'] != 'not found']
 
 # Convert columns to appropriate data types
 
-df = df.astype({'h': int, 'd': int, 'a': int, 'k': int, 'set_pk_max': int, 'verify_value': int})
+df = df.astype({'h': int, 'd': int, 'a': int, 'k': int, 'setPk_max': int, 'verify_value': int})
 
 # Determine the global color scale for verify_value
 global_min_verify = df['verify_value'].min()
