@@ -8,10 +8,10 @@ import {SphincsPlusNaysayer, ADRS,MerkleTree} from "../../src/sphincs_naysayer/s
 contract TestSphincsPlusNaysayer is Test {
 
     struct NaysayerXmssSig{
-        bytes32 wots_pk_hash;
+        bytes32 wotsPk_hash;
         bytes32[] xmss_auth;
         bytes32[] sig;
-        bytes32[] wots_pk;
+        bytes32[] wotsPk;
         bytes32[] htAdditionalNodes;
     }
 
@@ -28,7 +28,7 @@ contract TestSphincsPlusNaysayer is Test {
 
     struct NaysayerSphincsSig{
         bytes32 r;
-        NaysayerForsSig fors_sig;
+        NaysayerForsSig forsSig;
         NaysayerXmssSig[] sig;
         bytes32 fors_pk;
     }
@@ -81,13 +81,13 @@ contract TestSphincsPlusNaysayer is Test {
         len2 = (log2(len1 * (w - 1)) / log2(w)) + 1;
         len = len1 + len2;
 
-        uint tmp_md_size = (k*a+7) /8;
-        uint tmp_idx_tree_size = ((h+7-h/d)/8);
-        uint tmp_idx_leaf_size = (h/d+7)/8;
+        uint tmpMdSize = (k*a+7) /8;
+        uint tmpIdxTreeSize = ((h+7-h/d)/8);
+        uint tmpIdxLeafSize = (h/d+7)/8;
 
-        //console.logUint(tmp_md_size);
-        //console.logUint(tmp_idx_tree_size);
-        //console.logUint(tmp_idx_leaf_size);
+        //console.logUint(tmpMdSize);
+        //console.logUint(tmpIdxTreeSize);
+        //console.logUint(tmpIdxLeafSize);
 
         require((k*a+7)/8 + (h-h/d+7)/8 + (h/d+7)/8 == m, "message size does not match one which can be signed");
         spx_keygen();
@@ -100,33 +100,33 @@ contract TestSphincsPlusNaysayer is Test {
         sph.setParams(n, w, h, d, k, a, t);
         sph.setPk(sphincs_pk);
         bytes32[] memory sigma = flattenSPHINCS(naysayer_sig);
-        uint xmss_f_ind = 1 + 3 * k+1;
-        uint xmss_len = 1+h/d + len+len+h/d+1;
+        uint xmssFInd = 1 + 3 * k+1;
+        uint xmssLen = 1+h/d + len+len+h/d+1;
         {
             sph.setSign(mt.buildRoot(sigma),M);
             uint tree_ind = 1;
             bytes32[][] memory tree = mt.buildTree(sigma);
             bytes32[][] memory proofs = new bytes32[][](len);
             for (uint i =0 ; i < len; i++){
-                proofs[i] = mt.getProof(tree,xmss_f_ind+tree_ind* xmss_len + 1+h/d+len+i);
+                proofs[i] = mt.getProof(tree,xmssFInd+tree_ind* xmssLen + 1+h/d+len+i);
             }
 
 
-            bytes32[] memory proof2 = mt.getProof(tree,xmss_f_ind+tree_ind* xmss_len);
-            uint m_ind = xmss_f_ind+xmss_len*tree_ind-1;
+            bytes32[] memory proof2 = mt.getProof(tree,xmssFInd+tree_ind* xmssLen);
+            uint m_ind = xmssFInd+xmssLen*tree_ind-1;
             bytes32 m = naysayer_sig.sig[tree_ind-1].htAdditionalNodes[h/d];
             bytes32[] memory mProof =  mt.getProof(tree,m_ind);
 
             //check proofs
-            //require(sph.WOTSHASH_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof),"failed good proof");
-            //require(sph.WOTSHASH_naysayer(tree_ind,naysayer_sig.sig[tree_ind-1].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof) == false,"passed bad proof");
+            //require(sph.WotsHashNaysayer(tree_ind,naysayer_sig.sig[tree_ind].wotsPk,proofs,naysayer_sig.sig[tree_ind].wotsPk_hash,proof2,m,mProof),"failed good proof");
+            //require(sph.WotsHashNaysayer(tree_ind,naysayer_sig.sig[tree_ind-1].wotsPk,proofs,naysayer_sig.sig[tree_ind].wotsPk_hash,proof2,m,mProof) == false,"passed bad proof");
         
-            require(sph.WOTSHASH_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof)==false,"passed proof without mistake");
+            require(sph.WotsHashNaysayer(tree_ind,naysayer_sig.sig[tree_ind].wotsPk,proofs,naysayer_sig.sig[tree_ind].wotsPk_hash,proof2,m,mProof)==false,"passed proof without mistake");
         }
         {
          
             uint tree_ind = 1;
-            naysayer_sig.sig[tree_ind].wots_pk[0] = naysayer_sig.sig[tree_ind].wots_pk[0] ^ bytes32(uint(1));
+            naysayer_sig.sig[tree_ind].wotsPk[0] = naysayer_sig.sig[tree_ind].wotsPk[0] ^ bytes32(uint(1));
 
             sigma = flattenSPHINCS(naysayer_sig);
             bytes32[][] memory tree = mt.buildTree(sigma);
@@ -135,21 +135,21 @@ contract TestSphincsPlusNaysayer is Test {
 
             bytes32[][] memory proofs = new bytes32[][](len);
             for (uint i =0 ; i < len; i++){
-                proofs[i] = mt.getProof(tree,xmss_f_ind+tree_ind* xmss_len + 1+h/d+len+i);
+                proofs[i] = mt.getProof(tree,xmssFInd+tree_ind* xmssLen + 1+h/d+len+i);
             }
 
-            bytes32[] memory proof2 = mt.getProof(tree,xmss_f_ind+tree_ind* xmss_len);
+            bytes32[] memory proof2 = mt.getProof(tree,xmssFInd+tree_ind* xmssLen);
 
-            uint m_ind = xmss_f_ind+xmss_len*tree_ind-1;
+            uint m_ind = xmssFInd+xmssLen*tree_ind-1;
             bytes32 m = naysayer_sig.sig[tree_ind-1].htAdditionalNodes[h/d];
             bytes32[] memory mProof =  mt.getProof(tree,m_ind);
 
             //check proofs
-            //require(sph.WOTSHASH_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof),"failed good proof");
-            //require(sph.WOTSHASH_naysayer(tree_ind,naysayer_sig.sig[tree_ind-1].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof) == false,"passed bad proof");
+            //require(sph.WotsHashNaysayer(tree_ind,naysayer_sig.sig[tree_ind].wotsPk,proofs,naysayer_sig.sig[tree_ind].wotsPk_hash,proof2,m,mProof),"failed good proof");
+            //require(sph.WotsHashNaysayer(tree_ind,naysayer_sig.sig[tree_ind-1].wotsPk,proofs,naysayer_sig.sig[tree_ind].wotsPk_hash,proof2,m,mProof) == false,"passed bad proof");
         
-            require(sph.WOTSHASH_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof)==true,"failed proof with mistake");
-            naysayer_sig.sig[tree_ind].wots_pk[0] = naysayer_sig.sig[tree_ind].wots_pk[0] ^ bytes32(uint(1));
+            require(sph.WotsHashNaysayer(tree_ind,naysayer_sig.sig[tree_ind].wotsPk,proofs,naysayer_sig.sig[tree_ind].wotsPk_hash,proof2,m,mProof)==true,"failed proof with mistake");
+            naysayer_sig.sig[tree_ind].wotsPk[0] = naysayer_sig.sig[tree_ind].wotsPk[0] ^ bytes32(uint(1));
         }
 
     }
@@ -159,55 +159,55 @@ contract TestSphincsPlusNaysayer is Test {
         sph.setParams(n, w, h, d, k, a, t);
         sph.setPk(sphincs_pk);
         bytes32[] memory sigma = flattenSPHINCS(naysayer_sig);
-        uint xmss_f_ind = 1 + 3 * k+1;
-        uint xmss_len = 1+h/d + len+len+h/d+1;
+        uint xmssFInd = 1 + 3 * k+1;
+        uint xmssLen = 1+h/d + len+len+h/d+1;
         {
             sph.setSign(mt.buildRoot(sigma),M);
 
-            uint tree_index = 1;
+            uint treeIndex = 1;
             uint wotsSigInd = 2;
             bytes32[][] memory tree = mt.buildTree(sigma);
-            uint wots_pk_elem_ind = xmss_f_ind+xmss_len*tree_index+1+h/d+len+wotsSigInd;
-            uint wots_sig_elem_ind = xmss_f_ind+xmss_len*tree_index+1+h/d + wotsSigInd;
-            uint m_ind = xmss_f_ind+xmss_len*tree_index-1;
-            bytes32 m = naysayer_sig.sig[tree_index-1].htAdditionalNodes[h/d];
-            bytes32 wots_pk_elem = naysayer_sig.sig[tree_index].wots_pk[wotsSigInd];
-            bytes32 wots_sig_elem = naysayer_sig.sig[tree_index].sig[wotsSigInd];
+            uint wotsPk_elem_ind = xmssFInd+xmssLen*treeIndex+1+h/d+len+wotsSigInd;
+            uint wots_sig_elem_ind = xmssFInd+xmssLen*treeIndex+1+h/d + wotsSigInd;
+            uint m_ind = xmssFInd+xmssLen*treeIndex-1;
+            bytes32 m = naysayer_sig.sig[treeIndex-1].htAdditionalNodes[h/d];
+            bytes32 wotsPk_elem = naysayer_sig.sig[treeIndex].wotsPk[wotsSigInd];
+            bytes32 wots_sig_elem = naysayer_sig.sig[treeIndex].sig[wotsSigInd];
 
             bytes32[] memory mProof =  mt.getProof(tree,m_ind);
-            bytes32[] memory wots_pk_proof =  mt.getProof(tree,wots_pk_elem_ind);
+            bytes32[] memory wotsPkProof =  mt.getProof(tree,wotsPk_elem_ind);
             bytes32[] memory wots_sig_elemProof =  mt.getProof(tree,wots_sig_elem_ind);
 
             //check auth path works
-            //require (sph.wots_naysayer(tree_index, wotsSigInd, m, mProof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elemProof),"failed good auth path");
-            //require (sph.wots_naysayer(tree_index+1, wotsSigInd, m, mProof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elemProof) == false,"passed bad auth path");
+            //require (sph.wots_naysayer(treeIndex, wotsSigInd, m, mProof, wotsPk_elem, wotsPkProof,wots_sig_elem,wots_sig_elemProof),"failed good auth path");
+            //require (sph.wots_naysayer(treeIndex+1, wotsSigInd, m, mProof, wotsPk_elem, wotsPkProof,wots_sig_elem,wots_sig_elemProof) == false,"passed bad auth path");
 
-            require (sph.wots_naysayer(tree_index, wotsSigInd, m, mProof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elemProof) == false,"passed with no actual error");
+            require (sph.wots_naysayer(treeIndex, wotsSigInd, m, mProof, wotsPk_elem, wotsPkProof,wots_sig_elem,wots_sig_elemProof) == false,"passed with no actual error");
         }
         {
-            uint tree_index = 1;
+            uint treeIndex = 1;
             uint wotsSigInd = 2;
-            naysayer_sig.sig[tree_index].wots_pk[wotsSigInd] = naysayer_sig.sig[tree_index].wots_pk[wotsSigInd] ^ bytes32(uint(1));
+            naysayer_sig.sig[treeIndex].wotsPk[wotsSigInd] = naysayer_sig.sig[treeIndex].wotsPk[wotsSigInd] ^ bytes32(uint(1));
             sigma = flattenSPHINCS(naysayer_sig);
             sph.setSign(mt.buildRoot(sigma),M);
             bytes32[][] memory tree = mt.buildTree(sigma);
-            uint wots_pk_elem_ind = xmss_f_ind+xmss_len*tree_index+1+h/d+len+wotsSigInd;
-            uint wots_sig_elem_ind = xmss_f_ind+xmss_len*tree_index+1+h/d + wotsSigInd;
-            uint m_ind = xmss_f_ind+xmss_len*tree_index-1;
-            bytes32 m = naysayer_sig.sig[tree_index-1].htAdditionalNodes[h/d];
-            bytes32 wots_pk_elem = naysayer_sig.sig[tree_index].wots_pk[wotsSigInd];
-            bytes32 wots_sig_elem = naysayer_sig.sig[tree_index].sig[wotsSigInd];
+            uint wotsPk_elem_ind = xmssFInd+xmssLen*treeIndex+1+h/d+len+wotsSigInd;
+            uint wots_sig_elem_ind = xmssFInd+xmssLen*treeIndex+1+h/d + wotsSigInd;
+            uint m_ind = xmssFInd+xmssLen*treeIndex-1;
+            bytes32 m = naysayer_sig.sig[treeIndex-1].htAdditionalNodes[h/d];
+            bytes32 wotsPk_elem = naysayer_sig.sig[treeIndex].wotsPk[wotsSigInd];
+            bytes32 wots_sig_elem = naysayer_sig.sig[treeIndex].sig[wotsSigInd];
 
             bytes32[] memory mProof =  mt.getProof(tree,m_ind);
-            bytes32[] memory wots_pk_proof =  mt.getProof(tree,wots_pk_elem_ind);
+            bytes32[] memory wotsPkProof =  mt.getProof(tree,wotsPk_elem_ind);
             bytes32[] memory wots_sig_elemProof =  mt.getProof(tree,wots_sig_elem_ind);
 
             //check auth path works
-            //require (sph.wots_naysayer(tree_index, wotsSigInd, m, mProof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elemProof),"failed good auth path");
-            //require (sph.wots_naysayer(tree_index+1, wotsSigInd, m, mProof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elemProof) == false,"passed bad auth path");
+            //require (sph.wots_naysayer(treeIndex, wotsSigInd, m, mProof, wotsPk_elem, wotsPkProof,wots_sig_elem,wots_sig_elemProof),"failed good auth path");
+            //require (sph.wots_naysayer(treeIndex+1, wotsSigInd, m, mProof, wotsPk_elem, wotsPkProof,wots_sig_elem,wots_sig_elemProof) == false,"passed bad auth path");
 
-            require (sph.wots_naysayer(tree_index, wotsSigInd, m, mProof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elemProof) == true,"failed with actual proof");
-            naysayer_sig.sig[tree_index].wots_pk[wotsSigInd] = naysayer_sig.sig[tree_index].wots_pk[wotsSigInd] ^ bytes32(uint(1));
+            require (sph.wots_naysayer(treeIndex, wotsSigInd, m, mProof, wotsPk_elem, wotsPkProof,wots_sig_elem,wots_sig_elemProof) == true,"failed with actual proof");
+            naysayer_sig.sig[treeIndex].wotsPk[wotsSigInd] = naysayer_sig.sig[treeIndex].wotsPk[wotsSigInd] ^ bytes32(uint(1));
         }
     }
 
@@ -215,33 +215,33 @@ contract TestSphincsPlusNaysayer is Test {
         sph.setParams(n, w, h, d, k, a, t);
         sph.setPk(sphincs_pk);
         bytes32[] memory sigma = flattenSPHINCS(naysayer_sig);
-        uint xmss_f_ind = 1 + 3 * k+1;
-        uint xmss_len = 1+h/d + len+len+h/d+1;
+        uint xmssFInd = 1 + 3 * k+1;
+        uint xmssLen = 1+h/d + len+len+h/d+1;
         uint tree_ind = 0;
         uint top_ind = 1;
         {
             sph.setSign(mt.buildRoot(sigma),M);
             bytes32[][] memory tree = mt.buildTree(sigma);
-            uint baseIndex = xmss_f_ind + xmss_len * tree_ind +  1+h/d + len+len;
+            uint baseIndex = xmssFInd + xmssLen * tree_ind +  1+h/d + len+len;
 
 
             bytes32[] memory proof = mt.getProof(tree,baseIndex+top_ind);
             bytes32[] memory proof2 = mt.getProof(tree,baseIndex+top_ind-1);
-            bytes32[] memory proof3 = mt.getProof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind - 1);
+            bytes32[] memory proof3 = mt.getProof(tree,xmssFInd + xmssLen * tree_ind + 1 + top_ind - 1);
 
             bytes32 top_node = naysayer_sig.sig[tree_ind].htAdditionalNodes[top_ind];
             bytes32 bottom_node = naysayer_sig.sig[tree_ind].htAdditionalNodes[top_ind-1];
             bytes32 auth_node = naysayer_sig.sig[tree_ind].xmss_auth[top_ind-1];
             //test auth path
             //require(sph.xmssNaysayer(tree_ind, top_ind, top_node, proof, bottom_node, proof2, auth_node, proof3),"failed good auth");
-            //proof3 = mt.getProof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind);
+            //proof3 = mt.getProof(tree,xmssFInd + xmssLen * tree_ind + 1 + top_ind);
             //require(sph.xmssNaysayer(tree_ind, top_ind, top_node, proof, bottom_node, proof2, auth_node, proof3)==false,"passed bad auth");
-            //proof3 = mt.getProof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind - 1);
+            //proof3 = mt.getProof(tree,xmssFInd + xmssLen * tree_ind + 1 + top_ind - 1);
 
             require(sph.xmssNaysayer(tree_ind, top_ind, top_node, proof, bottom_node, proof2, auth_node, proof3) == false,"passed proof with no mistake");
         }
         {
-            uint baseIndex = xmss_f_ind + xmss_len * tree_ind +  1+h/d + len+len;
+            uint baseIndex = xmssFInd + xmssLen * tree_ind +  1+h/d + len+len;
             sigma[baseIndex+top_ind] = sigma[baseIndex+top_ind] ^ bytes32(uint(1));
             sph.setSign(mt.buildRoot(sigma),M);
 
@@ -250,16 +250,16 @@ contract TestSphincsPlusNaysayer is Test {
 
             bytes32[] memory proof = mt.getProof(tree,baseIndex+top_ind);
             bytes32[] memory proof2 = mt.getProof(tree,baseIndex+top_ind-1);
-            bytes32[] memory proof3 = mt.getProof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind - 1);
+            bytes32[] memory proof3 = mt.getProof(tree,xmssFInd + xmssLen * tree_ind + 1 + top_ind - 1);
 
             bytes32 top_node = sigma[baseIndex+top_ind];
             bytes32 bottom_node = naysayer_sig.sig[tree_ind].htAdditionalNodes[top_ind-1];
             bytes32 auth_node = naysayer_sig.sig[tree_ind].xmss_auth[top_ind-1];
             //test auth path
             //require(sph.xmssNaysayer(tree_ind, top_ind, top_node, proof, bottom_node, proof2, auth_node, proof3),"failed good auth");
-            //proof3 = mt.getProof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind);
+            //proof3 = mt.getProof(tree,xmssFInd + xmssLen * tree_ind + 1 + top_ind);
             //require(sph.xmssNaysayer(tree_ind, top_ind, top_node, proof, bottom_node, proof2, auth_node, proof3)==false,"passed bad auth");
-            //proof3 = mt.getProof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind - 1);
+            //proof3 = mt.getProof(tree,xmssFInd + xmssLen * tree_ind + 1 + top_ind - 1);
 
             require(sph.xmssNaysayer(tree_ind, top_ind, top_node, proof, bottom_node, proof2, auth_node, proof3) == true,"failed proof with nactual mistake");
             sigma[baseIndex+top_ind] = sigma[baseIndex+top_ind] ^ bytes32(uint(1));
@@ -279,11 +279,11 @@ contract TestSphincsPlusNaysayer is Test {
             bytes32[] memory proof3 = mt.getProof(tree,1+1*3+2);
 
             //test only verefication path
-            //require(sph.naysayer_fors(1,naysayer_sig.fors_sig.sig[1].sk,proof,naysayer_fors_proofs[1],proof2,naysayer_sig.fors_sig.sig[1].root,proof3),"failed good argument for verefication path");
-            //require(sph.naysayer_fors(1,naysayer_sig.fors_sig.sig[1].sk,proof,naysayer_fors_proofs[2],proof2,naysayer_sig.fors_sig.sig[1].root,proof3) == false,"passed bad argument for verefication path");
+            //require(sph.naysayer_fors(1,naysayer_sig.forsSig.sig[1].sk,proof,naysayer_fors_proofs[1],proof2,naysayer_sig.forsSig.sig[1].root,proof3),"failed good argument for verefication path");
+            //require(sph.naysayer_fors(1,naysayer_sig.forsSig.sig[1].sk,proof,naysayer_fors_proofs[2],proof2,naysayer_sig.forsSig.sig[1].root,proof3) == false,"passed bad argument for verefication path");
 
             
-            require(sph.naysayer_fors(1,naysayer_sig.fors_sig.sig[1].sk,proof,naysayer_fors_proofs[1],proof2,naysayer_sig.fors_sig.sig[1].root,proof3) == false,"passed bad proof where there is no mistakes");
+            require(sph.naysayer_fors(1,naysayer_sig.forsSig.sig[1].sk,proof,naysayer_fors_proofs[1],proof2,naysayer_sig.forsSig.sig[1].root,proof3) == false,"passed bad proof where there is no mistakes");
             
         }
         {
@@ -295,7 +295,7 @@ contract TestSphincsPlusNaysayer is Test {
             bytes32[] memory proof2 = mt.getProof(tree,1+1*3+1);
             bytes32[] memory proof3 = mt.getProof(tree,1+1*3+2);
 
-            require(sph.naysayer_fors(1,naysayer_sig.fors_sig.sig[1].sk,proof,naysayer_fors_proofs[1],proof2,sigma[1+1*3+2],proof3),"failed good proof");
+            require(sph.naysayer_fors(1,naysayer_sig.forsSig.sig[1].sk,proof,naysayer_fors_proofs[1],proof2,sigma[1+1*3+2],proof3),"failed good proof");
             sigma[1+1*3+2] = sigma[1+1*3+2]^bytes32(uint(1));
         }
     }
@@ -349,47 +349,47 @@ contract TestSphincsPlusNaysayer is Test {
  function verify_parts_assign(bytes32 M, SphincsPlusNaysayer.SphincsSig memory SIG)public returns (bool){
         ADRS adrs = new ADRS();
         bytes32 R = SIG.r;
-        SphincsPlusNaysayer.ForsSig memory SIG_FORS = SIG.fors_sig;
-        //HT_SIG memory SIG_HT = SIG.ht_sig;
+        SphincsPlusNaysayer.ForsSig memory SIG_FORS = SIG.forsSig;
+        //htSig memory SIG_HT = SIG.htSig;
 
 
         //We assume M is already diggest for testing hamming weight propouses
         bytes32 digest = M;
 
 
-        uint tmp_md_size = (k*a+7) /8;
-        uint tmp_idx_tree_size = ((h-h/d+7)/8);
-        uint tmp_idx_leaf_size = (h/d+7)/8;
+        uint tmpMdSize = (k*a+7) /8;
+        uint tmpIdxTreeSize = ((h-h/d+7)/8);
+        uint tmpIdxLeafSize = (h/d+7)/8;
 
-        bytes1[] memory tmp_md = new bytes1[](tmp_md_size);
-        for (uint i=0; i < tmp_md_size; i++ ){
-            tmp_md[i] = digest[i];
+        bytes1[] memory tmpMd = new bytes1[](tmpMdSize);
+        for (uint i=0; i < tmpMdSize; i++ ){
+            tmpMd[i] = digest[i];
         }
 
-        bytes1[] memory tmp_idx_tree = new bytes1[](tmp_idx_tree_size);
-        for (uint i=0; i < tmp_idx_tree_size; i++ ){
-            tmp_idx_tree[i] = digest[tmp_md_size+i];
+        bytes1[] memory tmpIdxTree = new bytes1[](tmpIdxTreeSize);
+        for (uint i=0; i < tmpIdxTreeSize; i++ ){
+            tmpIdxTree[i] = digest[tmpMdSize+i];
         }
 
-        bytes1[] memory tmp_idx_leaf = new bytes1[](tmp_idx_leaf_size);
-        for (uint i=0; i < tmp_idx_leaf_size; i++ ){
-            tmp_idx_leaf[i] = digest[tmp_md_size+tmp_idx_tree_size+i];
+        bytes1[] memory tmpIdxLeaf = new bytes1[](tmpIdxLeafSize);
+        for (uint i=0; i < tmpIdxLeafSize; i++ ){
+            tmpIdxLeaf[i] = digest[tmpMdSize+tmpIdxTreeSize+i];
         }
 
-        bytes memory  md = extractBits(abi.encodePacked(tmp_md), 0, k*a);
+        bytes memory  md = extractBits(abi.encodePacked(tmpMd), 0, k*a);
 
-        // idx_tree: first h - h/d bits after md
-        uint256 idx_tree_bits = h - h / d;
-        bytes memory  idx_tree = extractBits(abi.encodePacked(tmp_idx_tree), 0, idx_tree_bits);
+        // idxTree: first h - h/d bits after md
+        uint256 idxTree_bits = h - h / d;
+        bytes memory  idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTree_bits);
 
-        // idx_leaf: first h/d bits after idx_tree
-        uint256 idx_leaf_bits = h / d;
-        bytes memory idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
+        // idxLeaf: first h/d bits after idxTree
+        uint256 idxLeaf_bits = h / d;
+        bytes memory idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeaf_bits);
 
         adrs.setType(FORSTREE);
         adrs.setLayerAddress(0);
-        adrs.setTreeAddress(bytesToBytes4(idx_tree));
-        adrs.setKeyPairAddress(bytesToBytes4(idx_leaf));
+        adrs.setTreeAddress(bytesToBytes4(idxTree));
+        adrs.setKeyPairAddress(bytesToBytes4(idxLeaf));
         fors_pkFromSig_parts_assign(SIG_FORS,md,sphincs_pk.seed,adrs);
     }
 
@@ -426,7 +426,7 @@ contract TestSphincsPlusNaysayer is Test {
                 //console.logBytes32(node[0]);
             }
             root[i] = node[0];
-            naysayer_sig.fors_sig.sig[i].root = node[0];
+            naysayer_sig.forsSig.sig[i].root = node[0];
         }
 
         ADRS forspkADRS = new ADRS();
@@ -457,19 +457,19 @@ contract TestSphincsPlusNaysayer is Test {
 
     function flattenXMSS(NaysayerXmssSig memory xmssSig) private pure returns (bytes32[] memory) {
         bytes32[] memory result = new bytes32[](1);
-        result[0] = xmssSig.wots_pk_hash;
+        result[0] = xmssSig.wotsPk_hash;
         //result[1] = xmssSig.xmss_root;
 
-        // Concatenate other parts (auth, sig, wots_pk, htAdditionalNodes)
+        // Concatenate other parts (auth, sig, wotsPk, htAdditionalNodes)
         result = concatenateBytes32Arrays(result, xmssSig.xmss_auth);
         result = concatenateBytes32Arrays(result, xmssSig.sig);
-        result = concatenateBytes32Arrays(result, xmssSig.wots_pk);
+        result = concatenateBytes32Arrays(result, xmssSig.wotsPk);
         result = concatenateBytes32Arrays(result, xmssSig.htAdditionalNodes);
 
         return result;
     }
 
-    bytes32 hashed_for_fors_sig;
+    bytes32 hashed_for_forsSig;
 
     function flattenFORS(NaysayerForsSig memory forsSig) private returns (bytes32[] memory) {
         bytes32[] memory result = new bytes32[](forsSig.sig.length * 3+1); // Each FORS signature has 2 elements (sk, auth_hash)
@@ -478,7 +478,7 @@ contract TestSphincsPlusNaysayer is Test {
             result[i * 3 + 1] = forsSig.sig[i].auth_hash;
             result[i * 3 + 2] = forsSig.sig[i].root;
         }
-        result[forsSig.sig.length * 3] = hashed_for_fors_sig;
+        result[forsSig.sig.length * 3] = hashed_for_forsSig;
         return result;
     }
 
@@ -489,7 +489,7 @@ contract TestSphincsPlusNaysayer is Test {
         result[0] = sphincsSig.r;
 
         // Flatten FORS sig
-        bytes32[] memory fors_flattened = flattenFORS(sphincsSig.fors_sig);
+        bytes32[] memory fors_flattened = flattenFORS(sphincsSig.forsSig);
         result = concatenateBytes32Arrays(result, fors_flattened);
 
         // Flatten each XMSS sig and concatenate
@@ -510,96 +510,96 @@ contract TestSphincsPlusNaysayer is Test {
 
         //We assume M is already diggest for testing hamming weight propouses
         bytes32 digest = M;
-        uint tmp_md_size = (k*a+7) /8;
-        uint tmp_idx_tree_size = ((h-h/d+7)/8);
-        uint tmp_idx_leaf_size = (h/d+7)/8;
+        uint tmpMdSize = (k*a+7) /8;
+        uint tmpIdxTreeSize = ((h-h/d+7)/8);
+        uint tmpIdxLeafSize = (h/d+7)/8;
 
-        bytes1[] memory tmp_md = new bytes1[](tmp_md_size);
-        for (uint i=0; i < tmp_md_size; i++ ){
-            tmp_md[i] = digest[i];
+        bytes1[] memory tmpMd = new bytes1[](tmpMdSize);
+        for (uint i=0; i < tmpMdSize; i++ ){
+            tmpMd[i] = digest[i];
         }
         
-        bytes1[] memory tmp_idx_tree = new bytes1[](tmp_idx_tree_size);
-        for (uint i=0; i < tmp_idx_tree_size; i++ ){
-            tmp_idx_tree[i] = digest[tmp_md_size+i];
+        bytes1[] memory tmpIdxTree = new bytes1[](tmpIdxTreeSize);
+        for (uint i=0; i < tmpIdxTreeSize; i++ ){
+            tmpIdxTree[i] = digest[tmpMdSize+i];
         }
 
-        bytes1[] memory tmp_idx_leaf = new bytes1[](tmp_idx_leaf_size);
-        for (uint i=0; i < tmp_idx_leaf_size; i++ ){
-            tmp_idx_leaf[i] = digest[tmp_md_size+tmp_idx_tree_size+i];
+        bytes1[] memory tmpIdxLeaf = new bytes1[](tmpIdxLeafSize);
+        for (uint i=0; i < tmpIdxLeafSize; i++ ){
+            tmpIdxLeaf[i] = digest[tmpMdSize+tmpIdxTreeSize+i];
         }
           
  
-        bytes memory  md = extractBits(abi.encodePacked(tmp_md), 0, k*a);
+        bytes memory  md = extractBits(abi.encodePacked(tmpMd), 0, k*a);
 
-        // idx_tree: first h - h/d bits after md
-        uint256 idx_tree_bits = h - h / d;
-        bytes memory  idx_tree = extractBits(abi.encodePacked(tmp_idx_tree), 0, idx_tree_bits);
+        // idxTree: first h - h/d bits after md
+        uint256 idxTree_bits = h - h / d;
+        bytes memory  idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTree_bits);
 
-        // idx_leaf: first h/d bits after idx_tree
-        uint256 idx_leaf_bits = h / d;
-        bytes memory idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
+        // idxLeaf: first h/d bits after idxTree
+        uint256 idxLeaf_bits = h / d;
+        bytes memory idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeaf_bits);
         
 
         adrs.setType(FORSTREE);
         adrs.setLayerAddress(0);
-        adrs.setTreeAddress(bytesToBytes8(idx_tree));
-        adrs.setKeyPairAddress(bytesToBytes4(idx_leaf));
-        sphincs_sig.fors_sig = fors_sign(md, sphincs_sk.SKseed, sphincs_sk.PKseed, adrs);
-        bytes32 PK_FORS = fors_pkFromSig(sphincs_sig.fors_sig,md,sphincs_sk.PKseed,adrs);
-        hashed_for_fors_sig = PK_FORS;
+        adrs.setTreeAddress(bytesToBytes8(idxTree));
+        adrs.setKeyPairAddress(bytesToBytes4(idxLeaf));
+        sphincs_sig.forsSig = forsSign(md, sphincs_sk.SKseed, sphincs_sk.PKseed, adrs);
+        bytes32 PK_FORS = fors_pkFromSig(sphincs_sig.forsSig,md,sphincs_sk.PKseed,adrs);
+        hashed_for_forsSig = PK_FORS;
         //console.logBytes32(PK_FORS);
 
         //console.logBytes32(PK_FORS);
         adrs.setType(TREE);
-        SphincsPlusNaysayer.HtSig memory SIG_HT = ht_sign(PK_FORS,sphincs_sk.SKseed,sphincs_sk.PKseed,  uint64(bytesToBytes8(idx_tree)),uint32(bytesToBytes4(idx_leaf)));
-        sphincs_sig.ht_sig = SIG_HT;
+        SphincsPlusNaysayer.HtSig memory SIG_HT = htSign(PK_FORS,sphincs_sk.SKseed,sphincs_sk.PKseed,  uint64(bytesToBytes8(idxTree)),uint32(bytesToBytes4(idxLeaf)));
+        sphincs_sig.htSig = SIG_HT;
     }
 
     NaysayerXmssSig[] xmssnsig;
     uint xmssn_sig_ind = 0;
 
-    function ht_sign(bytes32 M, bytes32 SKseed, bytes32 PKseed, uint64 idx_tree, uint32 idx_leaf)public returns(SphincsPlusNaysayer.HtSig memory){
+    function htSign(bytes32 M, bytes32 SKseed, bytes32 PKseed, uint64 idxTree, uint32 idxLeaf)public returns(SphincsPlusNaysayer.HtSig memory){
         SphincsPlusNaysayer.HtSig memory SIG_HT = SphincsPlusNaysayer.HtSig(new SphincsPlusNaysayer.XmssSig[](d));
         xmssnsig = new NaysayerXmssSig[](d);
         ADRS adrs = new ADRS();
         adrs.setLayerAddress(0);
-        adrs.setTreeAddress(bytes8(idx_tree));
-        uint256 idx_tree_bits = h - h / d;
-        uint256 idx_leaf_bits = h / d;
-        SphincsPlusNaysayer.XmssSig memory SIG_tmp = xmssSign(M,SKseed,idx_leaf,PKseed,adrs);
+        adrs.setTreeAddress(bytes8(idxTree));
+        uint256 idxTree_bits = h - h / d;
+        uint256 idxLeaf_bits = h / d;
+        SphincsPlusNaysayer.XmssSig memory SIG_tmp = xmssSign(M,SKseed,idxLeaf,PKseed,adrs);
         SIG_HT.sig[0] = SIG_tmp;
-        bytes32 root = xmssPkFromSig(idx_leaf, SIG_tmp, M, PKseed, adrs);
+        bytes32 root = xmssPkFromSig(idxLeaf, SIG_tmp, M, PKseed, adrs);
         //xmssnsig[0].xmss_root = root;
         //console.logBytes32(root);   
         xmssnsig[0].xmss_auth = SIG_tmp.auth;
         xmssnsig[0].sig = SIG_tmp.sig;
         SIG_HT.sig[0] = SIG_tmp;
-        bytes memory idx_leaf2 = abi.encodePacked(idx_leaf);
-        bytes memory idx_tree2 = abi.encodePacked(idx_tree);
+        bytes memory idxLeaf2 = abi.encodePacked(idxLeaf);
+        bytes memory idxTree2 = abi.encodePacked(idxTree);
         for (uint j = 1; j < d; j++) {
             xmssn_sig_ind = j;
             if (j == d-1){
-                idx_tree_bits = 0;
-                idx_leaf2 = new bytes(4);
-                idx_tree2 = new bytes(4);
+                idxTree_bits = 0;
+                idxLeaf2 = new bytes(4);
+                idxTree2 = new bytes(4);
             }
             else{
-                // Extract idx_leaf as the least significant (h / d) bits of idx_tree
-                idx_leaf2 = extractBits(idx_tree2, idx_tree_bits - (h / d), h / d);
+                // Extract idxLeaf as the least significant (h / d) bits of idxTree
+                idxLeaf2 = extractBits(idxTree2, idxTree_bits - (h / d), h / d);
 
-                // Update idx_tree to the most significant (h - (j + 1) * (h / d)) bits
-                idx_tree_bits -= h / d;
+                // Update idxTree to the most significant (h - (j + 1) * (h / d)) bits
+                idxTree_bits -= h / d;
                 
-                idx_tree2 = extractBits(idx_tree2, 0, idx_tree_bits);
+                idxTree2 = extractBits(idxTree2, 0, idxTree_bits);
             }
             adrs.setLayerAddress(bytes4(uint32(j)));
-            adrs.setTreeAddress(bytesToBytes4(idx_tree2));
-            SIG_tmp = xmssSign(root, SKseed, uint32(bytesToBytes4(idx_tree2)), PKseed, adrs);
+            adrs.setTreeAddress(bytesToBytes4(idxTree2));
+            SIG_tmp = xmssSign(root, SKseed, uint32(bytesToBytes4(idxTree2)), PKseed, adrs);
             xmssnsig[j].xmss_auth = SIG_tmp.auth;
             xmssnsig[j].sig = SIG_tmp.sig;
             SIG_HT.sig[j] = SIG_tmp;
-            root = xmssPkFromSig(uint32(bytesToBytes4(idx_leaf2)), SIG_tmp, root, PKseed, adrs);
+            root = xmssPkFromSig(uint32(bytesToBytes4(idxLeaf2)), SIG_tmp, root, PKseed, adrs);
             //console.logBytes32(root);
             //as key gen doies not work properly
             sphincs_pk.root = root;
@@ -664,8 +664,8 @@ contract TestSphincsPlusNaysayer is Test {
         wotspkADRS.setType(WOTSPK);
         wotspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
         bytes32 pk = keccak256(abi.encodePacked(PKseed,wotspkADRS.toBytes(),tmp));
-        xmssnsig[xmssn_sig_ind].wots_pk_hash=pk;
-        xmssnsig[xmssn_sig_ind].wots_pk = tmp;
+        xmssnsig[xmssn_sig_ind].wotsPk_hash=pk;
+        xmssnsig[xmssn_sig_ind].wotsPk = tmp;
         return pk;
     }
 
@@ -750,7 +750,7 @@ contract TestSphincsPlusNaysayer is Test {
         return pk;
     }
 
-    function fors_sign( bytes memory M, bytes32 SKseed, bytes32 PKseed, ADRS adrs) public returns (SphincsPlusNaysayer.ForsSig memory){
+    function forsSign( bytes memory M, bytes32 SKseed, bytes32 PKseed, ADRS adrs) public returns (SphincsPlusNaysayer.ForsSig memory){
         SphincsPlusNaysayer.ForsSig memory sig = SphincsPlusNaysayer.ForsSig(new SphincsPlusNaysayer.ForsSigInner[](k));
         NaysayerForsSig memory nsig = NaysayerForsSig(new NaysayerForsSigInner[](k),0);
         naysayer_fors_proofs = new bytes32[][](k);
@@ -768,7 +768,7 @@ contract TestSphincsPlusNaysayer is Test {
             naysayer_fors_proofs[i] = auth;
         }
 
-        naysayer_sig.fors_sig = nsig;
+        naysayer_sig.forsSig = nsig;
         return sig;
     }
 
@@ -826,7 +826,7 @@ contract TestSphincsPlusNaysayer is Test {
     function treehash(uint s, uint z, ADRS adrs) public returns(bytes32){
         adrs.setType(WOTSHASH);   // Type = OTS hash address
         adrs.setKeyPairAddress(bytes4(uint32(s)));
-        bytes32 node = wots_PKgen(adrs); 
+        bytes32 node = wotsPkgen(adrs); 
         adrs.setType(TREE);
         adrs.setTreeHeight(bytes4(uint32(1)));
         adrs.setTreeIndex(bytes4(uint32(s)));
@@ -846,7 +846,7 @@ contract TestSphincsPlusNaysayer is Test {
     }
 
 
-    function wots_PKgen(ADRS adrs)public returns (bytes32){
+    function wotsPkgen(ADRS adrs)public returns (bytes32){
         ADRS wotspkADRS = new ADRS();
         wotspkADRS.fillFrom(adrs);
         ADRS skADRS = new ADRS();

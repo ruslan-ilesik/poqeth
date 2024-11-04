@@ -16,7 +16,7 @@ contract TestSphincsPlus is Test {
     }
 
     uint32 WOTSHASH = 0;
-    uint32 WOTS_PK = 1;
+    uint32 wotsPk = 1;
     uint32 TREE = 2;
     uint32 FORS_TREE = 3;
     uint32 FORS_ROOTS = 4;
@@ -49,13 +49,13 @@ contract TestSphincsPlus is Test {
         len2 = (log2(len1 * (w - 1)) / log2(w)) + 1;
         len = len1 + len2;
 
-        uint tmp_md_size = (k*a+7) /8;
-        uint tmp_idx_tree_size = ((h+7-h/d)/8);
-        uint tmp_idx_leaf_size = (h/d+7)/8;
+        uint tmpMdSize = (k*a+7) /8;
+        uint tmpIdxTreeSize = ((h+7-h/d)/8);
+        uint tmpIdxLeafSize = (h/d+7)/8;
 
-        //console.logUint(tmp_md_size);
-        //console.logUint(tmp_idx_tree_size);
-        //console.logUint(tmp_idx_leaf_size);
+        //console.logUint(tmpMdSize);
+        //console.logUint(tmpIdxTreeSize);
+        //console.logUint(tmpIdxLeafSize);
 
         require((k*a+7)/8 + (h-h/d+7)/8 + (h/d+7)/8 == m, "message size does not match one which can be signed");
         spx_keygen();
@@ -75,83 +75,83 @@ contract TestSphincsPlus is Test {
 
         //We assume M is already diggest for testing hamming weight propouses
         bytes32 digest = M;
-        uint tmp_md_size = (k*a+7) /8;
-        uint tmp_idx_tree_size = ((h-h/d+7)/8);
-        uint tmp_idx_leaf_size = (h/d+7)/8;
+        uint tmpMdSize = (k*a+7) /8;
+        uint tmpIdxTreeSize = ((h-h/d+7)/8);
+        uint tmpIdxLeafSize = (h/d+7)/8;
 
-        bytes1[] memory tmp_md = new bytes1[](tmp_md_size);
-        for (uint i=0; i < tmp_md_size; i++ ){
-            tmp_md[i] = digest[i];
+        bytes1[] memory tmpMd = new bytes1[](tmpMdSize);
+        for (uint i=0; i < tmpMdSize; i++ ){
+            tmpMd[i] = digest[i];
         }
         
-        bytes1[] memory tmp_idx_tree = new bytes1[](tmp_idx_tree_size);
-        for (uint i=0; i < tmp_idx_tree_size; i++ ){
-            tmp_idx_tree[i] = digest[tmp_md_size+i];
+        bytes1[] memory tmpIdxTree = new bytes1[](tmpIdxTreeSize);
+        for (uint i=0; i < tmpIdxTreeSize; i++ ){
+            tmpIdxTree[i] = digest[tmpMdSize+i];
         }
 
-        bytes1[] memory tmp_idx_leaf = new bytes1[](tmp_idx_leaf_size);
-        for (uint i=0; i < tmp_idx_leaf_size; i++ ){
-            tmp_idx_leaf[i] = digest[tmp_md_size+tmp_idx_tree_size+i];
+        bytes1[] memory tmpIdxLeaf = new bytes1[](tmpIdxLeafSize);
+        for (uint i=0; i < tmpIdxLeafSize; i++ ){
+            tmpIdxLeaf[i] = digest[tmpMdSize+tmpIdxTreeSize+i];
         }
           
  
-        bytes memory  md = extractBits(abi.encodePacked(tmp_md), 0, k*a);
+        bytes memory  md = extractBits(abi.encodePacked(tmpMd), 0, k*a);
 
-        // idx_tree: first h - h/d bits after md
-        uint256 idx_tree_bits = h - h / d;
-        bytes memory  idx_tree = extractBits(abi.encodePacked(tmp_idx_tree), 0, idx_tree_bits);
+        // idxTree: first h - h/d bits after md
+        uint256 idxTree_bits = h - h / d;
+        bytes memory  idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTree_bits);
 
-        // idx_leaf: first h/d bits after idx_tree
-        uint256 idx_leaf_bits = h / d;
-        bytes memory idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
+        // idxLeaf: first h/d bits after idxTree
+        uint256 idxLeaf_bits = h / d;
+        bytes memory idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeaf_bits);
         
 
         adrs.setType(FORS_TREE);
         adrs.setLayerAddress(0);
-        adrs.setTreeAddress(bytesToBytes8(idx_tree));
-        adrs.setKeyPairAddress(bytesToBytes4(idx_leaf));
-        sphincs_sig.fors_sig = fors_sign(md, sphincs_sk.SKseed, sphincs_sk.PKseed, adrs);
-        bytes32 PK_FORS = fors_pkFromSig(sphincs_sig.fors_sig,md,sphincs_sk.PKseed,adrs);
+        adrs.setTreeAddress(bytesToBytes8(idxTree));
+        adrs.setKeyPairAddress(bytesToBytes4(idxLeaf));
+        sphincs_sig.forsSig = forsSign(md, sphincs_sk.SKseed, sphincs_sk.PKseed, adrs);
+        bytes32 PK_FORS = fors_pkFromSig(sphincs_sig.forsSig,md,sphincs_sk.PKseed,adrs);
 
         //console.logBytes32(PK_FORS);
         adrs.setType(TREE);
-        Sphincs_plus.HT_SIG memory SIG_HT = ht_sign(PK_FORS,sphincs_sk.SKseed,sphincs_sk.PKseed,  uint64(bytesToBytes8(idx_tree)),uint32(bytesToBytes4(idx_leaf)));
-        sphincs_sig.ht_sig = SIG_HT;
+        Sphincs_plus.htSig memory SIG_HT = htSign(PK_FORS,sphincs_sk.SKseed,sphincs_sk.PKseed,  uint64(bytesToBytes8(idxTree)),uint32(bytesToBytes4(idxLeaf)));
+        sphincs_sig.htSig = SIG_HT;
     }
 
-    function ht_sign(bytes32 M, bytes32 SKseed, bytes32 PKseed, uint64 idx_tree, uint32 idx_leaf)public returns(Sphincs_plus.HT_SIG memory){
-        Sphincs_plus.HT_SIG memory SIG_HT = Sphincs_plus.HT_SIG(new Sphincs_plus.xmssSig[](d));
+    function htSign(bytes32 M, bytes32 SKseed, bytes32 PKseed, uint64 idxTree, uint32 idxLeaf)public returns(Sphincs_plus.htSig memory){
+        Sphincs_plus.htSig memory SIG_HT = Sphincs_plus.htSig(new Sphincs_plus.xmssSig[](d));
         ADRS adrs = new ADRS();
         adrs.setLayerAddress(0);
-        adrs.setTreeAddress(bytes8(idx_tree));
-        uint256 idx_tree_bits = h - h / d;
-        uint256 idx_leaf_bits = h / d;
-        Sphincs_plus.xmssSig memory SIG_tmp = xmssSign(M,SKseed,idx_leaf,PKseed,adrs);
+        adrs.setTreeAddress(bytes8(idxTree));
+        uint256 idxTree_bits = h - h / d;
+        uint256 idxLeaf_bits = h / d;
+        Sphincs_plus.xmssSig memory SIG_tmp = xmssSign(M,SKseed,idxLeaf,PKseed,adrs);
         SIG_HT.sig[0] = SIG_tmp;
-        bytes32 root = xmssPkFromSig(idx_leaf, SIG_tmp, M, PKseed, adrs);
+        bytes32 root = xmssPkFromSig(idxLeaf, SIG_tmp, M, PKseed, adrs);
         //console.logBytes32(root);
-        bytes memory idx_leaf2 = abi.encodePacked(idx_leaf);
-        bytes memory idx_tree2 = abi.encodePacked(idx_tree);
+        bytes memory idxLeaf2 = abi.encodePacked(idxLeaf);
+        bytes memory idxTree2 = abi.encodePacked(idxTree);
         for (uint j = 1; j < d; j++) {
             if (j == d-1){
-                idx_tree_bits = 0;
-                idx_leaf2 = new bytes(4);
-                idx_tree2 = new bytes(4);
+                idxTree_bits = 0;
+                idxLeaf2 = new bytes(4);
+                idxTree2 = new bytes(4);
             }
             else{
-                // Extract idx_leaf as the least significant (h / d) bits of idx_tree
-                idx_leaf2 = extractBits(idx_tree2, idx_tree_bits - (h / d), h / d);
+                // Extract idxLeaf as the least significant (h / d) bits of idxTree
+                idxLeaf2 = extractBits(idxTree2, idxTree_bits - (h / d), h / d);
 
-                // Update idx_tree to the most significant (h - (j + 1) * (h / d)) bits
-                idx_tree_bits -= h / d;
+                // Update idxTree to the most significant (h - (j + 1) * (h / d)) bits
+                idxTree_bits -= h / d;
                 
-                idx_tree2 = extractBits(idx_tree2, 0, idx_tree_bits);
+                idxTree2 = extractBits(idxTree2, 0, idxTree_bits);
             }
             adrs.setLayerAddress(bytes4(uint32(j)));
-            adrs.setTreeAddress(bytesToBytes4(idx_tree2));
-            SIG_tmp = xmssSign(root, SKseed, uint32(bytesToBytes4(idx_tree2)), PKseed, adrs);
+            adrs.setTreeAddress(bytesToBytes4(idxTree2));
+            SIG_tmp = xmssSign(root, SKseed, uint32(bytesToBytes4(idxTree2)), PKseed, adrs);
             SIG_HT.sig[j] = SIG_tmp;
-            root = xmssPkFromSig(uint32(bytesToBytes4(idx_leaf2)), SIG_tmp, root, PKseed, adrs);
+            root = xmssPkFromSig(uint32(bytesToBytes4(idxLeaf2)), SIG_tmp, root, PKseed, adrs);
             //console.logBytes32(root);
 
             //as key gen doies not work properly
@@ -205,7 +205,7 @@ contract TestSphincsPlus is Test {
             tmp[i] = chain(sig[i], uint(msg2[i-len1]), w - 1 - uint(msg2[i-len1]),PKseed, adrs);
           }
         }
-        wotspkADRS.setType(WOTS_PK);
+        wotspkADRS.setType(wotsPk);
         wotspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
         bytes32 pk = keccak256(abi.encodePacked(PKseed,wotspkADRS.toBytes(),tmp));
         return pk;
@@ -258,7 +258,7 @@ contract TestSphincsPlus is Test {
         return sig;
     }
 
-    function fors_pkFromSig(Sphincs_plus.FORS_SIG memory SIG_FORS, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
+    function fors_pkFromSig(Sphincs_plus.forsSig memory SIG_FORS, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
         bytes32[2] memory  node;
         bytes32[] memory root = new bytes32[](k);
         for(uint i = 0; i < k; i++){
@@ -293,8 +293,8 @@ contract TestSphincsPlus is Test {
         return pk;
     }
 
-    function fors_sign( bytes memory M, bytes32 SKseed, bytes32 PKseed, ADRS adrs) public returns (Sphincs_plus.FORS_SIG memory){
-        Sphincs_plus.FORS_SIG memory sig = Sphincs_plus.FORS_SIG(new Sphincs_plus.FORS_SIG_INNER[](k));
+    function forsSign( bytes memory M, bytes32 SKseed, bytes32 PKseed, ADRS adrs) public returns (Sphincs_plus.forsSig memory){
+        Sphincs_plus.forsSig memory sig = Sphincs_plus.forsSig(new Sphincs_plus.forsSig_INNER[](k));
         for(uint i = 0; i < k; i++){
             uint idx = bytesToUint256(extractBits(M, i*a, (i+1)*a - i*a));
             bytes32 sk = fors_SKgen(SKseed, adrs, i*t + idx) ;
@@ -304,7 +304,7 @@ contract TestSphincsPlus is Test {
                 uint s = (idx/ (2**j)) ^ 1;
                 auth[j] = fors_treehash(SKseed, i * t + s * 2**j, j, PKseed, adrs);
             }
-            sig.sig[i] = Sphincs_plus.FORS_SIG_INNER(sk,auth);
+            sig.sig[i] = Sphincs_plus.forsSig_INNER(sk,auth);
         }
         return sig;
     }
@@ -363,7 +363,7 @@ contract TestSphincsPlus is Test {
     function treehash(uint s, uint z, ADRS adrs) public returns(bytes32){
         adrs.setType(WOTSHASH);   // Type = OTS hash address
         adrs.setKeyPairAddress(bytes4(uint32(s)));
-        bytes32 node = wots_PKgen(adrs); 
+        bytes32 node = wotsPkgen(adrs); 
         adrs.setType(TREE);
         adrs.setTreeHeight(bytes4(uint32(1)));
         adrs.setTreeIndex(bytes4(uint32(s)));
@@ -383,7 +383,7 @@ contract TestSphincsPlus is Test {
     }
 
 
-    function wots_PKgen(ADRS adrs)public returns (bytes32){
+    function wotsPkgen(ADRS adrs)public returns (bytes32){
         ADRS wotspkADRS = new ADRS();
         wotspkADRS.fillFrom(adrs);
         ADRS skADRS = new ADRS();
@@ -400,7 +400,7 @@ contract TestSphincsPlus is Test {
             adrs.setHashAddress(0);
             tmp[i] = chain(sk[i], 0, w - 1,  sphincs_pk.seed, adrs);
         }
-        wotspkADRS.setType(WOTS_PK);
+        wotspkADRS.setType(wotsPk);
         wotspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
 
         return keccak256(abi.encodePacked(sphincs_pk.seed,wotspkADRS.toBytes(), tmp));

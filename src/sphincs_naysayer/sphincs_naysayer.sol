@@ -148,8 +148,8 @@ contract SphincsPlusNaysayer is MerkleTree{
 
     struct SphincsSig{
         bytes32 r;
-        ForsSig fors_sig;
-        HtSig ht_sig;
+        ForsSig forsSig;
+        HtSig htSig;
     }
 
     SphincsPk pk;
@@ -190,7 +190,7 @@ contract SphincsPlusNaysayer is MerkleTree{
     }
 
     //default offset = 1 as we store r in signature
-    //fors_sigs amount = k;
+    //forsSigs amount = k;
     //fors sig len = 3;
 
     //xmss sig len = len
@@ -199,92 +199,92 @@ contract SphincsPlusNaysayer is MerkleTree{
     //xmss additional nodes = h/d+1;
     //xmss additional words = 1;
     //xmss total length = d+h/d+len+h/d+1+1 = d+len+2*h/d+2;
-    function WOTSHASH_naysayer(
-        uint tree_index,
-        bytes32[] memory wots_pk,
-        bytes32[][] memory wots_pk_proof,
+    function WotsHashNaysayer(
+        uint treeIndex,
+        bytes32[] memory wotsPk,
+        bytes32[][] memory wotsPkProof,
         bytes32 hashed,
-        bytes32[] memory hashed_proof,
+        bytes32[] memory hashedProof,
         bytes32 M2,
         bytes32[] memory mProof
     ) public returns (bool){
-        uint xmss_f_ind = 1 + 3 * k + 1;
-        uint xmss_len = 1 + h / d + len + len + h / d + 1;
-        for (uint i =0; i < wots_pk.length;i++){
-            if (!verifyProof(sig, wots_pk[i], wots_pk_proof[i], xmss_f_ind+xmss_len*tree_index+1+h/d+len+i)){
+        uint xmssFInd = 1 + 3 * k + 1;
+        uint xmssLen = 1 + h / d + len + len + h / d + 1;
+        for (uint i =0; i < wotsPk.length;i++){
+            if (!verifyProof(sig, wotsPk[i], wotsPkProof[i], xmssFInd+xmssLen*treeIndex+1+h/d+len+i)){
                 return false;
             }
         }
 
-        if (!verifyProof(sig, hashed, hashed_proof, xmss_f_ind+xmss_len*tree_index)){
+        if (!verifyProof(sig, hashed, hashedProof, xmssFInd+xmssLen*treeIndex)){
             return false;
         }
 
-        if (tree_index == 0) {
-            if (!verifyProof(sig, M2, mProof,xmss_f_ind+xmss_len*d )){
+        if (treeIndex == 0) {
+            if (!verifyProof(sig, M2, mProof,xmssFInd+xmssLen*d )){
                 return false;
             }
-        } else if (!verifyProof(sig, M2, mProof, xmss_f_ind + xmss_len * tree_index - 1)) {
+        } else if (!verifyProof(sig, M2, mProof, xmssFInd + xmssLen * treeIndex - 1)) {
             return false;
         }
 
 
-        uint tmp_md_size = (k * a + 7) / 8;
-        uint tmp_idx_tree_size = ((h - h / d + 7) / 8);
-        uint tmp_idx_leaf_size = (h / d + 7) / 8;
+        uint tmpMdSize = (k * a + 7) / 8;
+        uint tmpIdxTreeSize = ((h - h / d + 7) / 8);
+        uint tmpIdxLeafSize = (h / d + 7) / 8;
 
         // Processing digest
-        bytes1[] memory tmp_md = new bytes1[](tmp_md_size);
-        for (uint i = 0; i < tmp_md_size; i++) {
-            tmp_md[i] = M2[i];
+        bytes1[] memory tmpMd = new bytes1[](tmpMdSize);
+        for (uint i = 0; i < tmpMdSize; i++) {
+            tmpMd[i] = M2[i];
         }
 
-        bytes1[] memory tmp_idx_tree = new bytes1[](tmp_idx_tree_size);
-        for (uint i = 0; i < tmp_idx_tree_size; i++) {
-            tmp_idx_tree[i] = M2[tmp_md_size + i];
+        bytes1[] memory tmpIdxTree = new bytes1[](tmpIdxTreeSize);
+        for (uint i = 0; i < tmpIdxTreeSize; i++) {
+            tmpIdxTree[i] = M2[tmpMdSize + i];
         }
 
-        bytes1[] memory tmp_idx_leaf = new bytes1[](tmp_idx_leaf_size);
-        for (uint i = 0; i < tmp_idx_leaf_size; i++) {
-            tmp_idx_leaf[i] = M2[tmp_md_size + tmp_idx_tree_size + i];
+        bytes1[] memory tmpIdxLeaf = new bytes1[](tmpIdxLeafSize);
+        for (uint i = 0; i < tmpIdxLeafSize; i++) {
+            tmpIdxLeaf[i] = M2[tmpMdSize + tmpIdxTreeSize + i];
         }
 
   
         bytes memory md;
-        bytes memory idx_leaf2;
-        bytes memory idx_tree2;
+        bytes memory idxLeaf2;
+        bytes memory idxTree2;
         ADRS adrs = new ADRS();
 
         {
-            bytes memory idx_leaf;
-            bytes memory idx_tree;
-            md = extractBits(abi.encodePacked(tmp_md), 0, k * a);
-            uint256 idx_tree_bits = h - h / d;
-            idx_tree = extractBits(abi.encodePacked(tmp_idx_tree), 0, idx_tree_bits);
-            uint256 idx_leaf_bits = h / d;
-            idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
+            bytes memory idxLeaf;
+            bytes memory idxTree;
+            md = extractBits(abi.encodePacked(tmpMd), 0, k * a);
+            uint256 idxTree_bits = h - h / d;
+            idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTree_bits);
+            uint256 idxLeaf_bits = h / d;
+            idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeaf_bits);
 
 
-            bytes memory idx_leaf2 = abi.encodePacked(idx_leaf);
-            bytes memory idx_tree2 = abi.encodePacked(idx_tree);
+            bytes memory idxLeaf2 = abi.encodePacked(idxLeaf);
+            bytes memory idxTree2 = abi.encodePacked(idxTree);
 
-            for (uint j = 1; j < tree_index; j++) {
+            for (uint j = 1; j < treeIndex; j++) {
                 if (j == d - 1) {
-                    idx_tree_bits = 0;
-                    idx_leaf2 = new bytes(4);
-                    idx_tree2 = new bytes(4);
+                    idxTree_bits = 0;
+                    idxLeaf2 = new bytes(4);
+                    idxTree2 = new bytes(4);
                 } else {
-                    idx_leaf2 = extractBits(idx_tree2, idx_tree_bits - (h / d), h / d);
-                    idx_tree_bits -= h / d;
-                    idx_tree2 = extractBits(idx_tree2, 0, idx_tree_bits);
+                    idxLeaf2 = extractBits(idxTree2, idxTree_bits - (h / d), h / d);
+                    idxTree_bits -= h / d;
+                    idxTree2 = extractBits(idxTree2, 0, idxTree_bits);
                 }
             }
         }
 
-        uint32 idx = uint32(bytesToBytes4(idx_leaf2));
+        uint32 idx = uint32(bytesToBytes4(idxLeaf2));
         adrs.setType(WOTSHASH);
         adrs.setKeyPairAddress(bytes4(idx));
-        adrs.setLayerAddress(bytes4(uint32(tree_index)));
+        adrs.setLayerAddress(bytes4(uint32(treeIndex)));
         adrs.setChainAddress(bytes4(uint32(len-1)));
 
         ADRS wotspkADRS = new ADRS();
@@ -292,102 +292,102 @@ contract SphincsPlusNaysayer is MerkleTree{
 
         wotspkADRS.setType(WOTSPK);
         wotspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
-        bytes32 pk = keccak256(abi.encodePacked(pk.seed,wotspkADRS.toBytes(),wots_pk));
+        bytes32 pk = keccak256(abi.encodePacked(pk.seed,wotspkADRS.toBytes(),wotsPk));
         return pk !=hashed;
     }
 
    
     function wots_naysayer(
-        uint tree_index,
+        uint treeIndex,
         uint wotsSigInd,
         bytes32 M2,
         bytes32[] memory mProof,
-        bytes32 wots_pk_elem,
-        bytes32[] memory wots_pk_proof,
+        bytes32 wotsPk_elem,
+        bytes32[] memory wotsPkProof,
         bytes32 wots_sig_elem,
         bytes32[] memory wots_sig_proof
     ) public returns (bool) {
 
         // Memory variables to avoid stack depth issues
         {
-            uint xmss_f_ind = 1 + 3 * k + 1;
-            uint xmss_len = 1 + h / d + len + len + h / d + 1;
+            uint xmssFInd = 1 + 3 * k + 1;
+            uint xmssLen = 1 + h / d + len + len + h / d + 1;
 
-            if (tree_index == 0) {
-                if (!verifyProof(sig, M2, mProof,xmss_f_ind+xmss_len*d )){
+            if (treeIndex == 0) {
+                if (!verifyProof(sig, M2, mProof,xmssFInd+xmssLen*d )){
                     return false;
                 }
-            } else if (!verifyProof(sig, M2, mProof, xmss_f_ind + xmss_len * tree_index - 1)) {
+            } else if (!verifyProof(sig, M2, mProof, xmssFInd + xmssLen * treeIndex - 1)) {
                 return false;
             }
 
-            uint wots_pk_elem_ind = xmss_f_ind + xmss_len * tree_index + 1 + h / d + len + wotsSigInd;
-            if (!verifyProof(sig, wots_pk_elem, wots_pk_proof, wots_pk_elem_ind)) {
+            uint wotsPk_elem_ind = xmssFInd + xmssLen * treeIndex + 1 + h / d + len + wotsSigInd;
+            if (!verifyProof(sig, wotsPk_elem, wotsPkProof, wotsPk_elem_ind)) {
                 return false;
             }
 
-            uint wots_sig_elem_ind = xmss_f_ind + xmss_len * tree_index + 1 + h / d + wotsSigInd;
+            uint wots_sig_elem_ind = xmssFInd + xmssLen * treeIndex + 1 + h / d + wotsSigInd;
             if (!verifyProof(sig, wots_sig_elem, wots_sig_proof, wots_sig_elem_ind)) {
                 return false;
             }
         }
 
-        uint tmp_md_size = (k * a + 7) / 8;
-        uint tmp_idx_tree_size = ((h - h / d + 7) / 8);
-        uint tmp_idx_leaf_size = (h / d + 7) / 8;
+        uint tmpMdSize = (k * a + 7) / 8;
+        uint tmpIdxTreeSize = ((h - h / d + 7) / 8);
+        uint tmpIdxLeafSize = (h / d + 7) / 8;
 
         // Processing digest
-        bytes1[] memory tmp_md = new bytes1[](tmp_md_size);
-        for (uint i = 0; i < tmp_md_size; i++) {
-            tmp_md[i] = M2[i];
+        bytes1[] memory tmpMd = new bytes1[](tmpMdSize);
+        for (uint i = 0; i < tmpMdSize; i++) {
+            tmpMd[i] = M2[i];
         }
 
-        bytes1[] memory tmp_idx_tree = new bytes1[](tmp_idx_tree_size);
-        for (uint i = 0; i < tmp_idx_tree_size; i++) {
-            tmp_idx_tree[i] = M2[tmp_md_size + i];
+        bytes1[] memory tmpIdxTree = new bytes1[](tmpIdxTreeSize);
+        for (uint i = 0; i < tmpIdxTreeSize; i++) {
+            tmpIdxTree[i] = M2[tmpMdSize + i];
         }
 
-        bytes1[] memory tmp_idx_leaf = new bytes1[](tmp_idx_leaf_size);
-        for (uint i = 0; i < tmp_idx_leaf_size; i++) {
-            tmp_idx_leaf[i] = M2[tmp_md_size + tmp_idx_tree_size + i];
+        bytes1[] memory tmpIdxLeaf = new bytes1[](tmpIdxLeafSize);
+        for (uint i = 0; i < tmpIdxLeafSize; i++) {
+            tmpIdxLeaf[i] = M2[tmpMdSize + tmpIdxTreeSize + i];
         }
 
   
         bytes memory md;
-        bytes memory idx_leaf2;
-        bytes memory idx_tree2;
+        bytes memory idxLeaf2;
+        bytes memory idxTree2;
         ADRS adrs = new ADRS();
 
         {
-            bytes memory idx_leaf;
-            bytes memory idx_tree;
-            md = extractBits(abi.encodePacked(tmp_md), 0, k * a);
-            uint256 idx_tree_bits = h - h / d;
-            idx_tree = extractBits(abi.encodePacked(tmp_idx_tree), 0, idx_tree_bits);
-            uint256 idx_leaf_bits = h / d;
-            idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
+            bytes memory idxLeaf;
+            bytes memory idxTree;
+            md = extractBits(abi.encodePacked(tmpMd), 0, k * a);
+            uint256 idxTree_bits = h - h / d;
+            idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTree_bits);
+            uint256 idxLeaf_bits = h / d;
+            idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeaf_bits);
 
 
-            bytes memory idx_leaf2 = abi.encodePacked(idx_leaf);
-            bytes memory idx_tree2 = abi.encodePacked(idx_tree);
+            bytes memory idxLeaf2 = abi.encodePacked(idxLeaf);
+            bytes memory idxTree2 = abi.encodePacked(idxTree);
 
-            for (uint j = 1; j < tree_index; j++) {
+            for (uint j = 1; j < treeIndex; j++) {
                 if (j == d - 1) {
-                    idx_tree_bits = 0;
-                    idx_leaf2 = new bytes(4);
-                    idx_tree2 = new bytes(4);
+                    idxTree_bits = 0;
+                    idxLeaf2 = new bytes(4);
+                    idxTree2 = new bytes(4);
                 } else {
-                    idx_leaf2 = extractBits(idx_tree2, idx_tree_bits - (h / d), h / d);
-                    idx_tree_bits -= h / d;
-                    idx_tree2 = extractBits(idx_tree2, 0, idx_tree_bits);
+                    idxLeaf2 = extractBits(idxTree2, idxTree_bits - (h / d), h / d);
+                    idxTree_bits -= h / d;
+                    idxTree2 = extractBits(idxTree2, 0, idxTree_bits);
                 }
             }
         }
 
-        uint32 idx = uint32(bytesToBytes4(idx_leaf2));
+        uint32 idx = uint32(bytesToBytes4(idxLeaf2));
         adrs.setType(WOTSHASH);
         adrs.setKeyPairAddress(bytes4(idx));
-        adrs.setLayerAddress(bytes4(uint32(tree_index)));
+        adrs.setLayerAddress(bytes4(uint32(treeIndex)));
         bytes32 node;
         {
             uint csum = 0;
@@ -418,7 +418,7 @@ contract SphincsPlusNaysayer is MerkleTree{
         }
 
         //return false; // Or return the actual result based on your logic
-        return node != wots_pk_elem;
+        return node != wotsPk_elem;
     }
 
 
@@ -435,14 +435,14 @@ contract SphincsPlusNaysayer is MerkleTree{
         bytes32[] memory auth_node_proof 
     ) public returns (bool) {
         //required because compiler crashes trying to inline it
-        uint xmss_f_ind = 1 + 3 * k+1;
-        uint xmss_len =  1+h/d + len+len+h/d+1;
-        uint baseIndex = xmss_f_ind + xmss_len * tree_ind +  1+h/d + len+len;
+        uint xmssFInd = 1 + 3 * k+1;
+        uint xmssLen =  1+h/d + len+len+h/d+1;
+        uint baseIndex = xmssFInd + xmssLen * tree_ind +  1+h/d + len+len;
 
         // Split the complex expressions into intermediate variables
         uint top_node_index = baseIndex + top_node_ind;
         uint bottom_node_index = baseIndex + top_node_ind - 1;
-        uint auth_node_index = xmss_f_ind + xmss_len * tree_ind + 1 + top_node_ind - 1;
+        uint auth_node_index = xmssFInd + xmssLen * tree_ind + 1 + top_node_ind - 1;
 
         // Verify each proof separately and return false early if any fails
         if (!verifyProof(sig, top_node, top_node_proof, top_node_index)) {
@@ -462,55 +462,55 @@ contract SphincsPlusNaysayer is MerkleTree{
         bytes32 digest = M;
 
 
-        uint tmp_md_size = (k*a+7) /8;
-        uint tmp_idx_tree_size = ((h-h/d+7)/8);
-        uint tmp_idx_leaf_size = (h/d+7)/8;
+        uint tmpMdSize = (k*a+7) /8;
+        uint tmpIdxTreeSize = ((h-h/d+7)/8);
+        uint tmpIdxLeafSize = (h/d+7)/8;
 
-        bytes1[] memory tmp_md = new bytes1[](tmp_md_size);
-        for (uint i=0; i < tmp_md_size; i++ ){
-            tmp_md[i] = digest[i];
+        bytes1[] memory tmpMd = new bytes1[](tmpMdSize);
+        for (uint i=0; i < tmpMdSize; i++ ){
+            tmpMd[i] = digest[i];
         }
 
-        bytes1[] memory tmp_idx_tree = new bytes1[](tmp_idx_tree_size);
-        for (uint i=0; i < tmp_idx_tree_size; i++ ){
-            tmp_idx_tree[i] = digest[tmp_md_size+i];
+        bytes1[] memory tmpIdxTree = new bytes1[](tmpIdxTreeSize);
+        for (uint i=0; i < tmpIdxTreeSize; i++ ){
+            tmpIdxTree[i] = digest[tmpMdSize+i];
         }
 
-        bytes1[] memory tmp_idx_leaf = new bytes1[](tmp_idx_leaf_size);
-        for (uint i=0; i < tmp_idx_leaf_size; i++ ){
-            tmp_idx_leaf[i] = digest[tmp_md_size+tmp_idx_tree_size+i];
+        bytes1[] memory tmpIdxLeaf = new bytes1[](tmpIdxLeafSize);
+        for (uint i=0; i < tmpIdxLeafSize; i++ ){
+            tmpIdxLeaf[i] = digest[tmpMdSize+tmpIdxTreeSize+i];
         }
 
-        bytes memory  md = extractBits(abi.encodePacked(tmp_md), 0, k*a);
+        bytes memory  md = extractBits(abi.encodePacked(tmpMd), 0, k*a);
 
-        // idx_tree: first h - h/d bits after md
-        uint256 idx_tree_bits = h - h / d;
-        bytes memory  idx_tree = extractBits(abi.encodePacked(tmp_idx_tree), 0, idx_tree_bits);
+        // idxTree: first h - h/d bits after md
+        uint256 idxTree_bits = h - h / d;
+        bytes memory  idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTree_bits);
 
-        // idx_leaf: first h/d bits after idx_tree
-        uint256 idx_leaf_bits = h / d;
-        bytes memory idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
+        // idxLeaf: first h/d bits after idxTree
+        uint256 idxLeaf_bits = h / d;
+        bytes memory idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeaf_bits);
 
-        bytes memory idx_leaf2 = abi.encodePacked(idx_leaf);
-        bytes memory idx_tree2 = abi.encodePacked(idx_tree);
+        bytes memory idxLeaf2 = abi.encodePacked(idxLeaf);
+        bytes memory idxTree2 = abi.encodePacked(idxTree);
         ADRS adrs = new ADRS();
         for (uint j = 1; j < tree_ind; j++) {
             if (j == d-1){
-                idx_tree_bits = 0;
-                idx_leaf2 = new bytes(4);
-                idx_tree2 = new bytes(4);
+                idxTree_bits = 0;
+                idxLeaf2 = new bytes(4);
+                idxTree2 = new bytes(4);
             }
             else{
-                // Extract idx_leaf as the least significant (h / d) bits of idx_tree
-                idx_leaf2 = extractBits(idx_tree2, idx_tree_bits - (h / d), h / d);
+                // Extract idxLeaf as the least significant (h / d) bits of idxTree
+                idxLeaf2 = extractBits(idxTree2, idxTree_bits - (h / d), h / d);
 
-                // Update idx_tree to the most significant (h - (j + 1) * (h / d)) bits
-                idx_tree_bits -= h / d;
+                // Update idxTree to the most significant (h - (j + 1) * (h / d)) bits
+                idxTree_bits -= h / d;
                 
-                idx_tree2 = extractBits(idx_tree2, 0, idx_tree_bits);
+                idxTree2 = extractBits(idxTree2, 0, idxTree_bits);
             }
         }
-        uint32 idx = uint32(bytesToBytes4(idx_leaf2));
+        uint32 idx = uint32(bytesToBytes4(idxLeaf2));
         adrs.setType(TREE);
         adrs.setTreeIndex(bytes4(idx));
         //console.logString("___________________");
@@ -551,47 +551,47 @@ contract SphincsPlusNaysayer is MerkleTree{
         ADRS adrs = new ADRS();
     
         //bytes32 R = SIG.r;
-        //FORS_SIG memory SIG_FORS = SIG.fors_sig;
-        //HT_SIG memory SIG_HT = SIG.ht_sig;
+        //forsSig memory SIG_FORS = SIG.forsSig;
+        //htSig memory SIG_HT = SIG.htSig;
 
 
         //We assume M is already diggest for testing hamming weight propouses
         bytes32 digest = M;
 
 
-        uint tmp_md_size = (k*a+7) /8;
-        uint tmp_idx_tree_size = ((h-h/d+7)/8);
-        uint tmp_idx_leaf_size = (h/d+7)/8;
+        uint tmpMdSize = (k*a+7) /8;
+        uint tmpIdxTreeSize = ((h-h/d+7)/8);
+        uint tmpIdxLeafSize = (h/d+7)/8;
 
-        bytes1[] memory tmp_md = new bytes1[](tmp_md_size);
-        for (uint i=0; i < tmp_md_size; i++ ){
-            tmp_md[i] = digest[i];
+        bytes1[] memory tmpMd = new bytes1[](tmpMdSize);
+        for (uint i=0; i < tmpMdSize; i++ ){
+            tmpMd[i] = digest[i];
         }
 
-        bytes1[] memory tmp_idx_tree = new bytes1[](tmp_idx_tree_size);
-        for (uint i=0; i < tmp_idx_tree_size; i++ ){
-            tmp_idx_tree[i] = digest[tmp_md_size+i];
+        bytes1[] memory tmpIdxTree = new bytes1[](tmpIdxTreeSize);
+        for (uint i=0; i < tmpIdxTreeSize; i++ ){
+            tmpIdxTree[i] = digest[tmpMdSize+i];
         }
 
-        bytes1[] memory tmp_idx_leaf = new bytes1[](tmp_idx_leaf_size);
-        for (uint i=0; i < tmp_idx_leaf_size; i++ ){
-            tmp_idx_leaf[i] = digest[tmp_md_size+tmp_idx_tree_size+i];
+        bytes1[] memory tmpIdxLeaf = new bytes1[](tmpIdxLeafSize);
+        for (uint i=0; i < tmpIdxLeafSize; i++ ){
+            tmpIdxLeaf[i] = digest[tmpMdSize+tmpIdxTreeSize+i];
         }
 
-        bytes memory  md = extractBits(abi.encodePacked(tmp_md), 0, k*a);
+        bytes memory  md = extractBits(abi.encodePacked(tmpMd), 0, k*a);
 
-        // idx_tree: first h - h/d bits after md
-        uint256 idx_tree_bits = h - h / d;
-        bytes memory  idx_tree = extractBits(abi.encodePacked(tmp_idx_tree), 0, idx_tree_bits);
+        // idxTree: first h - h/d bits after md
+        uint256 idxTree_bits = h - h / d;
+        bytes memory  idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTree_bits);
 
-        // idx_leaf: first h/d bits after idx_tree
-        uint256 idx_leaf_bits = h / d;
-        bytes memory idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
+        // idxLeaf: first h/d bits after idxTree
+        uint256 idxLeaf_bits = h / d;
+        bytes memory idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeaf_bits);
 
         adrs.setType(FORSTREE);
         adrs.setLayerAddress(0);
-        adrs.setTreeAddress(bytesToBytes4(idx_tree));
-        adrs.setKeyPairAddress(bytesToBytes4(idx_leaf));
+        adrs.setTreeAddress(bytesToBytes4(idxTree));
+        adrs.setKeyPairAddress(bytesToBytes4(idxLeaf));
 
         //fors_pkFromSig(SIG_FORS,md,pk.seed,adrs);
 
@@ -634,60 +634,60 @@ contract SphincsPlusNaysayer is MerkleTree{
 
 
 
-    function naysayer_fors_hash(bytes32[] memory roots, bytes32[][] memory proofs, bytes32 hashed, bytes32[] memory hashed_proof) public returns (bool){
+    function naysayer_fors_hash(bytes32[] memory roots, bytes32[][] memory proofs, bytes32 hashed, bytes32[] memory hashedProof) public returns (bool){
         for (uint i =0; i < k; i++){
             if (!verifyProof(sig, roots[i], proofs[i], 1+3*i+2)){
                 return false;
             }
         }
-        if (!verifyProof(sig, hashed, hashed_proof, 1+3*k)){
+        if (!verifyProof(sig, hashed, hashedProof, 1+3*k)){
             return false;
         }
 
         ADRS adrs = new ADRS();
     
         //bytes32 R = SIG.r;
-        //FORS_SIG memory SIG_FORS = SIG.fors_sig;
-        //HT_SIG memory SIG_HT = SIG.ht_sig;
+        //forsSig memory SIG_FORS = SIG.forsSig;
+        //htSig memory SIG_HT = SIG.htSig;
 
 
         //We assume M is already diggest for testing hamming weight propouses
         bytes32 digest = M;
 
 
-        uint tmp_md_size = (k*a+7) /8;
-        uint tmp_idx_tree_size = ((h-h/d+7)/8);
-        uint tmp_idx_leaf_size = (h/d+7)/8;
+        uint tmpMdSize = (k*a+7) /8;
+        uint tmpIdxTreeSize = ((h-h/d+7)/8);
+        uint tmpIdxLeafSize = (h/d+7)/8;
 
-        bytes1[] memory tmp_md = new bytes1[](tmp_md_size);
-        for (uint i=0; i < tmp_md_size; i++ ){
-            tmp_md[i] = digest[i];
+        bytes1[] memory tmpMd = new bytes1[](tmpMdSize);
+        for (uint i=0; i < tmpMdSize; i++ ){
+            tmpMd[i] = digest[i];
         }
 
-        bytes1[] memory tmp_idx_tree = new bytes1[](tmp_idx_tree_size);
-        for (uint i=0; i < tmp_idx_tree_size; i++ ){
-            tmp_idx_tree[i] = digest[tmp_md_size+i];
+        bytes1[] memory tmpIdxTree = new bytes1[](tmpIdxTreeSize);
+        for (uint i=0; i < tmpIdxTreeSize; i++ ){
+            tmpIdxTree[i] = digest[tmpMdSize+i];
         }
 
-        bytes1[] memory tmp_idx_leaf = new bytes1[](tmp_idx_leaf_size);
-        for (uint i=0; i < tmp_idx_leaf_size; i++ ){
-            tmp_idx_leaf[i] = digest[tmp_md_size+tmp_idx_tree_size+i];
+        bytes1[] memory tmpIdxLeaf = new bytes1[](tmpIdxLeafSize);
+        for (uint i=0; i < tmpIdxLeafSize; i++ ){
+            tmpIdxLeaf[i] = digest[tmpMdSize+tmpIdxTreeSize+i];
         }
 
-        bytes memory  md = extractBits(abi.encodePacked(tmp_md), 0, k*a);
+        bytes memory  md = extractBits(abi.encodePacked(tmpMd), 0, k*a);
 
-        // idx_tree: first h - h/d bits after md
-        uint256 idx_tree_bits = h - h / d;
-        bytes memory  idx_tree = extractBits(abi.encodePacked(tmp_idx_tree), 0, idx_tree_bits);
+        // idxTree: first h - h/d bits after md
+        uint256 idxTree_bits = h - h / d;
+        bytes memory  idxTree = extractBits(abi.encodePacked(tmpIdxTree), 0, idxTree_bits);
 
-        // idx_leaf: first h/d bits after idx_tree
-        uint256 idx_leaf_bits = h / d;
-        bytes memory idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
+        // idxLeaf: first h/d bits after idxTree
+        uint256 idxLeaf_bits = h / d;
+        bytes memory idxLeaf = extractBits(abi.encodePacked(tmpIdxLeaf), 0, idxLeaf_bits);
 
         adrs.setType(FORSTREE);
         adrs.setLayerAddress(0);
-        adrs.setTreeAddress(bytesToBytes4(idx_tree));
-        adrs.setKeyPairAddress(bytesToBytes4(idx_leaf));
+        adrs.setTreeAddress(bytesToBytes4(idxTree));
+        adrs.setKeyPairAddress(bytesToBytes4(idxLeaf));
 
         ADRS forspkADRS = new ADRS();
         forspkADRS.setType(FORSROOTS);
