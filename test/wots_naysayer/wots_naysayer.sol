@@ -32,24 +32,24 @@ contract TestWotsPlusnaysayer is Test {
         uint256 l = l1+l2;
         uint256 n = 512;
 
-        (sk,pk,r,k) = key_gen(n,l,w);
+        (sk,pk,r,k) = keyGen(n,l,w);
         
 
-        bytes32 hashed_message = hex"8000000000000000000000000000000000000000000000000000000000000000";
+        bytes32 hashedMessage = hex"8000000000000000000000000000000000000000000000000000000000000000";
         //keccak256(abi.encodePacked(message));
-        uint256 nhm = uint256(hashed_message);
+        uint256 nhm = uint256(hashedMessage);
         M = new bytes32[](l1);
         for (uint256 i = 0; i < l1; i++) {
             M[i] = bytes32(nhm % w);
             nhm /= w;
         }
-        wn.set_param(w);
+        wn.setParam(w);
         sigmacpy = sign(w,k,l1,l2,M,sk,r);
         wn.setPk(k);
 
         }
 
-        function test_proof_mistake_() public{
+        function testProofMistake() public{
             bytes1[] memory M2 = new bytes1[](M.length);
             for (uint i =0; i < M.length; i++){
                 M2[i] = bytes1(M[i]);
@@ -67,7 +67,7 @@ contract TestWotsPlusnaysayer is Test {
 
         
 
-        function test_right_sing_no_mistake() public {
+        function testRightSingNoMistake() public {
             if (w!=4){
                 return;
             }
@@ -84,16 +84,16 @@ contract TestWotsPlusnaysayer is Test {
             require(wn.naysayer(sigma[2], proof, 2,M2,mt.getProof(tree, sigmacpy.length),pk[2],mt.getProof(tree, sigmacpy.length+1+2),r,mt.getProof(tree, sigmacpy.length*2+1)) == false, "fail good sig and no miustake verefication");
         }
 
-        function test_false_signature() public{
+        function testFalseSignature() public{
             if (w!=4){
                 return;
             }
-            bytes32[] memory failed_sigma = new bytes32[](sigmacpy.length);
+            bytes32[] memory failedSigma = new bytes32[](sigmacpy.length);
             for (uint i =0; i < sigmacpy.length; i++){
-                failed_sigma[i] = sigmacpy[i];
+                failedSigma[i] = sigmacpy[i];
             }
 
-            failed_sigma[2] = failed_sigma[2] ^ bytes32(uint256(1));
+            failedSigma[2] = failedSigma[2] ^ bytes32(uint256(1));
         
             bytes1[] memory M2 = new bytes1[](M.length);
             for (uint i =0; i < M.length; i++){
@@ -102,7 +102,7 @@ contract TestWotsPlusnaysayer is Test {
             bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
             sigma = concatenateBytes32Arrays(sigma, pk);
             sigma = concatenateBytes32Arrays(sigma, keccak256(abi.encodePacked(r)));
-            wn.setSign(mt.buildRoot(failed_sigma));
+            wn.setSign(mt.buildRoot(failedSigma));
             
             bytes32[][] memory tree = mt.buildTree(sigma);
             bytes32[] memory proof = mt.getProof(tree,2);
@@ -121,7 +121,7 @@ contract TestWotsPlusnaysayer is Test {
     }
 
     //lets assume n is in bytes, not bits for simpler operations;
-    function key_gen(uint256 n,uint256 l,uint256 w) public returns (bytes32[] memory sk,bytes32[] memory pk,bytes32[] memory r,uint256 k){
+    function keyGen(uint256 n,uint256 l,uint256 w) public returns (bytes32[] memory sk,bytes32[] memory pk,bytes32[] memory r,uint256 k){
         require(w>1,"w should be >1");
         sk = new bytes32[](l);
         for (uint256 i =0; i < l; i++){

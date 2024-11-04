@@ -32,12 +32,12 @@ contract TestWotsPlusCollect is Test {
         uint256 n = 512;
 
         wots = new WOTSPlus();
-        (sk,pk,r,k) = key_gen(n,l,w);
+        (sk,pk,r,k) = keyGen(n,l,w);
         
 
-        bytes32 hashed_message = hex"8000000000000000000000000000000000000000000000000000000000000000";
+        bytes32 hashedMessage = hex"8000000000000000000000000000000000000000000000000000000000000000";
         //keccak256(abi.encodePacked(message));
-        uint256 nhm = uint256(hashed_message);
+        uint256 nhm = uint256(hashedMessage);
         M = new bytes32[](l1);
         for (uint256 i = 0; i < l1; i++) {
             M[i] = bytes32(nhm % w);
@@ -68,7 +68,7 @@ contract TestWotsPlusCollect is Test {
     }
 
     //lets assume n is in bytes, not bits for simpler operations;
-    function key_gen(uint256 n,uint256 l,uint256 w) public returns (bytes32[] memory sk,bytes32[] memory pk,bytes32[] memory r,uint256 k){
+    function keyGen(uint256 n,uint256 l,uint256 w) public returns (bytes32[] memory sk,bytes32[] memory pk,bytes32[] memory r,uint256 k){
         require(w>1,"w should be >1");
         sk = new bytes32[](l);
         for (uint256 i =0; i < l; i++){

@@ -63,7 +63,7 @@ contract TestSphincsPlus is Test {
     }
 
     function test_sphincs()public{
-        sph.set_params(n, w, h, d, k, a, t);
+        sph.setParams(n, w, h, d, k, a, t);
         sph.setPk(sphincs_pk);
         require(sph.verify(M, sphincs_sig),"verefication failed");
     }

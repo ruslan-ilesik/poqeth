@@ -157,7 +157,7 @@ contract Sphincs_plus_naysayer is MerkleTree{
         pk = p;
     }
 
-      function set_params(
+      function setParams(
         uint _n,
         uint _w,
         uint _h,
@@ -206,7 +206,7 @@ contract Sphincs_plus_naysayer is MerkleTree{
         bytes32 hashed,
         bytes32[] memory hashed_proof,
         bytes32 M2,
-        bytes32[] memory M_proof
+        bytes32[] memory mProof
     ) public returns (bool){
         uint xmss_f_ind = 1 + 3 * k + 1;
         uint xmss_len = 1 + h / d + len + len + h / d + 1;
@@ -221,10 +221,10 @@ contract Sphincs_plus_naysayer is MerkleTree{
         }
 
         if (tree_index == 0) {
-            if (!verifyProof(sig, M2, M_proof,xmss_f_ind+xmss_len*d )){
+            if (!verifyProof(sig, M2, mProof,xmss_f_ind+xmss_len*d )){
                 return false;
             }
-        } else if (!verifyProof(sig, M2, M_proof, xmss_f_ind + xmss_len * tree_index - 1)) {
+        } else if (!verifyProof(sig, M2, mProof, xmss_f_ind + xmss_len * tree_index - 1)) {
             return false;
         }
 
@@ -301,7 +301,7 @@ contract Sphincs_plus_naysayer is MerkleTree{
         uint tree_index,
         uint wots_sig_ind,
         bytes32 M2,
-        bytes32[] memory M_proof,
+        bytes32[] memory mProof,
         bytes32 wots_pk_elem,
         bytes32[] memory wots_pk_proof,
         bytes32 wots_sig_elem,
@@ -314,10 +314,10 @@ contract Sphincs_plus_naysayer is MerkleTree{
             uint xmss_len = 1 + h / d + len + len + h / d + 1;
 
             if (tree_index == 0) {
-                if (!verifyProof(sig, M2, M_proof,xmss_f_ind+xmss_len*d )){
+                if (!verifyProof(sig, M2, mProof,xmss_f_ind+xmss_len*d )){
                     return false;
                 }
-            } else if (!verifyProof(sig, M2, M_proof, xmss_f_ind + xmss_len * tree_index - 1)) {
+            } else if (!verifyProof(sig, M2, mProof, xmss_f_ind + xmss_len * tree_index - 1)) {
                 return false;
             }
 

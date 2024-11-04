@@ -17,31 +17,30 @@ contract WOTSPlusnaysayer is MerkleTree {
         k = _k;
     }
 
-    function set_param(uint16 _w) public{
+    function setParam(uint16 _w) public{
         w = _w;
     }
 
     function setSign(bytes32 _sign) public{
         sign = _sign;
-        //M = _M;
     }
 
 
     //returns true if naysayer proof accepted, false otherwise (incorrect data or no actuall mistake)
-    function naysayer(bytes32 sign_leaf, bytes32[] memory proof, uint256 index, bytes1[] memory M, bytes32[] memory M_proof, bytes32 pki, bytes32[] memory pki_proof, bytes32[] calldata r, bytes32[] memory r_proof) public returns (bool){
-        if (!verifyProof(sign,sign_leaf,proof,index)){
+    function naysayer(bytes32 signLeaf, bytes32[] memory proof, uint256 index, bytes1[] memory M, bytes32[] memory mProof, bytes32 pki, bytes32[] memory pkiProof, bytes32[] calldata r, bytes32[] memory rProof) public view returns (bool){
+        if (!verifyProof(sign,signLeaf,proof,index)){
             return false;
         }
         uint256 l1 = M.length;
         uint256 l2 = log2(l1*(w-1))/log2(w);
         uint l = l1+l2;
-        if (!verifyProof(sign,keccak256(abi.encodePacked(M)),M_proof,l)){
+        if (!verifyProof(sign,keccak256(abi.encodePacked(M)),mProof,l)){
             return false;
         }
-        if (!verifyProof(sign,pki,pki_proof,l+1+index)){
+        if (!verifyProof(sign,pki,pkiProof,l+1+index)){
             return false;
         }
-        if (!verifyProof(sign,keccak256(abi.encodePacked(r)),r_proof,l*2+1)){
+        if (!verifyProof(sign,keccak256(abi.encodePacked(r)),rProof,l*2+1)){
             return false;
         }
 
@@ -65,7 +64,7 @@ contract WOTSPlusnaysayer is MerkleTree {
         }
         
 
-        if (pki != c(sign_leaf, w - 1 - bi,bi,r)) {
+        if (pki != c(signLeaf, w - 1 - bi,bi,r)) {
             return true;
         }
         return false;
@@ -73,10 +72,10 @@ contract WOTSPlusnaysayer is MerkleTree {
 
 
 
-    function c(bytes32 x, uint256 i, uint256 start_ind, bytes32[] calldata r) public view returns (bytes32) {
+    function c(bytes32 x, uint256 i, uint256 startInd, bytes32[] calldata r) public view returns (bytes32) {
         bytes32 result = x;
         for (uint256 j = 0; j < i; j++) {
-            result = keccak256(abi.encodePacked(result ^ r[start_ind+j], k));
+            result = keccak256(abi.encodePacked(result ^ r[startInd+j], k));
         }
         return result;
     }

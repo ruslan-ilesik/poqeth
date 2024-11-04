@@ -12,10 +12,10 @@ def replace_hex_value_in_file(file_path, new_hex_value):
 
     # Modify the specific line
     for i in range(len(lines)):
-        if 'bytes32 hashed_message = hex"' in lines[i]:
-            start_index = lines[i].index('hex"') + 4
-            end_index = lines[i].index('";', start_index)
-            lines[i] = lines[i][:start_index] + new_hex_value + lines[i][end_index:]
+        if 'bytes32 hashedMessage = hex"' in lines[i]:
+            startIndex = lines[i].index('hex"') + 4
+            end_index = lines[i].index('";', startIndex)
+            lines[i] = lines[i][:startIndex] + new_hex_value + lines[i][end_index:]
             break
 
     # Write the modified content back to the file
@@ -31,9 +31,9 @@ def replace_w_value_in_file(file_path, new_w_value):
     # Modify the specific line
     for i in range(len(lines)):
         if 'uint16 w = ' in lines[i]:
-            start_index = lines[i].index('uint16 w = ') + len('uint16 w = ')
-            end_index = lines[i].index(';', start_index)
-            lines[i] = lines[i][:start_index] + str(new_w_value) + lines[i][end_index:]
+            startIndex = lines[i].index('uint16 w = ') + len('uint16 w = ')
+            end_index = lines[i].index(';', startIndex)
+            lines[i] = lines[i][:startIndex] + str(new_w_value) + lines[i][end_index:]
             break
 
     # Write the modified content back to the file

@@ -156,7 +156,7 @@ contract Sphincs_plus{
         pk = p;
     }
 
-     function set_params(
+     function setParams(
         uint _n,
         uint _w,
         uint _h,

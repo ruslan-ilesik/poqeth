@@ -64,10 +64,10 @@ contract WOTSPlus {
 
 
 
-    function c(bytes32 x, uint256 i, uint256 start_ind, bytes32[] calldata r, uint256 k) public view returns (bytes32) {
+    function c(bytes32 x, uint256 i, uint256 startInd, bytes32[] calldata r, uint256 k) public view returns (bytes32) {
         bytes32 result = x;
         for (uint256 j = 0; j < i; j++) {
-            result = keccak256(abi.encodePacked(result ^ r[start_ind+j], k));
+            result = keccak256(abi.encodePacked(result ^ r[startInd+j], k));
         }
         return result;
     }

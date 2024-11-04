@@ -97,7 +97,7 @@ contract TestSphincsPlusNaysayer is Test {
 
 
     function test_sphincs_wots_hash() public {
-        sph.set_params(n, w, h, d, k, a, t);
+        sph.setParams(n, w, h, d, k, a, t);
         sph.setPk(sphincs_pk);
         bytes32[] memory sigma = flattenSPHINCS(naysayer_sig);
         uint xmss_f_ind = 1 + 3 * k+1;
@@ -115,13 +115,13 @@ contract TestSphincsPlusNaysayer is Test {
             bytes32[] memory proof2 = mt.getProof(tree,xmss_f_ind+tree_ind* xmss_len);
             uint m_ind = xmss_f_ind+xmss_len*tree_ind-1;
             bytes32 m = naysayer_sig.sig[tree_ind-1].htAdditionalNodes[h/d];
-            bytes32[] memory m_proof =  mt.getProof(tree,m_ind);
+            bytes32[] memory mProof =  mt.getProof(tree,m_ind);
 
             //check proofs
-            //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,m_proof),"failed good proof");
-            //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind-1].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,m_proof) == false,"passed bad proof");
+            //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof),"failed good proof");
+            //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind-1].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof) == false,"passed bad proof");
         
-            require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,m_proof)==false,"passed proof without mistake");
+            require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof)==false,"passed proof without mistake");
         }
         {
          
@@ -142,13 +142,13 @@ contract TestSphincsPlusNaysayer is Test {
 
             uint m_ind = xmss_f_ind+xmss_len*tree_ind-1;
             bytes32 m = naysayer_sig.sig[tree_ind-1].htAdditionalNodes[h/d];
-            bytes32[] memory m_proof =  mt.getProof(tree,m_ind);
+            bytes32[] memory mProof =  mt.getProof(tree,m_ind);
 
             //check proofs
-            //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,m_proof),"failed good proof");
-            //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind-1].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,m_proof) == false,"passed bad proof");
+            //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof),"failed good proof");
+            //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind-1].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof) == false,"passed bad proof");
         
-            require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,m_proof)==true,"failed proof with mistake");
+            require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof)==true,"failed proof with mistake");
             naysayer_sig.sig[tree_ind].wots_pk[0] = naysayer_sig.sig[tree_ind].wots_pk[0] ^ bytes32(uint(1));
         }
 
@@ -156,7 +156,7 @@ contract TestSphincsPlusNaysayer is Test {
 
 
     function test_sphincs_wots() public{
-        sph.set_params(n, w, h, d, k, a, t);
+        sph.setParams(n, w, h, d, k, a, t);
         sph.setPk(sphincs_pk);
         bytes32[] memory sigma = flattenSPHINCS(naysayer_sig);
         uint xmss_f_ind = 1 + 3 * k+1;
@@ -174,15 +174,15 @@ contract TestSphincsPlusNaysayer is Test {
             bytes32 wots_pk_elem = naysayer_sig.sig[tree_index].wots_pk[wots_sig_ind];
             bytes32 wots_sig_elem = naysayer_sig.sig[tree_index].sig[wots_sig_ind];
 
-            bytes32[] memory m_proof =  mt.getProof(tree,m_ind);
+            bytes32[] memory mProof =  mt.getProof(tree,m_ind);
             bytes32[] memory wots_pk_proof =  mt.getProof(tree,wots_pk_elem_ind);
-            bytes32[] memory wots_sig_elem_proof =  mt.getProof(tree,wots_sig_elem_ind);
+            bytes32[] memory wots_sig_elemProof =  mt.getProof(tree,wots_sig_elem_ind);
 
             //check auth path works
-            //require (sph.wots_naysayer(tree_index, wots_sig_ind, m, m_proof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elem_proof),"failed good auth path");
-            //require (sph.wots_naysayer(tree_index+1, wots_sig_ind, m, m_proof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elem_proof) == false,"passed bad auth path");
+            //require (sph.wots_naysayer(tree_index, wots_sig_ind, m, mProof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elemProof),"failed good auth path");
+            //require (sph.wots_naysayer(tree_index+1, wots_sig_ind, m, mProof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elemProof) == false,"passed bad auth path");
 
-            require (sph.wots_naysayer(tree_index, wots_sig_ind, m, m_proof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elem_proof) == false,"passed with no actual error");
+            require (sph.wots_naysayer(tree_index, wots_sig_ind, m, mProof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elemProof) == false,"passed with no actual error");
         }
         {
             uint tree_index = 1;
@@ -198,21 +198,21 @@ contract TestSphincsPlusNaysayer is Test {
             bytes32 wots_pk_elem = naysayer_sig.sig[tree_index].wots_pk[wots_sig_ind];
             bytes32 wots_sig_elem = naysayer_sig.sig[tree_index].sig[wots_sig_ind];
 
-            bytes32[] memory m_proof =  mt.getProof(tree,m_ind);
+            bytes32[] memory mProof =  mt.getProof(tree,m_ind);
             bytes32[] memory wots_pk_proof =  mt.getProof(tree,wots_pk_elem_ind);
-            bytes32[] memory wots_sig_elem_proof =  mt.getProof(tree,wots_sig_elem_ind);
+            bytes32[] memory wots_sig_elemProof =  mt.getProof(tree,wots_sig_elem_ind);
 
             //check auth path works
-            //require (sph.wots_naysayer(tree_index, wots_sig_ind, m, m_proof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elem_proof),"failed good auth path");
-            //require (sph.wots_naysayer(tree_index+1, wots_sig_ind, m, m_proof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elem_proof) == false,"passed bad auth path");
+            //require (sph.wots_naysayer(tree_index, wots_sig_ind, m, mProof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elemProof),"failed good auth path");
+            //require (sph.wots_naysayer(tree_index+1, wots_sig_ind, m, mProof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elemProof) == false,"passed bad auth path");
 
-            require (sph.wots_naysayer(tree_index, wots_sig_ind, m, m_proof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elem_proof) == true,"failed with actual proof");
+            require (sph.wots_naysayer(tree_index, wots_sig_ind, m, mProof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elemProof) == true,"failed with actual proof");
             naysayer_sig.sig[tree_index].wots_pk[wots_sig_ind] = naysayer_sig.sig[tree_index].wots_pk[wots_sig_ind] ^ bytes32(uint(1));
         }
     }
 
     function test_sphincs_xmss()public{
-        sph.set_params(n, w, h, d, k, a, t);
+        sph.setParams(n, w, h, d, k, a, t);
         sph.setPk(sphincs_pk);
         bytes32[] memory sigma = flattenSPHINCS(naysayer_sig);
         uint xmss_f_ind = 1 + 3 * k+1;
@@ -267,7 +267,7 @@ contract TestSphincsPlusNaysayer is Test {
     }
 
     function test_sphincs_fors()public{
-        sph.set_params(n, w, h, d, k, a, t);
+        sph.setParams(n, w, h, d, k, a, t);
         sph.setPk(sphincs_pk);
         bytes32[] memory sigma = flattenSPHINCS(naysayer_sig);
 
@@ -301,7 +301,7 @@ contract TestSphincsPlusNaysayer is Test {
     }
 
     function test_sphincs_fors_hash() public{
-        sph.set_params(n, w, h, d, k, a, t);
+        sph.setParams(n, w, h, d, k, a, t);
         sph.setPk(sphincs_pk);
         bytes32[] memory sigma = flattenSPHINCS(naysayer_sig);
         {
