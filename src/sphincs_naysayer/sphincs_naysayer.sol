@@ -211,20 +211,20 @@ contract Sphincs_plus_naysayer is MerkleTree{
         uint xmss_f_ind = 1 + 3 * k + 1;
         uint xmss_len = 1 + h / d + len + len + h / d + 1;
         for (uint i =0; i < wots_pk.length;i++){
-            if (!verify_proof(sig, wots_pk[i], wots_pk_proof[i], xmss_f_ind+xmss_len*tree_index+1+h/d+len+i)){
+            if (!verifyProof(sig, wots_pk[i], wots_pk_proof[i], xmss_f_ind+xmss_len*tree_index+1+h/d+len+i)){
                 return false;
             }
         }
 
-        if (!verify_proof(sig, hashed, hashed_proof, xmss_f_ind+xmss_len*tree_index)){
+        if (!verifyProof(sig, hashed, hashed_proof, xmss_f_ind+xmss_len*tree_index)){
             return false;
         }
 
         if (tree_index == 0) {
-            if (!verify_proof(sig, M2, M_proof,xmss_f_ind+xmss_len*d )){
+            if (!verifyProof(sig, M2, M_proof,xmss_f_ind+xmss_len*d )){
                 return false;
             }
-        } else if (!verify_proof(sig, M2, M_proof, xmss_f_ind + xmss_len * tree_index - 1)) {
+        } else if (!verifyProof(sig, M2, M_proof, xmss_f_ind + xmss_len * tree_index - 1)) {
             return false;
         }
 
@@ -314,20 +314,20 @@ contract Sphincs_plus_naysayer is MerkleTree{
             uint xmss_len = 1 + h / d + len + len + h / d + 1;
 
             if (tree_index == 0) {
-                if (!verify_proof(sig, M2, M_proof,xmss_f_ind+xmss_len*d )){
+                if (!verifyProof(sig, M2, M_proof,xmss_f_ind+xmss_len*d )){
                     return false;
                 }
-            } else if (!verify_proof(sig, M2, M_proof, xmss_f_ind + xmss_len * tree_index - 1)) {
+            } else if (!verifyProof(sig, M2, M_proof, xmss_f_ind + xmss_len * tree_index - 1)) {
                 return false;
             }
 
             uint wots_pk_elem_ind = xmss_f_ind + xmss_len * tree_index + 1 + h / d + len + wots_sig_ind;
-            if (!verify_proof(sig, wots_pk_elem, wots_pk_proof, wots_pk_elem_ind)) {
+            if (!verifyProof(sig, wots_pk_elem, wots_pk_proof, wots_pk_elem_ind)) {
                 return false;
             }
 
             uint wots_sig_elem_ind = xmss_f_ind + xmss_len * tree_index + 1 + h / d + wots_sig_ind;
-            if (!verify_proof(sig, wots_sig_elem, wots_sig_proof, wots_sig_elem_ind)) {
+            if (!verifyProof(sig, wots_sig_elem, wots_sig_proof, wots_sig_elem_ind)) {
                 return false;
             }
         }
@@ -445,15 +445,15 @@ contract Sphincs_plus_naysayer is MerkleTree{
         uint auth_node_index = xmss_f_ind + xmss_len * tree_ind + 1 + top_node_ind - 1;
 
         // Verify each proof separately and return false early if any fails
-        if (!verify_proof(sig, top_node, top_node_proof, top_node_index)) {
+        if (!verifyProof(sig, top_node, top_node_proof, top_node_index)) {
             return false;
         }
 
-        if (!verify_proof(sig, bottom_node, bottom_node_proof, bottom_node_index)) {
+        if (!verifyProof(sig, bottom_node, bottom_node_proof, bottom_node_index)) {
             return false;
         }
 
-        if (!verify_proof(sig, auth_node, auth_node_proof, auth_node_index)) {
+        if (!verifyProof(sig, auth_node, auth_node_proof, auth_node_index)) {
             return false;
         }
 
@@ -545,7 +545,7 @@ contract Sphincs_plus_naysayer is MerkleTree{
 
 
     function naysayer_fors( uint fors_ind, bytes32 fors_sk,bytes32[] memory fors_sk_proof, bytes32[] memory fors_proof, bytes32[] memory fors_proof_proof, bytes32 fors_root, bytes32[] memory fors_root_proof) public returns(bool){
-        if (!verify_proof(sig, fors_sk, fors_sk_proof, 1+fors_ind*3) || !verify_proof(sig, keccak256(abi.encodePacked(fors_proof)), fors_proof_proof, 1+fors_ind*3+1) || !verify_proof(sig,fors_root,fors_root_proof,1+fors_ind*3+2)){
+        if (!verifyProof(sig, fors_sk, fors_sk_proof, 1+fors_ind*3) || !verifyProof(sig, keccak256(abi.encodePacked(fors_proof)), fors_proof_proof, 1+fors_ind*3+1) || !verifyProof(sig,fors_root,fors_root_proof,1+fors_ind*3+2)){
             return false;
         }
         ADRS adrs = new ADRS();
@@ -636,11 +636,11 @@ contract Sphincs_plus_naysayer is MerkleTree{
 
     function naysayer_fors_hash(bytes32[] memory roots, bytes32[][] memory proofs, bytes32 hashed, bytes32[] memory hashed_proof) public returns (bool){
         for (uint i =0; i < k; i++){
-            if (!verify_proof(sig, roots[i], proofs[i], 1+3*i+2)){
+            if (!verifyProof(sig, roots[i], proofs[i], 1+3*i+2)){
                 return false;
             }
         }
-        if (!verify_proof(sig, hashed, hashed_proof, 1+3*k)){
+        if (!verifyProof(sig, hashed, hashed_proof, 1+3*k)){
             return false;
         }
 

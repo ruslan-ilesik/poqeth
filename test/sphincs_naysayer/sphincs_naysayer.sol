@@ -103,19 +103,19 @@ contract TestSphincsPlusNaysayer is Test {
         uint xmss_f_ind = 1 + 3 * k+1;
         uint xmss_len = 1+h/d + len+len+h/d+1;
         {
-            sph.set_sign(mt.build_root(sigma),M);
+            sph.set_sign(mt.buildRoot(sigma),M);
             uint tree_ind = 1;
-            bytes32[][] memory tree = mt.build_tree(sigma);
+            bytes32[][] memory tree = mt.buildTree(sigma);
             bytes32[][] memory proofs = new bytes32[][](len);
             for (uint i =0 ; i < len; i++){
-                proofs[i] = mt.get_proof(tree,xmss_f_ind+tree_ind* xmss_len + 1+h/d+len+i);
+                proofs[i] = mt.getProof(tree,xmss_f_ind+tree_ind* xmss_len + 1+h/d+len+i);
             }
 
 
-            bytes32[] memory proof2 = mt.get_proof(tree,xmss_f_ind+tree_ind* xmss_len);
+            bytes32[] memory proof2 = mt.getProof(tree,xmss_f_ind+tree_ind* xmss_len);
             uint m_ind = xmss_f_ind+xmss_len*tree_ind-1;
             bytes32 m = naysayer_sig.sig[tree_ind-1].ht_additional_nodes[h/d];
-            bytes32[] memory m_proof =  mt.get_proof(tree,m_ind);
+            bytes32[] memory m_proof =  mt.getProof(tree,m_ind);
 
             //check proofs
             //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,m_proof),"failed good proof");
@@ -129,20 +129,20 @@ contract TestSphincsPlusNaysayer is Test {
             naysayer_sig.sig[tree_ind].wots_pk[0] = naysayer_sig.sig[tree_ind].wots_pk[0] ^ bytes32(uint(1));
 
             sigma = flattenSPHINCS(naysayer_sig);
-            bytes32[][] memory tree = mt.build_tree(sigma);
+            bytes32[][] memory tree = mt.buildTree(sigma);
 
-            sph.set_sign(mt.build_root(sigma),M);
+            sph.set_sign(mt.buildRoot(sigma),M);
 
             bytes32[][] memory proofs = new bytes32[][](len);
             for (uint i =0 ; i < len; i++){
-                proofs[i] = mt.get_proof(tree,xmss_f_ind+tree_ind* xmss_len + 1+h/d+len+i);
+                proofs[i] = mt.getProof(tree,xmss_f_ind+tree_ind* xmss_len + 1+h/d+len+i);
             }
 
-            bytes32[] memory proof2 = mt.get_proof(tree,xmss_f_ind+tree_ind* xmss_len);
+            bytes32[] memory proof2 = mt.getProof(tree,xmss_f_ind+tree_ind* xmss_len);
 
             uint m_ind = xmss_f_ind+xmss_len*tree_ind-1;
             bytes32 m = naysayer_sig.sig[tree_ind-1].ht_additional_nodes[h/d];
-            bytes32[] memory m_proof =  mt.get_proof(tree,m_ind);
+            bytes32[] memory m_proof =  mt.getProof(tree,m_ind);
 
             //check proofs
             //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,m_proof),"failed good proof");
@@ -162,11 +162,11 @@ contract TestSphincsPlusNaysayer is Test {
         uint xmss_f_ind = 1 + 3 * k+1;
         uint xmss_len = 1+h/d + len+len+h/d+1;
         {
-            sph.set_sign(mt.build_root(sigma),M);
+            sph.set_sign(mt.buildRoot(sigma),M);
 
             uint tree_index = 1;
             uint wots_sig_ind = 2;
-            bytes32[][] memory tree = mt.build_tree(sigma);
+            bytes32[][] memory tree = mt.buildTree(sigma);
             uint wots_pk_elem_ind = xmss_f_ind+xmss_len*tree_index+1+h/d+len+wots_sig_ind;
             uint wots_sig_elem_ind = xmss_f_ind+xmss_len*tree_index+1+h/d + wots_sig_ind;
             uint m_ind = xmss_f_ind+xmss_len*tree_index-1;
@@ -174,9 +174,9 @@ contract TestSphincsPlusNaysayer is Test {
             bytes32 wots_pk_elem = naysayer_sig.sig[tree_index].wots_pk[wots_sig_ind];
             bytes32 wots_sig_elem = naysayer_sig.sig[tree_index].sig[wots_sig_ind];
 
-            bytes32[] memory m_proof =  mt.get_proof(tree,m_ind);
-            bytes32[] memory wots_pk_proof =  mt.get_proof(tree,wots_pk_elem_ind);
-            bytes32[] memory wots_sig_elem_proof =  mt.get_proof(tree,wots_sig_elem_ind);
+            bytes32[] memory m_proof =  mt.getProof(tree,m_ind);
+            bytes32[] memory wots_pk_proof =  mt.getProof(tree,wots_pk_elem_ind);
+            bytes32[] memory wots_sig_elem_proof =  mt.getProof(tree,wots_sig_elem_ind);
 
             //check auth path works
             //require (sph.wots_naysayer(tree_index, wots_sig_ind, m, m_proof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elem_proof),"failed good auth path");
@@ -189,8 +189,8 @@ contract TestSphincsPlusNaysayer is Test {
             uint wots_sig_ind = 2;
             naysayer_sig.sig[tree_index].wots_pk[wots_sig_ind] = naysayer_sig.sig[tree_index].wots_pk[wots_sig_ind] ^ bytes32(uint(1));
             sigma = flattenSPHINCS(naysayer_sig);
-            sph.set_sign(mt.build_root(sigma),M);
-            bytes32[][] memory tree = mt.build_tree(sigma);
+            sph.set_sign(mt.buildRoot(sigma),M);
+            bytes32[][] memory tree = mt.buildTree(sigma);
             uint wots_pk_elem_ind = xmss_f_ind+xmss_len*tree_index+1+h/d+len+wots_sig_ind;
             uint wots_sig_elem_ind = xmss_f_ind+xmss_len*tree_index+1+h/d + wots_sig_ind;
             uint m_ind = xmss_f_ind+xmss_len*tree_index-1;
@@ -198,9 +198,9 @@ contract TestSphincsPlusNaysayer is Test {
             bytes32 wots_pk_elem = naysayer_sig.sig[tree_index].wots_pk[wots_sig_ind];
             bytes32 wots_sig_elem = naysayer_sig.sig[tree_index].sig[wots_sig_ind];
 
-            bytes32[] memory m_proof =  mt.get_proof(tree,m_ind);
-            bytes32[] memory wots_pk_proof =  mt.get_proof(tree,wots_pk_elem_ind);
-            bytes32[] memory wots_sig_elem_proof =  mt.get_proof(tree,wots_sig_elem_ind);
+            bytes32[] memory m_proof =  mt.getProof(tree,m_ind);
+            bytes32[] memory wots_pk_proof =  mt.getProof(tree,wots_pk_elem_ind);
+            bytes32[] memory wots_sig_elem_proof =  mt.getProof(tree,wots_sig_elem_ind);
 
             //check auth path works
             //require (sph.wots_naysayer(tree_index, wots_sig_ind, m, m_proof, wots_pk_elem, wots_pk_proof,wots_sig_elem,wots_sig_elem_proof),"failed good auth path");
@@ -220,46 +220,46 @@ contract TestSphincsPlusNaysayer is Test {
         uint tree_ind = 0;
         uint top_ind = 1;
         {
-            sph.set_sign(mt.build_root(sigma),M);
-            bytes32[][] memory tree = mt.build_tree(sigma);
+            sph.set_sign(mt.buildRoot(sigma),M);
+            bytes32[][] memory tree = mt.buildTree(sigma);
             uint baseIndex = xmss_f_ind + xmss_len * tree_ind +  1+h/d + len+len;
 
 
-            bytes32[] memory proof = mt.get_proof(tree,baseIndex+top_ind);
-            bytes32[] memory proof2 = mt.get_proof(tree,baseIndex+top_ind-1);
-            bytes32[] memory proof3 = mt.get_proof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind - 1);
+            bytes32[] memory proof = mt.getProof(tree,baseIndex+top_ind);
+            bytes32[] memory proof2 = mt.getProof(tree,baseIndex+top_ind-1);
+            bytes32[] memory proof3 = mt.getProof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind - 1);
 
             bytes32 top_node = naysayer_sig.sig[tree_ind].ht_additional_nodes[top_ind];
             bytes32 bottom_node = naysayer_sig.sig[tree_ind].ht_additional_nodes[top_ind-1];
             bytes32 auth_node = naysayer_sig.sig[tree_ind].xmss_auth[top_ind-1];
             //test auth path
             //require(sph.xmss_naysayer(tree_ind, top_ind, top_node, proof, bottom_node, proof2, auth_node, proof3),"failed good auth");
-            //proof3 = mt.get_proof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind);
+            //proof3 = mt.getProof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind);
             //require(sph.xmss_naysayer(tree_ind, top_ind, top_node, proof, bottom_node, proof2, auth_node, proof3)==false,"passed bad auth");
-            //proof3 = mt.get_proof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind - 1);
+            //proof3 = mt.getProof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind - 1);
 
             require(sph.xmss_naysayer(tree_ind, top_ind, top_node, proof, bottom_node, proof2, auth_node, proof3) == false,"passed proof with no mistake");
         }
         {
             uint baseIndex = xmss_f_ind + xmss_len * tree_ind +  1+h/d + len+len;
             sigma[baseIndex+top_ind] = sigma[baseIndex+top_ind] ^ bytes32(uint(1));
-            sph.set_sign(mt.build_root(sigma),M);
+            sph.set_sign(mt.buildRoot(sigma),M);
 
-            bytes32[][] memory tree = mt.build_tree(sigma);
+            bytes32[][] memory tree = mt.buildTree(sigma);
 
 
-            bytes32[] memory proof = mt.get_proof(tree,baseIndex+top_ind);
-            bytes32[] memory proof2 = mt.get_proof(tree,baseIndex+top_ind-1);
-            bytes32[] memory proof3 = mt.get_proof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind - 1);
+            bytes32[] memory proof = mt.getProof(tree,baseIndex+top_ind);
+            bytes32[] memory proof2 = mt.getProof(tree,baseIndex+top_ind-1);
+            bytes32[] memory proof3 = mt.getProof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind - 1);
 
             bytes32 top_node = sigma[baseIndex+top_ind];
             bytes32 bottom_node = naysayer_sig.sig[tree_ind].ht_additional_nodes[top_ind-1];
             bytes32 auth_node = naysayer_sig.sig[tree_ind].xmss_auth[top_ind-1];
             //test auth path
             //require(sph.xmss_naysayer(tree_ind, top_ind, top_node, proof, bottom_node, proof2, auth_node, proof3),"failed good auth");
-            //proof3 = mt.get_proof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind);
+            //proof3 = mt.getProof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind);
             //require(sph.xmss_naysayer(tree_ind, top_ind, top_node, proof, bottom_node, proof2, auth_node, proof3)==false,"passed bad auth");
-            //proof3 = mt.get_proof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind - 1);
+            //proof3 = mt.getProof(tree,xmss_f_ind + xmss_len * tree_ind + 1 + top_ind - 1);
 
             require(sph.xmss_naysayer(tree_ind, top_ind, top_node, proof, bottom_node, proof2, auth_node, proof3) == true,"failed proof with nactual mistake");
             sigma[baseIndex+top_ind] = sigma[baseIndex+top_ind] ^ bytes32(uint(1));
@@ -272,11 +272,11 @@ contract TestSphincsPlusNaysayer is Test {
         bytes32[] memory sigma = flattenSPHINCS(naysayer_sig);
 
         {
-            sph.set_sign(mt.build_root(sigma),M);
-            bytes32[][] memory tree = mt.build_tree(sigma);
-            bytes32[] memory proof = mt.get_proof(tree,1+1*3);
-            bytes32[] memory proof2 = mt.get_proof(tree,1+1*3+1);
-            bytes32[] memory proof3 = mt.get_proof(tree,1+1*3+2);
+            sph.set_sign(mt.buildRoot(sigma),M);
+            bytes32[][] memory tree = mt.buildTree(sigma);
+            bytes32[] memory proof = mt.getProof(tree,1+1*3);
+            bytes32[] memory proof2 = mt.getProof(tree,1+1*3+1);
+            bytes32[] memory proof3 = mt.getProof(tree,1+1*3+2);
 
             //test only verefication path
             //require(sph.naysayer_fors(1,naysayer_sig.fors_sig.sig[1].sk,proof,naysayer_fors_proofs[1],proof2,naysayer_sig.fors_sig.sig[1].root,proof3),"failed good argument for verefication path");
@@ -289,11 +289,11 @@ contract TestSphincsPlusNaysayer is Test {
         {
             sigma[1+1*3+2] = sigma[1+1*3+2]^bytes32(uint(1));
 
-            sph.set_sign(mt.build_root(sigma),M);
-            bytes32[][] memory tree = mt.build_tree(sigma);
-            bytes32[] memory proof = mt.get_proof(tree,1+1*3);
-            bytes32[] memory proof2 = mt.get_proof(tree,1+1*3+1);
-            bytes32[] memory proof3 = mt.get_proof(tree,1+1*3+2);
+            sph.set_sign(mt.buildRoot(sigma),M);
+            bytes32[][] memory tree = mt.buildTree(sigma);
+            bytes32[] memory proof = mt.getProof(tree,1+1*3);
+            bytes32[] memory proof2 = mt.getProof(tree,1+1*3+1);
+            bytes32[] memory proof3 = mt.getProof(tree,1+1*3+2);
 
             require(sph.naysayer_fors(1,naysayer_sig.fors_sig.sig[1].sk,proof,naysayer_fors_proofs[1],proof2,sigma[1+1*3+2],proof3),"failed good proof");
             sigma[1+1*3+2] = sigma[1+1*3+2]^bytes32(uint(1));
@@ -305,17 +305,17 @@ contract TestSphincsPlusNaysayer is Test {
         sph.set_pk(sphincs_pk);
         bytes32[] memory sigma = flattenSPHINCS(naysayer_sig);
         {
-            sph.set_sign(mt.build_root(sigma),M);
-            bytes32[][] memory tree = mt.build_tree(sigma);
+            sph.set_sign(mt.buildRoot(sigma),M);
+            bytes32[][] memory tree = mt.buildTree(sigma);
             bytes32[] memory roots = new bytes32[](k);
             bytes32[][] memory proofs = new bytes32[][](k);
             for (uint i =0 ; i < k; i++){
                 roots[i] = sigma[1+3*i+2];
-                proofs[i] = mt.get_proof(tree,1+3*i+2);
+                proofs[i] = mt.getProof(tree,1+3*i+2);
             }
 
 
-            bytes32[] memory proof_r = mt.get_proof(tree,1+3*k);
+            bytes32[] memory proof_r = mt.getProof(tree,1+3*k);
             bytes32 hashed = sigma[1+3*k];
 
             //check auth paths.
@@ -326,17 +326,17 @@ contract TestSphincsPlusNaysayer is Test {
         }
         {
             sigma[1+1*3+2] =  sigma[1+1*3+2] ^bytes32(uint(1));
-            sph.set_sign(mt.build_root(sigma),M);
-            bytes32[][] memory tree = mt.build_tree(sigma);
+            sph.set_sign(mt.buildRoot(sigma),M);
+            bytes32[][] memory tree = mt.buildTree(sigma);
             bytes32[] memory roots = new bytes32[](k);
             bytes32[][] memory proofs = new bytes32[][](k);
             for (uint i =0 ; i < k; i++){
                 roots[i] = sigma[1+3*i+2];
-                proofs[i] = mt.get_proof(tree,1+3*i+2);
+                proofs[i] = mt.getProof(tree,1+3*i+2);
             }
 
 
-            bytes32[] memory proof_r = mt.get_proof(tree,1+3*k);
+            bytes32[] memory proof_r = mt.getProof(tree,1+3*k);
             bytes32 hashed = sigma[1+3*k];
 
             require(sph.naysayer_fors_hash(roots, proofs,hashed,proof_r)==true,"failed proof with actual mistake");

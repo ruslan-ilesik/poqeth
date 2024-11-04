@@ -29,19 +29,19 @@ contract WOTSPlusnaysayer is MerkleTree {
 
     //returns true if naysayer proof accepted, false otherwise (incorrect data or no actuall mistake)
     function naysayer(bytes32 sign_leaf, bytes32[] memory proof, uint256 index, bytes1[] memory M, bytes32[] memory M_proof, bytes32 pki, bytes32[] memory pki_proof, bytes32[] calldata r, bytes32[] memory r_proof) public returns (bool){
-        if (!verify_proof(sign,sign_leaf,proof,index)){
+        if (!verifyProof(sign,sign_leaf,proof,index)){
             return false;
         }
         uint256 l1 = M.length;
         uint256 l2 = log2(l1*(w-1))/log2(w);
         uint l = l1+l2;
-        if (!verify_proof(sign,keccak256(abi.encodePacked(M)),M_proof,l)){
+        if (!verifyProof(sign,keccak256(abi.encodePacked(M)),M_proof,l)){
             return false;
         }
-        if (!verify_proof(sign,pki,pki_proof,l+1+index)){
+        if (!verifyProof(sign,pki,pki_proof,l+1+index)){
             return false;
         }
-        if (!verify_proof(sign,keccak256(abi.encodePacked(r)),r_proof,l*2+1)){
+        if (!verifyProof(sign,keccak256(abi.encodePacked(r)),r_proof,l*2+1)){
             return false;
         }
 

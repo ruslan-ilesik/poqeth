@@ -5,40 +5,41 @@ import "forge-std/console.sol";
 
 contract MerkleTree {
 
-    constructor(){}
+    constructor() {}
 
-    //Accepts previously hashed values
-    function build_root(bytes32[] memory hashes) public pure returns (bytes32) {
+    // Accepts previously hashed values
+    function buildRoot(bytes32[] memory hashes) public pure returns (bytes32) {
         require(hashes.length > 0, "No hashes provided");
 
         // While there's more than one hash in the array
         while (hashes.length > 1) {
             uint newLength = (hashes.length + 1) / 2; // Number of pairs
-            bytes32[] memory new_level = new bytes32[](newLength);
+            bytes32[] memory newLevel = new bytes32[](newLength);
 
             for (uint i = 0; i < hashes.length; i += 2) {
                 if (i + 1 < hashes.length) {
-                    new_level[i / 2] = keccak256(abi.encodePacked(hashes[i], hashes[i + 1]));
+                    newLevel[i / 2] = keccak256(abi.encodePacked(hashes[i], hashes[i + 1]));
                 } else {
-                    new_level[i / 2] = keccak256(abi.encodePacked(hashes[i],bytes32(0)));
+                    newLevel[i / 2] = keccak256(abi.encodePacked(hashes[i], bytes32(0)));
                 }
             }
-            hashes = new_level;
+            hashes = newLevel;
         }
 
         return hashes[0];
     }
 
-    function build_root_from_pure_values(bytes32[] memory values) public pure returns (bytes32) {
-        for (uint i=0; i < values.length; i++){
+    function buildRootFromPureValues(bytes32[] memory values) public pure returns (bytes32) {
+        for (uint i = 0; i < values.length; i++) {
             values[i] = keccak256(abi.encodePacked(values[i]));
         }
-        return build_root(values);
+        return buildRoot(values);
     }
 
-     // Accepts previously hashed values
-    function build_tree(bytes32[] memory hashes) public  returns (bytes32[][] memory) {
+    // Accepts previously hashed values
+    function buildTree(bytes32[] memory hashes) public pure returns (bytes32[][] memory) {
         require(hashes.length > 0, "No hashes provided");
+
         // Calculate the number of levels in the tree
         uint256 levels = 1;
         uint256 tempLength = hashes.length;
@@ -61,21 +62,21 @@ contract MerkleTree {
                 if (i + 1 < currentLength) {
                     tree[level + 1][i / 2] = keccak256(abi.encodePacked(tree[level][i], tree[level][i + 1]));
                 } else {
-                    tree[level + 1][i / 2] = keccak256(abi.encodePacked(tree[level][i],bytes32(0)));
+                    tree[level + 1][i / 2] = keccak256(abi.encodePacked(tree[level][i], bytes32(0)));
                 }
             }
         }
         return tree;
     }
 
-    function build_tree_from_values(bytes32[] memory values) public returns (bytes32[][] memory) {
+    function buildTreeFromValues(bytes32[] memory values) public pure returns (bytes32[][] memory) {
         for (uint256 i = 0; i < values.length; i++) {
             values[i] = keccak256(abi.encodePacked(values[i]));
         }
-        return build_tree(values);
+        return buildTree(values);
     }
 
-    function get_proof(bytes32[][] memory tree, uint256 index) public returns (bytes32[] memory) {
+    function getProof(bytes32[][] memory tree, uint256 index) public pure returns (bytes32[] memory) {
         require(tree.length > 0, "Tree is empty");
 
         uint256 totalLevels = tree.length;
@@ -93,22 +94,21 @@ contract MerkleTree {
         return proof;
     }
 
-    function verify_proof(bytes32 root, bytes32 leaf, bytes32[] memory proof, uint256 index) public pure returns (bool) {
-        return root_from_proof(leaf, proof, index) == root;
+    function verifyProof(bytes32 root, bytes32 leaf, bytes32[] memory proof, uint256 index) public pure returns (bool) {
+        return rootFromProof(leaf, proof, index) == root;
     }
 
-    function root_from_proof( bytes32 leaf, bytes32[] memory proof, uint256 index) public pure returns (bytes32){
-        bytes32 hhash = leaf;
+    function rootFromProof(bytes32 leaf, bytes32[] memory proof, uint256 index) public pure returns (bytes32) {
+        bytes32 hash = leaf;
 
         for (uint256 i = 0; i < proof.length; i++) {
             if (index % 2 == 0) {
-                hhash = keccak256(abi.encodePacked(hhash, proof[i]));
+                hash = keccak256(abi.encodePacked(hash, proof[i]));
             } else {
-                hhash = keccak256(abi.encodePacked(proof[i], hhash));
+                hash = keccak256(abi.encodePacked(proof[i], hash));
             }
             index /= 2;
         }
-        return hhash;
+        return hash;
     }
 }
-

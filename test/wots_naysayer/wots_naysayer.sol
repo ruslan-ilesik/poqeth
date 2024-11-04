@@ -58,10 +58,10 @@ contract TestWotsPlusnaysayer is Test {
             bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
             sigma = concatenateBytes32Arrays(sigma, pk);
             sigma = concatenateBytes32Arrays(sigma, keccak256(abi.encodePacked(r)));
-            wn.set_sign(mt.build_root(sigma));
-            bytes32[][] memory tree = mt.build_tree(sigma);
-            bytes32[] memory proof = mt.get_proof(tree,2);
-            require(wn.naysayer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length),pk[2],mt.get_proof(tree, sigmacpy.length+1+2),r,mt.get_proof(tree, sigmacpy.length*2+1)), "fail good verefication");
+            wn.set_sign(mt.buildRoot(sigma));
+            bytes32[][] memory tree = mt.buildTree(sigma);
+            bytes32[] memory proof = mt.getProof(tree,2);
+            require(wn.naysayer(sigma[2], proof, 2,M2,mt.getProof(tree, sigmacpy.length),pk[2],mt.getProof(tree, sigmacpy.length+1+2),r,mt.getProof(tree, sigmacpy.length*2+1)), "fail good verefication");
             
         }
 
@@ -78,10 +78,10 @@ contract TestWotsPlusnaysayer is Test {
             bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
             sigma = concatenateBytes32Arrays(sigma, pk);
             sigma = concatenateBytes32Arrays(sigma, keccak256(abi.encodePacked(r)));
-            wn.set_sign(mt.build_root(sigma));
-            bytes32[][] memory tree = mt.build_tree(sigma);
-            bytes32[] memory proof = mt.get_proof(tree,2);
-            require(wn.naysayer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length),pk[2],mt.get_proof(tree, sigmacpy.length+1+2),r,mt.get_proof(tree, sigmacpy.length*2+1)) == false, "fail good sig and no miustake verefication");
+            wn.set_sign(mt.buildRoot(sigma));
+            bytes32[][] memory tree = mt.buildTree(sigma);
+            bytes32[] memory proof = mt.getProof(tree,2);
+            require(wn.naysayer(sigma[2], proof, 2,M2,mt.getProof(tree, sigmacpy.length),pk[2],mt.getProof(tree, sigmacpy.length+1+2),r,mt.getProof(tree, sigmacpy.length*2+1)) == false, "fail good sig and no miustake verefication");
         }
 
         function test_false_signature() public{
@@ -102,11 +102,11 @@ contract TestWotsPlusnaysayer is Test {
             bytes32[] memory sigma = concatenateBytes32Arrays(sigmacpy, keccak256(abi.encodePacked(M2)));
             sigma = concatenateBytes32Arrays(sigma, pk);
             sigma = concatenateBytes32Arrays(sigma, keccak256(abi.encodePacked(r)));
-            wn.set_sign(mt.build_root(failed_sigma));
+            wn.set_sign(mt.buildRoot(failed_sigma));
             
-            bytes32[][] memory tree = mt.build_tree(sigma);
-            bytes32[] memory proof = mt.get_proof(tree,2);
-            require(wn.naysayer(sigma[2], proof, 2,M2,mt.get_proof(tree, sigmacpy.length),pk[2],mt.get_proof(tree, sigmacpy.length+1+2),r,mt.get_proof(tree, sigmacpy.length*2+1)) == false, "failed to fail failing verefication");
+            bytes32[][] memory tree = mt.buildTree(sigma);
+            bytes32[] memory proof = mt.getProof(tree,2);
+            require(wn.naysayer(sigma[2], proof, 2,M2,mt.getProof(tree, sigmacpy.length),pk[2],mt.getProof(tree, sigmacpy.length+1+2),r,mt.getProof(tree, sigmacpy.length*2+1)) == false, "failed to fail failing verefication");
         }
 
 

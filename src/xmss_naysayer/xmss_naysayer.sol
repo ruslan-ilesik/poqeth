@@ -158,7 +158,7 @@ contract XMSSSNaysayer is MerkleTree{
         wots_sig_length = sig_ots.length;
         wots_pk_length = wots_pk.length;
         bytes32[] memory sig_full = concatenateBytes32Arrays([wots_pk_hash,auth,sig_ots,wots_pk,ht_additional_nodes]);
-        bytes32 root = build_root(sig_full);
+        bytes32 root = buildRoot(sig_full);
         sig = root;
 
     }
@@ -204,7 +204,7 @@ contract XMSSSNaysayer is MerkleTree{
     }
     
     function naysayer_ht(uint top_node_ind, bytes32 top_node, bytes32[] memory top_node_proof,  bytes32 bottom_node, bytes32[] memory bottom_node_proof,bytes32 auth_node, bytes32[] memory auth_node_proof ) public returns (bool){
-        if (!verify_proof(sig, top_node, top_node_proof, 1+xmss_auth_length +wots_sig_length+wots_pk_length+top_node_ind) || !verify_proof(sig, bottom_node, bottom_node_proof, 1+xmss_auth_length +wots_sig_length+wots_pk_length+top_node_ind-1) || !verify_proof(sig, auth_node, auth_node_proof, 1+top_node_ind-1)){
+        if (!verifyProof(sig, top_node, top_node_proof, 1+xmss_auth_length +wots_sig_length+wots_pk_length+top_node_ind) || !verifyProof(sig, bottom_node, bottom_node_proof, 1+xmss_auth_length +wots_sig_length+wots_pk_length+top_node_ind-1) || !verifyProof(sig, auth_node, auth_node_proof, 1+top_node_ind-1)){
             return false;
         }
         ADRS adrs = new ADRS();
@@ -234,7 +234,7 @@ contract XMSSSNaysayer is MerkleTree{
 
     function naysayer_ltree(bytes32[] memory wots_pk, bytes32[] memory wots_pk_proof, bytes32 ltree_result, bytes32[] memory ltree_result_proof) public returns(bool){
         bytes32 wots_hash = keccak256(abi.encodePacked(wots_pk));
-        if (!verify_proof(sig, wots_hash, wots_pk_proof, 0) || !verify_proof(sig, ltree_result, ltree_result_proof, 1+xmss_auth_length +wots_sig_length+wots_pk_length)){
+        if (!verifyProof(sig, wots_hash, wots_pk_proof, 0) || !verifyProof(sig, ltree_result, ltree_result_proof, 1+xmss_auth_length +wots_sig_length+wots_pk_length)){
             return false;
         }
         uint8 n = 32; 
@@ -252,7 +252,7 @@ contract XMSSSNaysayer is MerkleTree{
                 bytes32 wots_pk_elem, bytes32[] memory wots_pk_proof
     ) public returns(bool){
 
-        if (!verify_proof(sig, wots_sig_elem, wots_sig_proof, 1+xmss_auth_length+wots_sig_ind) || !verify_proof(sig, wots_pk_elem, wots_pk_proof, 1+xmss_auth_length+wots_sig_length+wots_sig_ind)){
+        if (!verifyProof(sig, wots_sig_elem, wots_sig_proof, 1+xmss_auth_length+wots_sig_ind) || !verifyProof(sig, wots_pk_elem, wots_pk_proof, 1+xmss_auth_length+wots_sig_length+wots_sig_ind)){
             return false;
         }
         uint8 n = 32; 
