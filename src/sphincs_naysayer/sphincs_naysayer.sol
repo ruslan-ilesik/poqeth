@@ -46,7 +46,7 @@ contract ADRS {
         thirdWord = bytes4(0);
     }
 
-    function getType()public returns(bytes4){
+    function getType()public view returns(bytes4){
         return adrsType;
     }
 
@@ -101,7 +101,7 @@ contract ADRS {
 }
 
 
-contract Sphincs_plus_naysayer is MerkleTree{
+contract SphincsPlusNaysayer is MerkleTree{
     uint n;
     uint w;
     uint h;
@@ -114,13 +114,13 @@ contract Sphincs_plus_naysayer is MerkleTree{
     uint len;
 
 
-    uint32 WOTS_HASH = 0;
-    uint32 WOTS_PK = 1;
+    uint32 WOTSHASH = 0;
+    uint32 WOTSPK = 1;
     uint32 TREE = 2;
-    uint32 FORS_TREE = 3;
-    uint32 FORS_ROOTS = 4;
-    uint32 WOTS_PRF = 5;
-    uint32 FORS_PRF = 6;
+    uint32 FORSTREE = 3;
+    uint32 FORSROOTS = 4;
+    uint32 WOTSPRF = 5;
+    uint32 FORSPRF = 6;
 
     // Struct to represent the public key
     struct SPHINCS_PK {
@@ -199,7 +199,7 @@ contract Sphincs_plus_naysayer is MerkleTree{
     //xmss additional nodes = h/d+1;
     //xmss additional words = 1;
     //xmss total length = d+h/d+len+h/d+1+1 = d+len+2*h/d+2;
-    function wots_hash_naysayer(
+    function WOTSHASH_naysayer(
         uint tree_index,
         bytes32[] memory wots_pk,
         bytes32[][] memory wots_pk_proof,
@@ -282,7 +282,7 @@ contract Sphincs_plus_naysayer is MerkleTree{
         }
 
         uint32 idx = uint32(bytesToBytes4(idx_leaf2));
-        adrs.setType(WOTS_HASH);
+        adrs.setType(WOTSHASH);
         adrs.setKeyPairAddress(bytes4(idx));
         adrs.setLayerAddress(bytes4(uint32(tree_index)));
         adrs.setChainAddress(bytes4(uint32(len-1)));
@@ -290,7 +290,7 @@ contract Sphincs_plus_naysayer is MerkleTree{
         ADRS wotspkADRS = new ADRS();
         wotspkADRS.fillFrom(adrs);
 
-        wotspkADRS.setType(WOTS_PK);
+        wotspkADRS.setType(WOTSPK);
         wotspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
         bytes32 pk = keccak256(abi.encodePacked(pk.seed,wotspkADRS.toBytes(),wots_pk));
         return pk !=hashed;
@@ -385,7 +385,7 @@ contract Sphincs_plus_naysayer is MerkleTree{
         }
 
         uint32 idx = uint32(bytesToBytes4(idx_leaf2));
-        adrs.setType(WOTS_HASH);
+        adrs.setType(WOTSHASH);
         adrs.setKeyPairAddress(bytes4(idx));
         adrs.setLayerAddress(bytes4(uint32(tree_index)));
         bytes32 node;
@@ -588,7 +588,7 @@ contract Sphincs_plus_naysayer is MerkleTree{
         uint256 idx_leaf_bits = h / d;
         bytes memory idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
 
-        adrs.setType(FORS_TREE);
+        adrs.setType(FORSTREE);
         adrs.setLayerAddress(0);
         adrs.setTreeAddress(bytesToBytes4(idx_tree));
         adrs.setKeyPairAddress(bytesToBytes4(idx_leaf));
@@ -684,13 +684,13 @@ contract Sphincs_plus_naysayer is MerkleTree{
         uint256 idx_leaf_bits = h / d;
         bytes memory idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
 
-        adrs.setType(FORS_TREE);
+        adrs.setType(FORSTREE);
         adrs.setLayerAddress(0);
         adrs.setTreeAddress(bytesToBytes4(idx_tree));
         adrs.setKeyPairAddress(bytesToBytes4(idx_leaf));
 
         ADRS forspkADRS = new ADRS();
-        forspkADRS.setType(FORS_ROOTS);
+        forspkADRS.setType(FORSROOTS);
         forspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
         //console.logBytes32(hashed);
         bytes32 pk = keccak256(abi.encodePacked(pk.seed,forspkADRS.toBytes(),roots));

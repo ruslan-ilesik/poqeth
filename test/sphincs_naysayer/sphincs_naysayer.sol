@@ -2,7 +2,7 @@ pragma solidity ^0.8.26;
 
 import {Test, console} from "forge-std/Test.sol";
 import "forge-std/console.sol";
-import {Sphincs_plus_naysayer, ADRS,MerkleTree} from "../../src/sphincs_naysayer/sphincs_naysayer.sol";
+import {SphincsPlusNaysayer, ADRS,MerkleTree} from "../../src/sphincs_naysayer/sphincs_naysayer.sol";
 
 
 contract TestSphincsPlusNaysayer is Test {
@@ -43,13 +43,13 @@ contract TestSphincsPlusNaysayer is Test {
         bytes32 PKroot;
     }
 
-    uint32 WOTS_HASH = 0;
-    uint32 WOTS_PK = 1;
+    uint32 WOTSHASH = 0;
+    uint32 WOTSPK = 1;
     uint32 TREE = 2;
-    uint32 FORS_TREE = 3;
-    uint32 FORS_ROOTS = 4;
-    uint32 WOTS_PRF = 5;
-    uint32 FORS_PRF = 6;
+    uint32 FORSTREE = 3;
+    uint32 FORSROOTS = 4;
+    uint32 WOTSPRF = 5;
+    uint32 FORSPRF = 6;
 
     uint n = 32; // constant
     uint m = 32; // constant
@@ -66,17 +66,17 @@ contract TestSphincsPlusNaysayer is Test {
     uint len;
 
     SPHINCS_SK sphincs_sk;
-    Sphincs_plus_naysayer.SPHINCS_PK sphincs_pk;
-    Sphincs_plus_naysayer.SPHINCS_SIG sphincs_sig;
+    SphincsPlusNaysayer.SPHINCS_PK sphincs_pk;
+    SphincsPlusNaysayer.SPHINCS_SIG sphincs_sig;
     MerkleTree mt;
 
 
     NAYSAYER_SPHINCS_SIG naysayer_sig;
 
-    Sphincs_plus_naysayer sph;
+    SphincsPlusNaysayer sph;
     function setUp()public{
         mt = new MerkleTree();
-        sph = new Sphincs_plus_naysayer();
+        sph = new SphincsPlusNaysayer();
         len1 = (n) / log2(w) + ((n) % log2(w) == 0 ? 0 : 1);
         len2 = (log2(len1 * (w - 1)) / log2(w)) + 1;
         len = len1 + len2;
@@ -96,7 +96,7 @@ contract TestSphincsPlusNaysayer is Test {
     }
 
 
-    function test_sphincs_wots_hash() public {
+    function test_sphincs_WOTSHASH() public {
         sph.setParams(n, w, h, d, k, a, t);
         sph.setPk(sphincs_pk);
         bytes32[] memory sigma = flattenSPHINCS(naysayer_sig);
@@ -118,10 +118,10 @@ contract TestSphincsPlusNaysayer is Test {
             bytes32[] memory mProof =  mt.getProof(tree,m_ind);
 
             //check proofs
-            //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof),"failed good proof");
-            //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind-1].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof) == false,"passed bad proof");
+            //require(sph.WOTSHASH_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof),"failed good proof");
+            //require(sph.WOTSHASH_naysayer(tree_ind,naysayer_sig.sig[tree_ind-1].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof) == false,"passed bad proof");
         
-            require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof)==false,"passed proof without mistake");
+            require(sph.WOTSHASH_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof)==false,"passed proof without mistake");
         }
         {
          
@@ -145,10 +145,10 @@ contract TestSphincsPlusNaysayer is Test {
             bytes32[] memory mProof =  mt.getProof(tree,m_ind);
 
             //check proofs
-            //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof),"failed good proof");
-            //require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind-1].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof) == false,"passed bad proof");
+            //require(sph.WOTSHASH_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof),"failed good proof");
+            //require(sph.WOTSHASH_naysayer(tree_ind,naysayer_sig.sig[tree_ind-1].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof) == false,"passed bad proof");
         
-            require(sph.wots_hash_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof)==true,"failed proof with mistake");
+            require(sph.WOTSHASH_naysayer(tree_ind,naysayer_sig.sig[tree_ind].wots_pk,proofs,naysayer_sig.sig[tree_ind].wots_pk_hash,proof2,m,mProof)==true,"failed proof with mistake");
             naysayer_sig.sig[tree_ind].wots_pk[0] = naysayer_sig.sig[tree_ind].wots_pk[0] ^ bytes32(uint(1));
         }
 
@@ -346,10 +346,10 @@ contract TestSphincsPlusNaysayer is Test {
     }
 
 
- function verify_parts_assign(bytes32 M, Sphincs_plus_naysayer.SPHINCS_SIG memory SIG)public returns (bool){
+ function verify_parts_assign(bytes32 M, SphincsPlusNaysayer.SPHINCS_SIG memory SIG)public returns (bool){
         ADRS adrs = new ADRS();
         bytes32 R = SIG.r;
-        Sphincs_plus_naysayer.FORS_SIG memory SIG_FORS = SIG.fors_sig;
+        SphincsPlusNaysayer.FORS_SIG memory SIG_FORS = SIG.fors_sig;
         //HT_SIG memory SIG_HT = SIG.ht_sig;
 
 
@@ -386,14 +386,14 @@ contract TestSphincsPlusNaysayer is Test {
         uint256 idx_leaf_bits = h / d;
         bytes memory idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
 
-        adrs.setType(FORS_TREE);
+        adrs.setType(FORSTREE);
         adrs.setLayerAddress(0);
         adrs.setTreeAddress(bytesToBytes4(idx_tree));
         adrs.setKeyPairAddress(bytesToBytes4(idx_leaf));
         fors_pkFromSig_parts_assign(SIG_FORS,md,sphincs_pk.seed,adrs);
     }
 
-    function fors_pkFromSig_parts_assign(Sphincs_plus_naysayer.FORS_SIG memory SIG_FORS, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
+    function fors_pkFromSig_parts_assign(SphincsPlusNaysayer.FORS_SIG memory SIG_FORS, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
         bytes32[2] memory  node;
         bytes32[] memory root = new bytes32[](k);
         for(uint i = 0; i < k; i++){
@@ -431,7 +431,7 @@ contract TestSphincsPlusNaysayer is Test {
 
         ADRS forspkADRS = new ADRS();
         forspkADRS.fillFrom(adrs);
-        forspkADRS.setType(FORS_ROOTS);
+        forspkADRS.setType(FORSROOTS);
         forspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
         bytes32 pk = keccak256(abi.encodePacked(PKseed,forspkADRS.toBytes(),root));
         naysayer_sig.fors_pk = pk;
@@ -541,7 +541,7 @@ contract TestSphincsPlusNaysayer is Test {
         bytes memory idx_leaf = extractBits(abi.encodePacked(tmp_idx_leaf), 0, idx_leaf_bits);
         
 
-        adrs.setType(FORS_TREE);
+        adrs.setType(FORSTREE);
         adrs.setLayerAddress(0);
         adrs.setTreeAddress(bytesToBytes8(idx_tree));
         adrs.setKeyPairAddress(bytesToBytes4(idx_leaf));
@@ -552,22 +552,22 @@ contract TestSphincsPlusNaysayer is Test {
 
         //console.logBytes32(PK_FORS);
         adrs.setType(TREE);
-        Sphincs_plus_naysayer.HT_SIG memory SIG_HT = ht_sign(PK_FORS,sphincs_sk.SKseed,sphincs_sk.PKseed,  uint64(bytesToBytes8(idx_tree)),uint32(bytesToBytes4(idx_leaf)));
+        SphincsPlusNaysayer.HT_SIG memory SIG_HT = ht_sign(PK_FORS,sphincs_sk.SKseed,sphincs_sk.PKseed,  uint64(bytesToBytes8(idx_tree)),uint32(bytesToBytes4(idx_leaf)));
         sphincs_sig.ht_sig = SIG_HT;
     }
 
     NAYSAYER_xmssSig[] xmssnsig;
     uint xmssn_sig_ind = 0;
 
-    function ht_sign(bytes32 M, bytes32 SKseed, bytes32 PKseed, uint64 idx_tree, uint32 idx_leaf)public returns(Sphincs_plus_naysayer.HT_SIG memory){
-        Sphincs_plus_naysayer.HT_SIG memory SIG_HT = Sphincs_plus_naysayer.HT_SIG(new Sphincs_plus_naysayer.xmssSig[](d));
+    function ht_sign(bytes32 M, bytes32 SKseed, bytes32 PKseed, uint64 idx_tree, uint32 idx_leaf)public returns(SphincsPlusNaysayer.HT_SIG memory){
+        SphincsPlusNaysayer.HT_SIG memory SIG_HT = SphincsPlusNaysayer.HT_SIG(new SphincsPlusNaysayer.xmssSig[](d));
         xmssnsig = new NAYSAYER_xmssSig[](d);
         ADRS adrs = new ADRS();
         adrs.setLayerAddress(0);
         adrs.setTreeAddress(bytes8(idx_tree));
         uint256 idx_tree_bits = h - h / d;
         uint256 idx_leaf_bits = h / d;
-        Sphincs_plus_naysayer.xmssSig memory SIG_tmp = xmssSign(M,SKseed,idx_leaf,PKseed,adrs);
+        SphincsPlusNaysayer.xmssSig memory SIG_tmp = xmssSign(M,SKseed,idx_leaf,PKseed,adrs);
         SIG_HT.sig[0] = SIG_tmp;
         bytes32 root = xmssPkFromSig(idx_leaf, SIG_tmp, M, PKseed, adrs);
         //xmssnsig[0].xmss_root = root;
@@ -609,8 +609,8 @@ contract TestSphincsPlusNaysayer is Test {
         return SIG_HT;
     }
 
-    function xmssPkFromSig(uint32 idx, Sphincs_plus_naysayer.xmssSig memory SIG_XMSS, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
-    adrs.setType(WOTS_HASH);
+    function xmssPkFromSig(uint32 idx, SphincsPlusNaysayer.xmssSig memory SIG_XMSS, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
+    adrs.setType(WOTSHASH);
     //console.logUint(idx);
     adrs.setKeyPairAddress(bytes4(idx));
     bytes32[] memory sig = SIG_XMSS.sig;
@@ -661,7 +661,7 @@ contract TestSphincsPlusNaysayer is Test {
           }
 
         }
-        wotspkADRS.setType(WOTS_PK);
+        wotspkADRS.setType(WOTSPK);
         wotspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
         bytes32 pk = keccak256(abi.encodePacked(PKseed,wotspkADRS.toBytes(),tmp));
         xmssnsig[xmssn_sig_ind].wots_pk_hash=pk;
@@ -669,15 +669,15 @@ contract TestSphincsPlusNaysayer is Test {
         return pk;
     }
 
-    function xmssSign(bytes32 M, bytes32 SKseed, uint32 idx, bytes32 PKseed, ADRS adrs)public returns(Sphincs_plus_naysayer.xmssSig memory){
+    function xmssSign(bytes32 M, bytes32 SKseed, uint32 idx, bytes32 PKseed, ADRS adrs)public returns(SphincsPlusNaysayer.xmssSig memory){
         bytes32[] memory AUTH = new bytes32[](h/d);
         for (uint j = 0; j < h/d; j++ ) {
             AUTH[j] = treehash(k*(2**j),j, adrs);
         }
-        adrs.setType(WOTS_HASH);
+        adrs.setType(WOTSHASH);
         adrs.setKeyPairAddress(bytes4(idx));
         bytes32[] memory sig = wotsSign(M,SKseed,PKseed,adrs);
-        Sphincs_plus_naysayer.xmssSig memory xmssSig = Sphincs_plus_naysayer.xmssSig(sig,AUTH);
+        SphincsPlusNaysayer.xmssSig memory xmssSig = SphincsPlusNaysayer.xmssSig(sig,AUTH);
         return xmssSig;
     } 
 
@@ -695,7 +695,7 @@ contract TestSphincsPlusNaysayer is Test {
         bytes32[] memory msg2 = baseW(toByte(csum, len2Bytes), len2);
         ADRS skADRS = new ADRS();
         skADRS.fillFrom(adrs);
-        skADRS.setType(WOTS_PRF);
+        skADRS.setType(WOTSPRF);
         skADRS.setKeyPairAddress(adrs.getKeyPairAddress());
 
         bytes32[] memory sig = new bytes32[](len);
@@ -715,7 +715,7 @@ contract TestSphincsPlusNaysayer is Test {
         return sig;
     }
 
-    function fors_pkFromSig(Sphincs_plus_naysayer.FORS_SIG memory SIG_FORS, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
+    function fors_pkFromSig(SphincsPlusNaysayer.FORS_SIG memory SIG_FORS, bytes memory M, bytes32 PKseed, ADRS adrs)public  returns (bytes32) {
         bytes32[2] memory  node;
         bytes32[] memory root = new bytes32[](k);
         for(uint i = 0; i < k; i++){
@@ -744,14 +744,14 @@ contract TestSphincsPlusNaysayer is Test {
 
         ADRS forspkADRS = new ADRS();
         forspkADRS.fillFrom(adrs);
-        forspkADRS.setType(FORS_ROOTS);
+        forspkADRS.setType(FORSROOTS);
         forspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
         bytes32 pk = keccak256(abi.encodePacked(PKseed,forspkADRS.toBytes(),root));
         return pk;
     }
 
-    function fors_sign( bytes memory M, bytes32 SKseed, bytes32 PKseed, ADRS adrs) public returns (Sphincs_plus_naysayer.FORS_SIG memory){
-        Sphincs_plus_naysayer.FORS_SIG memory sig = Sphincs_plus_naysayer.FORS_SIG(new Sphincs_plus_naysayer.FORS_SIG_INNER[](k));
+    function fors_sign( bytes memory M, bytes32 SKseed, bytes32 PKseed, ADRS adrs) public returns (SphincsPlusNaysayer.FORS_SIG memory){
+        SphincsPlusNaysayer.FORS_SIG memory sig = SphincsPlusNaysayer.FORS_SIG(new SphincsPlusNaysayer.FORS_SIG_INNER[](k));
         NAYSAYER_FORS_SIG memory nsig = NAYSAYER_FORS_SIG(new NAYSAYER_FORS_SIG_INNER[](k),0);
         naysayer_fors_proofs = new bytes32[][](k);
         for(uint i = 0; i < k; i++){
@@ -763,7 +763,7 @@ contract TestSphincsPlusNaysayer is Test {
                 uint s = (idx/ (2**j)) ^ 1;
                 auth[j] = fors_treehash(SKseed, i * t + s * 2**j, j, PKseed, adrs);
             }
-            sig.sig[i] = Sphincs_plus_naysayer.FORS_SIG_INNER(sk,auth);
+            sig.sig[i] = SphincsPlusNaysayer.FORS_SIG_INNER(sk,auth);
             nsig.sig[i] = NAYSAYER_FORS_SIG_INNER(sk,keccak256(abi.encodePacked(auth)),0); //3rd value should be defined later
             naysayer_fors_proofs[i] = auth;
         }
@@ -791,7 +791,7 @@ contract TestSphincsPlusNaysayer is Test {
     function fors_SKgen(bytes32 SKseed, ADRS adrs, uint idx)public returns (bytes32){
         ADRS skADRS = new ADRS();
         skADRS.fillFrom(adrs);
-        skADRS.setType(FORS_PRF);
+        skADRS.setType(FORSPRF);
         skADRS.setKeyPairAddress(adrs.getKeyPairAddress());
         skADRS.setTreeHeight(0);
         skADRS.setTreeIndex(bytes4(uint32(idx)));
@@ -824,7 +824,7 @@ contract TestSphincsPlusNaysayer is Test {
     }
 
     function treehash(uint s, uint z, ADRS adrs) public returns(bytes32){
-        adrs.setType(WOTS_HASH);   // Type = OTS hash address
+        adrs.setType(WOTSHASH);   // Type = OTS hash address
         adrs.setKeyPairAddress(bytes4(uint32(s)));
         bytes32 node = wots_PKgen(adrs); 
         adrs.setType(TREE);
@@ -851,7 +851,7 @@ contract TestSphincsPlusNaysayer is Test {
         wotspkADRS.fillFrom(adrs);
         ADRS skADRS = new ADRS();
         skADRS.fillFrom(adrs);
-        skADRS.setType(WOTS_PRF);
+        skADRS.setType(WOTSPRF);
         skADRS.setKeyPairAddress(adrs.getKeyPairAddress());
         bytes32[] memory sk = new bytes32[](len);
         bytes32[] memory tmp = new bytes32[](len);
@@ -863,7 +863,7 @@ contract TestSphincsPlusNaysayer is Test {
             adrs.setHashAddress(0);
             tmp[i] = chain(sk[i], 0, w - 1,  sphincs_pk.seed, adrs);
         }
-        wotspkADRS.setType(WOTS_PK);
+        wotspkADRS.setType(WOTSPK);
         wotspkADRS.setKeyPairAddress(adrs.getKeyPairAddress());
 
         return keccak256(abi.encodePacked(sphincs_pk.seed,wotspkADRS.toBytes(), tmp));

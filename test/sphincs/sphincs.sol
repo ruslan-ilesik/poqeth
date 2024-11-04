@@ -15,7 +15,7 @@ contract TestSphincsPlus is Test {
         bytes32 PKroot;
     }
 
-    uint32 WOTS_HASH = 0;
+    uint32 WOTSHASH = 0;
     uint32 WOTS_PK = 1;
     uint32 TREE = 2;
     uint32 FORS_TREE = 3;
@@ -161,7 +161,7 @@ contract TestSphincsPlus is Test {
     }
 
     function xmssPkFromSig(uint32 idx, Sphincs_plus.xmssSig memory SIG_XMSS, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
-    adrs.setType(WOTS_HASH);
+    adrs.setType(WOTSHASH);
     adrs.setKeyPairAddress(bytes4(idx));
     bytes32[] memory sig = SIG_XMSS.sig;
     bytes32[] memory AUTH = SIG_XMSS.auth;
@@ -217,7 +217,7 @@ contract TestSphincsPlus is Test {
     uint k = 60;
             AUTH[j] = treehash(k*(2**j),j, adrs);
         }
-        adrs.setType(WOTS_HASH);
+        adrs.setType(WOTSHASH);
         adrs.setKeyPairAddress(bytes4(idx));
         bytes32[] memory sig = wotsSign(M,SKseed,PKseed,adrs);
         Sphincs_plus.xmssSig memory xmssSig = Sphincs_plus.xmssSig(sig,AUTH);
@@ -361,7 +361,7 @@ contract TestSphincsPlus is Test {
     }
 
     function treehash(uint s, uint z, ADRS adrs) public returns(bytes32){
-        adrs.setType(WOTS_HASH);   // Type = OTS hash address
+        adrs.setType(WOTSHASH);   // Type = OTS hash address
         adrs.setKeyPairAddress(bytes4(uint32(s)));
         bytes32 node = wots_PKgen(adrs); 
         adrs.setType(TREE);

@@ -113,7 +113,7 @@ contract Sphincs_plus{
     uint len;
 
 
-    uint32 WOTS_HASH = 0;
+    uint32 WOTSHASH = 0;
     uint32 WOTS_PK = 1;
     uint32 TREE = 2;
     uint32 FORS_TREE = 3;
@@ -297,7 +297,7 @@ contract Sphincs_plus{
     }
 
     function xmssPkFromSig(uint32 idx, Sphincs_plus.xmssSig memory SIG_XMSS, bytes32 M, bytes32 PKseed, ADRS adrs) public returns (bytes32){
-        adrs.setType(WOTS_HASH);
+        adrs.setType(WOTSHASH);
         adrs.setKeyPairAddress(bytes4(idx));
         bytes32[] memory sig = SIG_XMSS.sig;
         bytes32[] memory AUTH = SIG_XMSS.auth;
