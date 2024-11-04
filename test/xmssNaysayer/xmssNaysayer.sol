@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
 import {XmssNaysayer,ADRS} from "../../src/xmssNaysayer/xmssNaysayer.sol";
-import {MerkleTree} from "../../src/merkle_tree.sol";
+import {MerkleTree} from "../../src/merkleTree.sol";
 import "forge-std/console.sol";
 
 //4397356 h=1

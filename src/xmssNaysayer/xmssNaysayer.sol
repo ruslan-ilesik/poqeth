@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 import "forge-std/console.sol";
-import "../merkle_tree.sol";
+import "../merkleTree.sol";
 
 contract ADRS {
     bytes4 public layerAddress;
