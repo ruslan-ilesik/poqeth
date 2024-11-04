@@ -6,13 +6,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {XMSS,ADRS} from "../../src/xmss/xmss.sol";
 import "forge-std/console.sol";
 
-//4397356 h=1
-//4413730 h=2
-//4430119 h=3
 
-
-//4709188 h=20
-//4725636 h=21
 contract TestXMSSS is Test {
     XMSS xmss;
     uint h = 2;
@@ -192,23 +186,6 @@ contract TestXMSSS is Test {
 
     } 
 
-    /*function chain(bytes32 X,uint i,uint s, ADRS adrs)public returns(bytes32) {
-        if ( s == 0 ) {
-            return X;
-        }
-        if ( (i + s) > (w - 1) ) {
-            return 0;
-        }
-        bytes32 tmp = chain(X, i, s - 1, adrs);
-        adrs.setHashAddress(uint32(i + s - 1));
-        adrs.setKeyAndMask(0);
-        bytes32 KEY = PRF(adrs);
-        adrs.setKeyAndMask(1);
-        bytes32 BM = PRF(adrs);
-        tmp = keccak256(abi.encodePacked(KEY, tmp ^ BM));
-        return tmp;
-    }*/
-
     function chain(bytes32 X, uint i, uint s, ADRS adrs) public returns (bytes32) {
         if ((i + s) > (w - 1)) {
             return 0;
@@ -247,7 +224,7 @@ contract TestXMSSS is Test {
         return sk;
     }
 
-    function test_xmss() public{
+    function testXmss() public{
         xmss.setPk(xmssPk);
         require(xmss.verify(xmssSig, Mp, w,h),"verefication failed");
         // PLACE HOLDER START

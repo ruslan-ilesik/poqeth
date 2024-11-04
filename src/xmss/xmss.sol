@@ -27,7 +27,7 @@ contract ADRS {
         keyAndMask = bytes4(0);
     }
 
-    function toBytes()public returns (bytes memory){
+    function toBytes()public view returns (bytes memory){
         return abi.encodePacked(layerAddress,treeAddress,adrsType,firstWord,secondWord,thirdWord,keyAndMask);
     }
 
@@ -85,7 +85,7 @@ contract ADRS {
 }
 
 contract XMSS{
-    uint expected_sig_id = 0;
+    uint expectedSigId = 0;
 
     struct PK{
         bytes32 root;
@@ -113,7 +113,7 @@ contract XMSS{
     uint w;
     uint h;
     function verify(SIG calldata Sig, bytes32 M, uint _w, uint _h) public returns(bool){
-        if (expected_sig_id != Sig.idxSig){
+        if (expectedSigId != Sig.idxSig){
             return false;
         }
         ADRS adrs = new ADRS();
@@ -124,7 +124,7 @@ contract XMSS{
         //HMSG skipped to be able to do proper verefication
         //bytes memory M2 = Hmsg(abi.encodePacked(Sig.r,pk.root,toBytes(Sig.idxSig,n)),M,uint8(len1));
 
-        bytes32 temp = XMSS_rootFromSig(Sig,M, adrs);
+        bytes32 temp = xmssRootFromSig(Sig,M, adrs);
 
         //return true;
         return pk.root == temp;
@@ -152,14 +152,14 @@ contract XMSS{
         return tmpPk;
     }
 
-    function XMSS_rootFromSig(SIG calldata Sig,bytes32 M, ADRS adrs)public returns (bytes32){
+    function xmssRootFromSig(SIG calldata Sig,bytes32 M, ADRS adrs)public returns (bytes32){
         adrs.setType(0);   // Type = OTS hash address
         adrs.setOTSAddress(Sig.idxSig);
-        bytes32[] memory pk_ots = wotsPkFromSig(Sig.sigOts, M, adrs);
+        bytes32[] memory pkOts = wotsPkFromSig(Sig.sigOts, M, adrs);
         adrs.setType(1);   // Type = L-tree address
         adrs.setLTreeAddress(Sig.idxSig);
         bytes32[2] memory node;
-        node[0] = ltree(pk_ots, adrs);
+        node[0] = ltree(pkOts, adrs);
         //console.logBytes32(node[0]);
         adrs.setType(2);   // Type = hash tree address
         adrs.setTreeIndex(Sig.idxSig);
@@ -184,11 +184,11 @@ contract XMSS{
         return (a + b - 1) / b;
     }
 
-    function computeLengths(uint n, uint w) public pure returns (uint len1, uint len2, uint len_all) {
+    function computeLengths(uint n, uint w) public pure returns (uint len1, uint len2, uint lenAll) {
         uint m = 32; // constant
         len1 = (m*8) / log2(w) + ((m*8) % log2(w) == 0 ? 0 : 1);
         len2 = log2(len1*(w-1))/log2(w);
-        len_all = len1 + len2;
+        lenAll = len1 + len2;
     }
 
     function PRF(ADRS adrs) public returns(bytes32){
