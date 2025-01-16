@@ -107,7 +107,6 @@ unique_d_values = sorted(df['d'].unique())
 unique_k_values = sorted(df['k'].unique())
 
 
-# Generate plots for specific k values
 def generate_plots_specific_k(k_values, x_param, y_param, z_param, file_name):
     # Create a figure for the grid of 3D scatter plots
     fig = plt.figure(figsize=(20, 20))
@@ -120,6 +119,10 @@ def generate_plots_specific_k(k_values, x_param, y_param, z_param, file_name):
     for i, k in enumerate(k_values):
         # Filter the data for the current k value
         df_filtered = df[df['k'] == k]
+        
+        # Save filtered data to a CSV file
+        csv_file_name = os.path.join(script_dir, file_name.replace(".png", f"_k={k}.csv"))
+        df_filtered.to_csv(csv_file_name, index=False)
         
         # Create a 3D subplot
         ax = fig.add_subplot(rows, cols, i + 1, projection='3d')
@@ -145,9 +148,7 @@ def generate_plots_specific_k(k_values, x_param, y_param, z_param, file_name):
     output_file = os.path.join(script_dir, file_name)
     plt.savefig(output_file, dpi=300)  # Save with high resolution
     plt.close()
-
     print(f"Saved the 3D scatter plot grid for specific k values to {output_file}")
-
 
 
 # Generate plots for specific a values
@@ -163,6 +164,10 @@ def generate_plots_specific_a(a_values, x_param, y_param, z_param, file_name):
     for i, a in enumerate(a_values):
         # Filter the data for the current a value
         df_filtered = df[df['a'] == a]
+        
+        # Save filtered data to a CSV file
+        csv_file_name = os.path.join(script_dir, file_name.replace(".png", f"_a={a}.csv"))
+        df_filtered.to_csv(csv_file_name, index=False)
         
         # Create a 3D subplot
         ax = fig.add_subplot(rows, cols, i + 1, projection='3d')
@@ -191,6 +196,7 @@ def generate_plots_specific_a(a_values, x_param, y_param, z_param, file_name):
 
     print(f"Saved the 3D scatter plot grid for specific a values to {output_file}")
 
+
 # Generate plots for specific h values
 def generate_plots_specific_h(h_values, x_param, y_param, z_param, file_name):
     # Create a figure for the grid of 3D scatter plots
@@ -204,6 +210,10 @@ def generate_plots_specific_h(h_values, x_param, y_param, z_param, file_name):
     for i, h in enumerate(h_values):
         # Filter the data for the current h value
         df_filtered = df[df['h'] == h]
+        
+        # Save filtered data to a CSV file
+        csv_file_name = os.path.join(script_dir, file_name.replace(".png", f"_h={h}.csv"))
+        df_filtered.to_csv(csv_file_name, index=False)
         
         # Create a 3D subplot
         ax = fig.add_subplot(rows, cols, i + 1, projection='3d')
