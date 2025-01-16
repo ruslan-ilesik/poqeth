@@ -1,9 +1,6 @@
 import csv
 import matplotlib.pyplot as plt
-import matplotlib
-import math
 import os
-
 
 
 def read_csv(file_path):
@@ -23,10 +20,10 @@ def read_csv(file_path):
 def plot_graphs(i_values_dict, file_name):
     plt.figure(figsize=(12, 6))
     markers = {
-        4 : "o",
+        4: "o",
         8: "s",
-        16:"d",
-        256:"p"
+        16: "d",
+        256: "p"
     }
     
     # Plot each dataset with a different color
@@ -34,19 +31,22 @@ def plot_graphs(i_values_dict, file_name):
         # Use slicing to select every 5th element
         i_values_sliced = i_values[::5]
         verify_values_sliced = [i for i in verify_values[::5]]
-        #plt.plot(i_values, verify_values, linestyle='-', label=f'w={w}') # Plot full line
         plt.plot(i_values_sliced, verify_values_sliced, marker=markers[w], linestyle='-', label=f'w={w}') # Plot every 5th dot
-    
     
     plt.xlabel('$\\vert\\vert M \\vert\\vert _1$')
     plt.ylabel('Gas')
     plt.yscale("log")
-    #plt.ticklabel_format(axis='y', scilimits=[0, 22])
-    #plt.title('Verefication cost for WOTS+ with w={4, 8, 16, 256}')
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.show()
+    
+    # Save as an image file
+    plt.savefig(file_name)
+
+    # Save the plot as file
+    plt.savefig(file_name.replace('.png', '.pgf'))  # Replace extension for pgf output
+    
+    #plt.show()
 
 def main():
     i_values_dict = {}
@@ -54,12 +54,12 @@ def main():
     
     # Read the data for each value of w
     for w in [4, 8, 16, 256]:
-        file_path = os.path.join(script_dir,f'{w}.csv')
+        file_path = os.path.join(script_dir, f'{w}.csv')
         i_values, verify_values = read_csv(file_path)
         i_values_dict[w] = (i_values, verify_values)
     
-    # Plot the graphs on the same plot
-    plot_graphs(i_values_dict, 'combined_plot.png')
+    # Plot the graphs on the same plot and save TikZ output
+    plot_graphs(i_values_dict, 'wots_full_plot.png')
 
 if __name__ == "__main__":
     main()

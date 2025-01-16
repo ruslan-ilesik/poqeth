@@ -1,6 +1,8 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('pgf')
 
 def read_csv_files(folder_path):
     data_frames = []
@@ -38,7 +40,8 @@ def plot_graphs_grouped_by_w(data):
         plt.legend()
         plt.tight_layout()
         plt.grid(True)
-        plt.show()
+        #plt.show()
+
         
         # Identify cheapest and most expensive for this w
         min_verify_row = subset.loc[subset['verify'].idxmin()]
@@ -80,7 +83,8 @@ def plot_graphs_for_min_max_h(data):
     plt.legend()
     plt.tight_layout()
     plt.grid(True)
-    plt.show()
+
+    #plt.show()
 
 
 def plot_graphs_for_w4_and_w8(data):
@@ -117,7 +121,8 @@ def plot_graphs_for_w4_and_w8(data):
     # Show the legend, grid, and plot
     plt.legend()    
     plt.tight_layout()
-    plt.show()
+    plt.savefig("./xmss_plot.pgf")
+    #plt.show()
 
 
 
