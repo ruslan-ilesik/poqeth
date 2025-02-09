@@ -26,7 +26,7 @@ contract ADRS {
     }
 
     function toBytes()public returns (bytes memory){
-        return abi.encodePacked(layerAddress,treeAddress,adrsType,firstWord,secondWord,thirdWord);
+        return abi.encodePacked(layerAddress,treeAddress,adrsType,firstWord,secondWord,thirdWord,keyAndMask);
     }
 
     function fillFrom(ADRS adrs)public{
