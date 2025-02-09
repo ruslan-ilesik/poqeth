@@ -13,8 +13,6 @@ contract ADRS {
     bytes4 public secondWord;
     bytes4 public thirdWord;
 
-    bytes4 public keyAndMask;
-
     constructor() {
         layerAddress = bytes4(0);
         treeAddress = bytes8(0);
@@ -26,7 +24,7 @@ contract ADRS {
     }
 
     function toBytes()public returns (bytes memory){
-        return abi.encodePacked(layerAddress,treeAddress,adrsType,firstWord,secondWord,thirdWord,keyAndMask);
+        return abi.encodePacked(layerAddress,treeAddress,adrsType,firstWord,secondWord,thirdWord);
     }
 
     function fillFrom(ADRS adrs)public{
